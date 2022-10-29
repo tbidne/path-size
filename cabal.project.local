@@ -1,0 +1,5 @@
+package fs-utils
+  ghc-options: -Wwarn
+
+--tests: true
+--benchmarks: true

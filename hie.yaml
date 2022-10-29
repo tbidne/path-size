@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+    - path: "./src"
+      component: "lib:fs-utils"
+
+    - path: "./app/Main.hs"
+      component: "fs-utils:exe:fs-utils"
