@@ -11,9 +11,7 @@ let
       (strings.intersperse ", " (to-keys attrs));
 
   stack-map = {
-    lts-18 = { ghc = "ghc8107"; yaml = "stack_lts-18.yaml"; };
-    default = { ghc = "ghc902"; yaml = "stack.yaml"; };
-    nightly = { ghc = "ghc924"; yaml = "stack_nightly.yaml"; };
+    default = { ghc = "ghc924"; yaml = "stack.yaml"; };
   };
   val =
     if stack-map ? ${stack-vers}

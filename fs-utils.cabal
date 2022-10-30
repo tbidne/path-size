@@ -3,7 +3,7 @@ name:               fs-utils
 version:            0.1
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==8.10.7 || ==9.0.2 || ==9.2.4 || ==9.4.2
+tested-with:        GHC ==9.2.4 || ==9.4.2
 copyright:          2022 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -22,44 +22,34 @@ source-repository head
 
 common common-exts
   default-extensions:
-    BangPatterns
-    ConstraintKinds
+    NoFieldSelectors
     DataKinds
     DeriveAnyClass
-    DeriveFunctor
-    DeriveGeneric
-    DeriveTraversable
     DerivingStrategies
-    DerivingVia
-    FlexibleContexts
-    FlexibleInstances
-    FunctionalDependencies
-    GADTs
-    GeneralizedNewtypeDeriving
-    ImportQualifiedPost
-    InstanceSigs
     LambdaCase
-    MultiParamTypeClasses
-    MultiWayIf
-    NamedFieldPuns
-    NumericUnderscores
+    OverloadedLabels
     OverloadedStrings
-    PatternSynonyms
-    RankNTypes
-    ScopedTypeVariables
-    StandaloneDeriving
-    StandaloneKindSignatures
-    TupleSections
-    TypeApplications
-    TypeFamilyDependencies
-    TypeOperators
+    TypeFamilies
 
 library
   import:           common-exts
-  exposed-modules:  Lib
-  build-depends:    base >=4.14.0.0 && <4.18
+  exposed-modules:
+    FsUtils.Control.Exception
+    FsUtils.Data.PathSize
+    FsUtils.Size
+
+  build-depends:
+    , base                  >=4.14.0.0  && <4.18
+    , deepseq               ^>=1.4.4.0
+    , directory             ^>=1.3.5.0
+    , filepath              ^>=1.4.2.1
+    , hashable              ^>=1.4.0.2
+    , safe-exceptions       ^>=0.1.7.0
+    , text                  >=1.2.3.2   && <2.1
+    , unordered-containers  ^>=0.2.14.0
+
   hs-source-dirs:   src
-  default-language: Haskell2010
+  default-language: GHC2021
 
 executable fs-utils
   import:           common-exts
@@ -67,7 +57,26 @@ executable fs-utils
   build-depends:
     , base
     , fs-utils
+    , safe-exceptions
+    , unordered-containers
 
   hs-source-dirs:   app
   ghc-options:      -threaded -with-rtsopts=-N
-  default-language: Haskell2010
+  default-language: GHC2021
+
+benchmark benchmarks
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , bytestring       >=0.10.12 && <0.12
+    , directory
+    , env-guard        ^>=0.2
+    , filepath
+    , fs-utils
+    , safe-exceptions
+    , tasty-bench      ^>=0.3
+
+  hs-source-dirs:   benchmarks
+  default-language: GHC2021
