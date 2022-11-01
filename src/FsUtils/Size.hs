@@ -7,10 +7,12 @@ module FsUtils.Size
     -- * Calculating sizes
     pathSizeRecursive,
     pathSizeRecursiveAsync,
+    pathSizeRecursiveParallel,
   )
 where
 
 import Control.Concurrent.Async qualified as Async
+import Control.Concurrent.ParallelIO.Global qualified as ParallelG
 import Control.Exception.Safe (throwString)
 import Data.HashMap.Strict qualified as HMap
 import FsUtils.Control.Exception (withCallStack)
@@ -24,14 +26,22 @@ import System.FilePath ((</>))
 --
 -- @since 0.1
 pathSizeRecursive :: HasCallStack => FilePath -> IO PathSize
-pathSizeRecursive = pathSizeRecursiveTraversal traverse
+pathSizeRecursive = pathSizeRecursiveTraversal sequenceA
 
 -- | Like 'pathSizeRecursive', but each recursive call is run in its own
 -- thread.
 --
 -- @since 0.1
 pathSizeRecursiveAsync :: HasCallStack => FilePath -> IO PathSize
-pathSizeRecursiveAsync = pathSizeRecursiveTraversal Async.mapConcurrently
+pathSizeRecursiveAsync = pathSizeRecursiveTraversal (Async.mapConcurrently id)
+
+-- | Like 'pathSizeRecursive', but each recursive call is run in parallel.
+--
+-- @since 0.1
+pathSizeRecursiveParallel :: HasCallStack => FilePath -> IO PathSize
+pathSizeRecursiveParallel fp =
+  pathSizeRecursiveTraversal ParallelG.parallel fp
+    <* ParallelG.stopGlobalPool
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed via the parameter traversal.
@@ -40,11 +50,11 @@ pathSizeRecursiveAsync = pathSizeRecursiveTraversal Async.mapConcurrently
 pathSizeRecursiveTraversal ::
   HasCallStack =>
   -- | Traversal function.
-  (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
+  (forall a. [IO a] -> IO [a]) ->
   -- | Start path.
   FilePath ->
   IO PathSize
-pathSizeRecursiveTraversal traversal = go HMap.empty
+pathSizeRecursiveTraversal sequenceT = go HMap.empty
   where
     go :: HasCallStack => PathSize -> FilePath -> IO PathSize
     go mp path = do
@@ -58,7 +68,7 @@ pathSizeRecursiveTraversal traversal = go HMap.empty
           if isDir
             then do
               files <- withCallStack $ Dir.listDirectory path
-              maps <- traversal (go mp) ((path </>) <$> files)
+              maps <- sequenceT $ go mp <$> ((path </>) <$> files)
               let size = sumPathSizes maps
               pure $ HMap.insert (Directory path) size (HMap.unions (mp : maps))
             else throwString ("Not a path or directory: " <> path)

@@ -48,33 +48,43 @@ benchPathSizeRecursive testDir =
         "flat"
         [ runPathSizeRecursive "100" (testDir </> "flat-100"),
           runPathSizeRecursiveAsync "100 - Async" (testDir </> "flat-100"),
+          runPathSizeRecursiveParallel "100 - Parallel" (testDir </> "flat-100"),
           runPathSizeRecursive "1,000" (testDir </> "flat-1_000"),
           runPathSizeRecursiveAsync "1,000 - Async" (testDir </> "flat-1_000"),
+          runPathSizeRecursiveParallel "1,000 - Parallel" (testDir </> "flat-1_000"),
           runPathSizeRecursive "10,000" (testDir </> "flat-10_000"),
-          runPathSizeRecursiveAsync "10,000 - Async" (testDir </> "flat-10_000")
+          runPathSizeRecursiveAsync "10,000 - Async" (testDir </> "flat-10_000"),
+          runPathSizeRecursiveParallel "10,000 - Parallel" (testDir </> "flat-10_000")
         ]
     sparse =
       bgroup
         "sparse"
         [ runPathSizeRecursive "d = 6" (testDir </> "sparse-6"),
           runPathSizeRecursiveAsync "d = 6 - Async" (testDir </> "sparse-6"),
+          runPathSizeRecursiveParallel "d = 6 - Parallel" (testDir </> "sparse-6"),
           runPathSizeRecursive "d = 8" (testDir </> "sparse-8"),
           runPathSizeRecursiveAsync "d = 8 - Async" (testDir </> "sparse-8"),
+          runPathSizeRecursiveParallel "d = 8 - Parallel" (testDir </> "sparse-8"),
           runPathSizeRecursive "d = 10" (testDir </> "sparse-10"),
-          runPathSizeRecursiveAsync "d = 10 - Async" (testDir </> "sparse-10")
+          runPathSizeRecursiveAsync "d = 10 - Async" (testDir </> "sparse-10"),
+          runPathSizeRecursiveParallel "d = 10 - Parallel" (testDir </> "sparse-10")
         ]
     dense =
       bgroup
         "dense"
         [ runPathSizeRecursive "d = 6" (testDir </> "dense-6"),
           runPathSizeRecursiveAsync "d = 6 - Async" (testDir </> "dense-6"),
+          runPathSizeRecursiveParallel "d = 6 - Parallel" (testDir </> "dense-6"),
           runPathSizeRecursive "d = 8" (testDir </> "dense-8"),
           runPathSizeRecursiveAsync "d = 8 - Async" (testDir </> "dense-8"),
+          runPathSizeRecursiveParallel "d = 8 - Parallel" (testDir </> "dense-8"),
           runPathSizeRecursive "d = 10" (testDir </> "dense-10"),
-          runPathSizeRecursiveAsync "d = 10 - Async" (testDir </> "dense-10")
+          runPathSizeRecursiveAsync "d = 10 - Async" (testDir </> "dense-10"),
+          runPathSizeRecursiveParallel "d = 10 - Parallel" (testDir </> "dense-10")
         ]
     runPathSizeRecursive desc = bench desc . nfIO . pathSizeRecursive
     runPathSizeRecursiveAsync desc = bench desc . nfIO . pathSizeRecursiveAsync
+    runPathSizeRecursiveParallel desc = bench desc . nfIO . pathSizeRecursiveParallel
 
 benchLargestN :: FilePath -> Benchmark
 benchLargestN testDir =
