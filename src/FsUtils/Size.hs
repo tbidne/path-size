@@ -6,9 +6,11 @@ module FsUtils.Size
 
     -- * Calculating sizes
     pathSizeRecursive,
+    pathSizeRecursiveAsync,
   )
 where
 
+import Control.Concurrent.Async qualified as Async
 import Control.Exception.Safe (throwString)
 import Data.HashMap.Strict qualified as HMap
 import FsUtils.Control.Exception (withCallStack)
@@ -23,6 +25,13 @@ import System.FilePath ((</>))
 -- @since 0.1
 pathSizeRecursive :: HasCallStack => FilePath -> IO PathSize
 pathSizeRecursive = pathSizeRecursiveTraversal traverse
+
+-- | Like 'pathSizeRecursive', but each recursive call is run in its own
+-- thread.
+--
+-- @since 0.1
+pathSizeRecursiveAsync :: HasCallStack => FilePath -> IO PathSize
+pathSizeRecursiveAsync = pathSizeRecursiveTraversal Async.mapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed via the parameter traversal.
