@@ -1,9 +1,13 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Supplies the 'PathSize' data type and related functions.
 --
 -- @since 0.1
 module FsUtils.Data.PathSize
   ( Path (..),
-    PathSize,
+    SizedPath (..),
+    PathSizeData,
     sortPathSize,
     largestN,
     displayPathSize,
@@ -14,9 +18,11 @@ where
 
 import Control.DeepSeq (NFData)
 import Data.Foldable (Foldable (foldl'))
-import Data.HashMap.Strict (HashMap)
-import Data.HashMap.Strict qualified as HMap
-import Data.Hashable (Hashable)
+import Optics.TH (makeFieldLabelsNoPrefix)
+import Optics.Core (view, _2, (%))
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HSet
+import Data.Hashable (Hashable (hashWithSalt))
 import Data.List qualified as L
 import Data.Ord (Down (Down))
 import Data.Text (Text)
@@ -45,6 +51,28 @@ data Path
       NFData
     )
 
+-- | @since 0.1
+newtype SizedPath = MkSizedPath { unSizedPath :: (Path, Integer) }
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Generic,
+      -- | @since 0.1
+      Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1
+      NFData
+    )
+
+-- | @since 0.1
+makeFieldLabelsNoPrefix ''SizedPath
+
+-- | @since 0.1
+instance Hashable SizedPath where
+  hashWithSalt i (MkSizedPath (p, _)) = hashWithSalt i p
+
 -- TODO: Should this be a regular Map, using its Ord rather than sorting
 -- the HashMap later? Benchmark.
 --
@@ -55,29 +83,29 @@ data Path
 -- | Associates paths to their sizes.
 --
 -- @since 0.1
-type PathSize = HashMap Path Integer
+type PathSizeData = HashSet SizedPath
 
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortPathSize :: PathSize -> [(Path, Integer)]
-sortPathSize = L.sortOn (Down . snd) . HMap.toList
+sortPathSize :: PathSizeData -> [SizedPath]
+sortPathSize = L.sortOn (Down . view (#unSizedPath % _2)) . HSet.toList
 
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-largestN :: Natural -> PathSize -> [(Path, Integer)]
+largestN :: Natural -> PathSizeData -> [SizedPath]
 largestN n = L.take (fromIntegral n) . sortPathSize
 
 -- | Displays the map.
 --
 -- @since 0.1
-displayPathSize :: PathSize -> Text
-displayPathSize = showList' . L.sortOn (Down . snd) . HMap.toList
+displayPathSize :: PathSizeData -> Text
+displayPathSize = showList' . sortPathSize
   where
-    showList' :: [(Path, Integer)] -> Text
+    showList' :: [SizedPath] -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldl' go ""
-    go acc (path, size) =
+    go acc (MkSizedPath (path, size)) =
       mconcat
         [ TLB.fromString $ show path,
           ": ",
@@ -86,14 +114,14 @@ displayPathSize = showList' . L.sortOn (Down . snd) . HMap.toList
           acc
         ]
 
--- | Gives the total size for a list of 'PathSize'.
+-- | Gives the total size for a list of 'PathSizeData'.
 --
 -- @since 0.1
-sumPathSizes :: [PathSize] -> Integer
+sumPathSizes :: [PathSizeData] -> Integer
 sumPathSizes = foldl' (\a m -> a + sumPathSize m) 0
 
--- | Gives the total size for a 'PathSize'.
+-- | Gives the total size for a 'PathSizeData'.
 --
 -- @since 0.1
-sumPathSize :: PathSize -> Integer
-sumPathSize = HMap.foldl' (+) 0
+sumPathSize :: PathSizeData -> Integer
+sumPathSize = HSet.foldl' (\acc (MkSizedPath (_, x)) -> x + acc) 0

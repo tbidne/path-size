@@ -2,7 +2,8 @@
 module FsUtils.Size
   ( -- * Types
     Path (..),
-    PathSize,
+    SizedPath (..),
+    PathSizeData,
 
     -- * Calculating sizes
     pathSizeRecursive,
@@ -11,9 +12,9 @@ module FsUtils.Size
   )
 where
 
-import Data.HashMap.Strict qualified as HMap
+import Data.HashSet qualified as HSet
 import FsUtils.Control.Exception (withCallStack)
-import FsUtils.Data.PathSize (Path (..), PathSize, sumPathSizes)
+import FsUtils.Data.PathSize (Path (..), PathSizeData, SizedPath (..), sumPathSizes)
 import GHC.Stack (HasCallStack)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
@@ -32,20 +33,20 @@ import UnliftIO.Async qualified as Async
 -- The searching is performed sequentially.
 --
 -- @since 0.1
-pathSizeRecursive :: HasCallStack => FilePath -> IO PathSize
+pathSizeRecursive :: HasCallStack => FilePath -> IO PathSizeData
 pathSizeRecursive = pathSizeRecursiveTraversal traverse
 
 -- | Like 'pathSizeRecursive', but each recursive call is run in its own
 -- thread.
 --
 -- @since 0.1
-pathSizeRecursiveAsync :: HasCallStack => FilePath -> IO PathSize
+pathSizeRecursiveAsync :: HasCallStack => FilePath -> IO PathSizeData
 pathSizeRecursiveAsync = pathSizeRecursiveTraversal Async.mapConcurrently
 
 -- | Like 'pathSizeRecursive', but each recursive call is run in parallel.
 --
 -- @since 0.1
-pathSizeRecursiveParallel :: HasCallStack => FilePath -> IO PathSize
+pathSizeRecursiveParallel :: HasCallStack => FilePath -> IO PathSizeData
 pathSizeRecursiveParallel = pathSizeRecursiveTraversal Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -58,16 +59,16 @@ pathSizeRecursiveTraversal ::
   (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
   -- | Start path.
   FilePath ->
-  IO PathSize
-pathSizeRecursiveTraversal traverseT = go HMap.empty
+  IO PathSizeData
+pathSizeRecursiveTraversal traverseT = go HSet.empty
   where
-    go :: HasCallStack => PathSize -> FilePath -> IO PathSize
+    go :: HasCallStack => PathSizeData -> FilePath -> IO PathSizeData
     go mp path = do
       isFile <- withCallStack $ Dir.doesFileExist path
       if isFile
         then do
           size <- withCallStack $ Dir.getFileSize path
-          pure $ HMap.insert (File path) size mp
+          pure $ HSet.insert (MkSizedPath (File path, size)) mp
         else do
           isDir <- withCallStack $ Dir.doesDirectoryExist path
           if isDir
@@ -75,7 +76,7 @@ pathSizeRecursiveTraversal traverseT = go HMap.empty
               files <- withCallStack $ Dir.listDirectory path
               maps <- traverseT (go mp) ((path </>) <$> files)
               let size = sumPathSizes maps
-              pure $ HMap.insert (Directory path) size (HMap.unions (mp : maps))
+              pure $ HSet.insert (MkSizedPath (Directory path, size)) (HSet.unions (mp : maps))
             else do
               -- NOTE: Assuming this is a symbolic link. Maybe we should warn?
               pure mp
