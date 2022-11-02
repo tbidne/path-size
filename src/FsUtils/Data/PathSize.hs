@@ -4,6 +4,7 @@
 module FsUtils.Data.PathSize
   ( Path (..),
     PathSize,
+    sortPathSize,
     largestN,
     displayPathSize,
     sumPathSizes,
@@ -56,16 +57,17 @@ data Path
 -- @since 0.1
 type PathSize = HashMap Path Integer
 
+-- | Sorts the path size.
+--
+-- @since 0.1
+sortPathSize :: PathSize -> [(Path, Integer)]
+sortPathSize = L.sortOn (Down . snd) . HMap.toList
+
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
 largestN :: Natural -> PathSize -> [(Path, Integer)]
-largestN n = takeN
-  where
-    takeN =
-      L.take (fromIntegral n)
-        . L.sortOn (Down . snd)
-        . HMap.toList
+largestN n = L.take (fromIntegral n) . sortPathSize
 
 -- | Displays the map.
 --

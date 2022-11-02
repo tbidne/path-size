@@ -1,13 +1,16 @@
 module Main (main) where
 
-import Control.Exception.Safe (Exception (displayException), bracket)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Word (Word8)
 import FsUtils.Control.Exception (withCallStack)
-import FsUtils.Data.PathSize
+import FsUtils.Data.PathSize (displayPathSize, largestN)
 import FsUtils.Size
+  ( pathSizeRecursive,
+    pathSizeRecursiveAsync,
+    pathSizeRecursiveParallel,
+  )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
 import System.Directory qualified as Dir
@@ -20,6 +23,7 @@ import Test.Tasty.Bench as X
     defaultMain,
     nfIO,
   )
+import UnliftIO.Exception (Exception (displayException), bracket)
 
 main :: IO ()
 main = do
@@ -33,6 +37,9 @@ main = do
           benchLargestN testDir,
           benchDisplayPathSize testDir
         ]
+
+-- Apparently, tasty-bench does not like benchmarking concurrent tests.
+-- Maybe try w/ criterion?
 
 benchPathSizeRecursive :: FilePath -> Benchmark
 benchPathSizeRecursive testDir =
