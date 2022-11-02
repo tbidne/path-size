@@ -7,11 +7,9 @@
 module FsUtils.Data.PathSize
   ( Path (..),
     SizedPath (..),
-    PathSizeData,
     sortPathSize,
     largestN,
     displayPathSize,
-    sumPathSizes,
     sumPathSize,
   )
 where
@@ -20,10 +18,8 @@ import Control.DeepSeq (NFData)
 import Data.Foldable (Foldable (foldl'))
 import Optics.TH (makeFieldLabelsNoPrefix)
 import Optics.Core (view, _2, (%))
-import Data.HashSet (HashSet)
-import Data.HashSet qualified as HSet
-import Data.Hashable (Hashable (hashWithSalt))
-import Data.List qualified as L
+import Data.Sequence (Seq)
+import Data.Sequence qualified as Seq
 import Data.Ord (Down (Down))
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
@@ -46,8 +42,6 @@ data Path
     )
   deriving anyclass
     ( -- | @since 0.1
-      Hashable,
-      -- | @since 0.1
       NFData
     )
 
@@ -69,41 +63,29 @@ newtype SizedPath = MkSizedPath { unSizedPath :: (Path, Integer) }
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''SizedPath
 
--- | @since 0.1
-instance Hashable SizedPath where
-  hashWithSalt i (MkSizedPath (p, _)) = hashWithSalt i p
 
--- TODO: Should this be a regular Map, using its Ord rather than sorting
--- the HashMap later? Benchmark.
---
--- Also, if we end up using a sorted map, we should consider using a Set
--- since we want to sort on the size, and at that point there's no reason
--- to prefer the map (Path -> Integer) over a set (Path, Integer)
-
--- | Associates paths to their sizes.
---
--- @since 0.1
-type PathSizeData = HashSet SizedPath
+-- TODO:
+-- Try unboxed types
 
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortPathSize :: PathSizeData -> [SizedPath]
-sortPathSize = L.sortOn (Down . view (#unSizedPath % _2)) . HSet.toList
+sortPathSize :: Seq SizedPath -> Seq SizedPath
+sortPathSize = Seq.sortOn (Down . view (#unSizedPath % _2))
 
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-largestN :: Natural -> PathSizeData -> [SizedPath]
-largestN n = L.take (fromIntegral n) . sortPathSize
+largestN :: Natural -> Seq SizedPath -> Seq SizedPath
+largestN n = Seq.take (fromIntegral n) . sortPathSize
 
 -- | Displays the map.
 --
 -- @since 0.1
-displayPathSize :: PathSizeData -> Text
+displayPathSize :: Seq SizedPath -> Text
 displayPathSize = showList' . sortPathSize
   where
-    showList' :: [SizedPath] -> Text
+    showList' :: Seq SizedPath -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldl' go ""
     go acc (MkSizedPath (path, size)) =
       mconcat
@@ -114,14 +96,8 @@ displayPathSize = showList' . sortPathSize
           acc
         ]
 
--- | Gives the total size for a list of 'PathSizeData'.
---
--- @since 0.1
-sumPathSizes :: [PathSizeData] -> Integer
-sumPathSizes = foldl' (\a m -> a + sumPathSize m) 0
-
 -- | Gives the total size for a 'PathSizeData'.
 --
 -- @since 0.1
-sumPathSize :: PathSizeData -> Integer
-sumPathSize = HSet.foldl' (\acc (MkSizedPath (_, x)) -> x + acc) 0
+sumPathSize :: Seq SizedPath -> Integer
+sumPathSize = foldl' (\acc (MkSizedPath (_, x)) -> x + acc) 0

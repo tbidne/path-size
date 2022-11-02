@@ -46,10 +46,8 @@ library
     , filepath              ^>=1.4.2.1
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
-    , hashable              ^>=1.4.0.2
     , text                  >=1.2.3.2   && <2.1
     , unliftio              ^>=0.2.0.0
-    , unordered-containers  ^>=0.2.14.0
 
   hs-source-dirs:   src
   default-language: GHC2021
