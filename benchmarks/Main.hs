@@ -1,5 +1,12 @@
 module Main (main) where
 
+import Criterion as X
+  ( Benchmark,
+    bench,
+    bgroup,
+    nfIO,
+  )
+import Criterion.Main (defaultMain)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
@@ -16,13 +23,6 @@ import GHC.Stack (HasCallStack)
 import System.Directory qualified as Dir
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import System.FilePath ((</>))
-import Test.Tasty.Bench as X
-  ( Benchmark,
-    bench,
-    bgroup,
-    defaultMain,
-    nfIO,
-  )
 import UnliftIO.Exception (Exception (displayException), bracket)
 
 main :: IO ()
@@ -37,9 +37,6 @@ main = do
           benchLargestN testDir,
           benchDisplayPathSize testDir
         ]
-
--- Apparently, tasty-bench does not like benchmarking concurrent tests.
--- Maybe try w/ criterion?
 
 benchPathSizeRecursive :: FilePath -> Benchmark
 benchPathSizeRecursive testDir =

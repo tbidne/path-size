@@ -9,10 +9,9 @@ package fs-utils
     
 
   benchmark-options:
-    +RTS -T --nonmoving-gc -RTS
-    --timeout 100
-    --csv benchmarks/bench.csv
-    --svg benchmarks/bench.svg
+    +RTS -T -RTS
+    "--csv=benchmarks/bench.csv"
+    "--output=benchmarks/bench.html"
 
 optimization: 2
 test-show-details: direct

@@ -48,6 +48,8 @@ library
     , unliftio              ^>=0.2.0.0
     , unordered-containers  ^>=0.2.14.0
 
+  --, containers            ^>=0.6.3.1
+
   hs-source-dirs:   src
   default-language: GHC2021
 
@@ -69,13 +71,14 @@ benchmark benchmarks
   main-is:          Main.hs
   build-depends:
     , base
-    , bytestring   >=0.10.12 && <0.12
+    , bytestring  >=0.10.12  && <0.12
+    , criterion   ^>=1.6.0.0
     , directory
-    , env-guard    ^>=0.2
+    , env-guard   ^>=0.2
     , filepath
     , fs-utils
-    , tasty-bench  ^>=0.3
     , unliftio
 
   hs-source-dirs:   benchmarks
+  ghc-options:      -threaded -with-rtsopts=-N
   default-language: GHC2021
