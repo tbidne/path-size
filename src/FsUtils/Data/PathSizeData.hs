@@ -1,32 +1,35 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | Supplies the 'PathSize' data type and related functions.
+-- | Supplies the 'PathSizeData' data type and related functions.
 --
 -- @since 0.1
-module FsUtils.Data.PathSize
+module FsUtils.Data.PathSizeData
   ( Path (..),
-    SizedPath (..),
-    sortPathSize,
-    largestN,
-    displayPathSize,
-    sumPathSize,
+    PathSizeData (..),
+    sort,
+    takeLargestN,
+    display,
+    sumSize,
   )
 where
 
 import Control.DeepSeq (NFData)
 import Data.Foldable (Foldable (foldl'))
-import Optics.TH (makeFieldLabelsNoPrefix)
-import Optics.Core (view, _2, (%))
+import Data.Ord (Down (Down))
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
-import Data.Ord (Down (Down))
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
+import Optics.Core (view, (%), _2)
+import Optics.TH (makeFieldLabelsNoPrefix)
 
+-- | Path types.
+--
+--- @since 0.1
 data Path
   = -- | @since 0.1
     Directory !FilePath
@@ -45,8 +48,14 @@ data Path
       NFData
     )
 
--- | @since 0.1
-newtype SizedPath = MkSizedPath { unSizedPath :: (Path, Integer) }
+-- | Associates a 'Path' to its total (recursive) size in the file-system.
+--
+-- @since 0.1
+newtype PathSizeData = MkPathSizeData
+  { -- TODO: Switch to natural if performance does not suffer too much.
+    -- Maybe we should try UNPACK?
+    unPathSizeData :: (Path, Integer)
+  }
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -61,8 +70,7 @@ newtype SizedPath = MkSizedPath { unSizedPath :: (Path, Integer) }
     )
 
 -- | @since 0.1
-makeFieldLabelsNoPrefix ''SizedPath
-
+makeFieldLabelsNoPrefix ''PathSizeData
 
 -- TODO:
 -- Try unboxed types
@@ -70,24 +78,24 @@ makeFieldLabelsNoPrefix ''SizedPath
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortPathSize :: Seq SizedPath -> Seq SizedPath
-sortPathSize = Seq.sortOn (Down . view (#unSizedPath % _2))
+sort :: Seq PathSizeData -> Seq PathSizeData
+sort = Seq.sortOn (Down . view (#unPathSizeData % _2))
 
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-largestN :: Natural -> Seq SizedPath -> Seq SizedPath
-largestN n = Seq.take (fromIntegral n) . sortPathSize
+takeLargestN :: Natural -> Seq PathSizeData -> Seq PathSizeData
+takeLargestN n = Seq.take (fromIntegral n) . sort
 
--- | Displays the map.
+-- | Displays the data.
 --
 -- @since 0.1
-displayPathSize :: Seq SizedPath -> Text
-displayPathSize = showList' . sortPathSize
+display :: Seq PathSizeData -> Text
+display = showList' . sort
   where
-    showList' :: Seq SizedPath -> Text
+    showList' :: Seq PathSizeData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldl' go ""
-    go acc (MkSizedPath (path, size)) =
+    go acc (MkPathSizeData (path, size)) =
       mconcat
         [ TLB.fromString $ show path,
           ": ",
@@ -96,8 +104,8 @@ displayPathSize = showList' . sortPathSize
           acc
         ]
 
--- | Gives the total size for a 'PathSizeData'.
+-- | Gives the total size for a 'Seq' 'PathSizeData'.
 --
 -- @since 0.1
-sumPathSize :: Seq SizedPath -> Integer
-sumPathSize = foldl' (\acc (MkSizedPath (_, x)) -> x + acc) 0
+sumSize :: Seq PathSizeData -> Integer
+sumSize = foldl' (\acc (MkPathSizeData (_, x)) -> x + acc) 0

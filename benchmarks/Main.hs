@@ -12,12 +12,11 @@ import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Word (Word8)
 import FsUtils.Control.Exception (withCallStack)
-import FsUtils.Data.PathSize (displayPathSize, largestN)
-import FsUtils.Size
-  ( pathSizeRecursive,
-    pathSizeRecursiveAsync,
-    pathSizeRecursiveParallel,
+import FsUtils.Data.PathSizeConfig
+  ( PathSizeConfig (numPaths, strategy),
+    Strategy (Async, AsyncPooled, Sync),
   )
+import FsUtils.PathSize (display, findLargestPaths)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
 import System.Directory qualified as Dir
@@ -41,7 +40,7 @@ main = do
 benchPathSizeRecursive :: FilePath -> Benchmark
 benchPathSizeRecursive testDir =
   bgroup
-    "pathSizeRecursive"
+    "findLargestPaths All"
     [ flat,
       sparse,
       dense
@@ -50,59 +49,69 @@ benchPathSizeRecursive testDir =
     flat =
       bgroup
         "flat"
-        [ runPathSizeRecursive "100" (testDir </> "flat-100"),
-          runPathSizeRecursiveAsync "100 - Async" (testDir </> "flat-100"),
-          runPathSizeRecursiveParallel "100 - Parallel" (testDir </> "flat-100"),
-          runPathSizeRecursive "1,000" (testDir </> "flat-1_000"),
-          runPathSizeRecursiveAsync "1,000 - Async" (testDir </> "flat-1_000"),
-          runPathSizeRecursiveParallel "1,000 - Parallel" (testDir </> "flat-1_000"),
-          runPathSizeRecursive "10,000" (testDir </> "flat-10_000"),
-          runPathSizeRecursiveAsync "10,000 - Async" (testDir </> "flat-10_000"),
-          runPathSizeRecursiveParallel "10,000 - Parallel" (testDir </> "flat-10_000")
+        [ findLargestSync "100 - Sync" (testDir </> "flat-100"),
+          findLargestAsync "100 - Async" (testDir </> "flat-100"),
+          findLargestAsyncPooled "100 - AsyncPooled" (testDir </> "flat-100"),
+          findLargestSync "1,000 - Sync" (testDir </> "flat-1_000"),
+          findLargestAsync "1,000 - Async" (testDir </> "flat-1_000"),
+          findLargestAsyncPooled "1,000 - AsyncPooled" (testDir </> "flat-1_000"),
+          findLargestSync "10,000 - Sync" (testDir </> "flat-10_000"),
+          findLargestAsync "10,000 - Async" (testDir </> "flat-10_000"),
+          findLargestAsyncPooled "10,000 - AsyncPooled" (testDir </> "flat-10_000")
         ]
     sparse =
       bgroup
         "sparse"
-        [ runPathSizeRecursive "d = 6" (testDir </> "sparse-6"),
-          runPathSizeRecursiveAsync "d = 6 - Async" (testDir </> "sparse-6"),
-          runPathSizeRecursiveParallel "d = 6 - Parallel" (testDir </> "sparse-6"),
-          runPathSizeRecursive "d = 8" (testDir </> "sparse-8"),
-          runPathSizeRecursiveAsync "d = 8 - Async" (testDir </> "sparse-8"),
-          runPathSizeRecursiveParallel "d = 8 - Parallel" (testDir </> "sparse-8"),
-          runPathSizeRecursive "d = 10" (testDir </> "sparse-10"),
-          runPathSizeRecursiveAsync "d = 10 - Async" (testDir </> "sparse-10"),
-          runPathSizeRecursiveParallel "d = 10 - Parallel" (testDir </> "sparse-10")
+        [ findLargestSync "d = 6 - Sync" (testDir </> "sparse-6"),
+          findLargestAsync "d = 6 - Async" (testDir </> "sparse-6"),
+          findLargestAsyncPooled "d = 6 - AsyncPooled" (testDir </> "sparse-6"),
+          findLargestSync "d = 8 - Sync" (testDir </> "sparse-8"),
+          findLargestAsync "d = 8 - Async" (testDir </> "sparse-8"),
+          findLargestAsyncPooled "d = 8 - AsyncPooled" (testDir </> "sparse-8"),
+          findLargestSync "d = 10 - Sync" (testDir </> "sparse-10"),
+          findLargestAsync "d = 10 - Async" (testDir </> "sparse-10"),
+          findLargestAsyncPooled "d = 10 - AsyncPooled" (testDir </> "sparse-10")
         ]
     dense =
       bgroup
         "dense"
-        [ runPathSizeRecursive "d = 6" (testDir </> "dense-6"),
-          runPathSizeRecursiveAsync "d = 6 - Async" (testDir </> "dense-6"),
-          runPathSizeRecursiveParallel "d = 6 - Parallel" (testDir </> "dense-6"),
-          runPathSizeRecursive "d = 8" (testDir </> "dense-8"),
-          runPathSizeRecursiveAsync "d = 8 - Async" (testDir </> "dense-8"),
-          runPathSizeRecursiveParallel "d = 8 - Parallel" (testDir </> "dense-8"),
-          runPathSizeRecursive "d = 10" (testDir </> "dense-10"),
-          runPathSizeRecursiveAsync "d = 10 - Async" (testDir </> "dense-10"),
-          runPathSizeRecursiveParallel "d = 10 - Parallel" (testDir </> "dense-10")
+        [ findLargestSync "d = 6 - Sync" (testDir </> "dense-6"),
+          findLargestAsync "d = 6 - Async" (testDir </> "dense-6"),
+          findLargestAsyncPooled "d = 6 - AsyncPooled" (testDir </> "dense-6"),
+          findLargestSync "d = 8 - Sync" (testDir </> "dense-8"),
+          findLargestAsync "d = 8 - Async" (testDir </> "dense-8"),
+          findLargestAsyncPooled "d = 8 - AsyncPooled" (testDir </> "dense-8"),
+          findLargestSync "d = 10 - Sync" (testDir </> "dense-10"),
+          findLargestAsync "d = 10 - Async" (testDir </> "dense-10"),
+          findLargestAsyncPooled "d = 10 - AsyncPooled" (testDir </> "dense-10")
         ]
-    runPathSizeRecursive desc = bench desc . nfIO . pathSizeRecursive
-    runPathSizeRecursiveAsync desc = bench desc . nfIO . pathSizeRecursiveAsync
-    runPathSizeRecursiveParallel desc = bench desc . nfIO . pathSizeRecursiveParallel
+    findLargestSync desc =
+      bench desc
+        . nfIO
+        . findLargestPaths mempty {strategy = Sync}
+    findLargestAsync desc =
+      bench desc
+        . nfIO
+        . findLargestPaths mempty {strategy = Async}
+    findLargestAsyncPooled desc =
+      bench desc
+        . nfIO
+        . findLargestPaths mempty {strategy = AsyncPooled}
 
 benchLargestN :: FilePath -> Benchmark
 benchLargestN testDir =
   bgroup
-    "largestN"
-    [ runLargestN "1" (testDir </> "dense-10") 1,
-      runLargestN "10" (testDir </> "dense-10") 10,
-      runLargestN "100" (testDir </> "dense-10") 100,
-      runLargestN "1,000" (testDir </> "dense-10") 1_000
+    "takeLargestN"
+    [ runLargestN "1" (Just 1) (testDir </> "dense-10"),
+      runLargestN "10" (Just 10) (testDir </> "dense-10"),
+      runLargestN "100" (Just 100) (testDir </> "dense-10"),
+      runLargestN "1,000" (Just 1_000) (testDir </> "dense-10")
     ]
   where
-    runLargestN desc path n = bench desc $ nfIO $ do
-      mp <- pathSizeRecursive path
-      pure $ largestN n mp
+    runLargestN desc n =
+      bench desc
+        . nfIO
+        . findLargestPaths (mempty {numPaths = n})
 
 benchDisplayPathSize :: FilePath -> Benchmark
 benchDisplayPathSize testDir =
@@ -113,9 +122,11 @@ benchDisplayPathSize testDir =
       runDisplayPathSize "d = 10" (testDir </> "dense-10")
     ]
   where
-    runDisplayPathSize desc path = bench desc $ nfIO $ do
-      mp <- pathSizeRecursive path
-      pure $ displayPathSize mp
+    runDisplayPathSize desc =
+      bench desc
+        . nfIO
+        . fmap display
+        . findLargestPaths mempty
 
 setup :: HasCallStack => IO FilePath
 setup = do

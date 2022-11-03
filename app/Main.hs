@@ -3,7 +3,11 @@
 -- @since 0.1
 module Main (main) where
 
-import FsUtils.Size
+import FsUtils.PathSize
+  ( PathSizeConfig (strategy),
+    Strategy (Async, AsyncPooled, Sync),
+    findLargestPaths,
+  )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
 import System.Environment (getArgs)
@@ -18,11 +22,11 @@ main = do
 
   result <-
     getArgs >>= \case
-      [path] -> pathSizeRecursive path
-      [path, "c"] -> pathSizeRecursiveAsync path
-      [path, "p"] -> pathSizeRecursiveParallel path
+      [path] -> findLargestPaths (mempty {strategy = Sync}) path
+      [path, "c"] -> findLargestPaths (mempty {strategy = Async}) path
+      [path, "p"] -> findLargestPaths (mempty {strategy = AsyncPooled}) path
       other ->
         throwString $ "Unexpected args " <> show other
 
-  -- let sorted = sortPathSize sizeMap
+  -- let sorted = sort sizeMap
   print $ length result
