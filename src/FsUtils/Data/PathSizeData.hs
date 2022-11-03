@@ -28,7 +28,7 @@ import Optics.Core (view, (%), _2)
 import Optics.TH (makeFieldLabelsNoPrefix)
 
 -- | Path types.
---
+
 --- @since 0.1
 data Path
   = -- | @since 0.1

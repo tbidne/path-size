@@ -56,9 +56,16 @@ library
 executable fs-utils
   import:           common-exts
   main-is:          Main.hs
+  other-modules:    Args
   build-depends:
     , base
     , fs-utils
+    , gitrev                >=1.2.0    && <1.4
+    , optics-core
+    , optics-th
+    , optparse-applicative  >=0.16.1.0 && <0.18
+    , package-version       >=0.1.0.0  && <0.4
+    , text
     , unliftio
 
   hs-source-dirs:   app

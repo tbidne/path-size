@@ -3,15 +3,13 @@
 -- @since 0.1
 module Main (main) where
 
-import FsUtils.PathSize
-  ( PathSizeConfig (strategy),
-    Strategy (Async, AsyncPooled, Sync),
-    findLargestPaths,
-  )
+import Args (getArgs)
+import Data.Text qualified as T
+import FsUtils.PathSize (display, findLargestPaths)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
-import System.Environment (getArgs)
-import UnliftIO.Exception (displayException, throwString)
+import Optics.Core ((^.))
+import UnliftIO.Exception (displayException)
 
 -- | Executable entry-point.
 --
@@ -20,13 +18,8 @@ main :: HasCallStack => IO ()
 main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
 
-  result <-
-    getArgs >>= \case
-      [path] -> findLargestPaths (mempty {strategy = Sync}) path
-      [path, "c"] -> findLargestPaths (mempty {strategy = Async}) path
-      [path, "p"] -> findLargestPaths (mempty {strategy = AsyncPooled}) path
-      other ->
-        throwString $ "Unexpected args " <> show other
+  args <- getArgs
 
-  -- let sorted = sort sizeMap
-  print $ length result
+  result <- findLargestPaths (args ^. #pathSizeConfig) (args ^. #path)
+
+  putStrLn $ T.unpack $ display result

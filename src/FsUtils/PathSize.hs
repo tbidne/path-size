@@ -39,6 +39,7 @@ import UnliftIO.Async qualified as Async
 --
 -- @since 0.1
 findLargestPaths ::
+  HasCallStack =>
   -- | Configuration.
   PathSizeConfig ->
   -- | Path to search.

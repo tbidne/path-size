@@ -6,5 +6,8 @@ cradle:
     - path: "./app/Main.hs"
       component: "fs-utils:exe:fs-utils"
 
+    - path: "./app/Args.hs"
+      component: "fs-utils:exe:fs-utils"
+
     - path: "./benchmarks/Main.hs"
       component: "fs-utils:bench:benchmarks"
