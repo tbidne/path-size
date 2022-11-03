@@ -99,12 +99,12 @@ pathDataRecursive ::
 pathDataRecursive traverseT = go []
   where
     go :: HasCallStack => Seq PathSizeData -> FilePath -> IO (Seq PathSizeData)
-    go mp path = do
+    go subPaths path = do
       isFile <- withCallStack $ Dir.doesFileExist path
       if isFile
         then do
           size <- withCallStack $ Dir.getFileSize path
-          pure $ MkPathSizeData (File path, size) <| mp
+          pure $ MkPathSizeData (File path, size) <| subPaths
         else do
           isDir <- withCallStack $ Dir.doesDirectoryExist path
           if isDir
@@ -112,13 +112,13 @@ pathDataRecursive traverseT = go []
               files <- withCallStack $ Dir.listDirectory path
               -- NOTE: Benchmarking shows it is significantly better to do
               -- the "list to seq + join" here as opposed to after.
-              maps <-
+              allSubPaths <-
                 join
                   <$> traverseT
-                    (go mp)
+                    (go subPaths)
                     (foldl' (\acc f -> (path </> f) <| acc) [] files)
-              let size = PathSizeData.sumSize maps
-              pure $ MkPathSizeData (Directory path, size) <| (mp <> maps)
+              let size = PathSizeData.sumSize allSubPaths
+              pure $ MkPathSizeData (Directory path, size) <| (subPaths <> allSubPaths)
             else do
               -- NOTE: Assuming this is a symbolic link. Maybe we should warn?
-              pure mp
+              pure subPaths
