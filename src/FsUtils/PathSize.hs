@@ -5,6 +5,7 @@ module FsUtils.PathSize
   ( -- * Types
     Path (..),
     PathSizeData (..),
+    SubPathSizeData (MkSubPathSizeData),
 
     -- ** Configuration
     PathSizeConfig (..),
@@ -27,7 +28,11 @@ import Data.Functor ((<&>))
 import Data.Sequence (Seq, (<|))
 import FsUtils.Control.Exception (withCallStack)
 import FsUtils.Data.PathSizeConfig (PathSizeConfig (..), Strategy (..))
-import FsUtils.Data.PathSizeData (Path (..), PathSizeData (..))
+import FsUtils.Data.PathSizeData
+  ( Path (..),
+    PathSizeData (..),
+    SubPathSizeData (MkSubPathSizeData),
+  )
 import FsUtils.Data.PathSizeData qualified as PathSizeData
 import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))
@@ -44,15 +49,18 @@ findLargestPaths ::
   PathSizeConfig ->
   -- | Path to search.
   FilePath ->
-  IO (Seq PathSizeData)
+  IO SubPathSizeData
 findLargestPaths cfg path = f path <&> \dataSeq -> takeLargestN dataSeq
   where
-    -- TODO: We should probably ensure the return list is always sorted.
     f = case cfg ^. #strategy of
       Sync -> pathDataRecursiveSync
       Async -> pathDataRecursiveAsync
       AsyncPooled -> pathDataRecursiveAsyncPooled
-    takeLargestN = maybe id PathSizeData.takeLargestN (cfg ^. #numPaths)
+    takeLargestN =
+      maybe
+        MkSubPathSizeData
+        PathSizeData.takeLargestN
+        (cfg ^. #numPaths)
 
 -- TODO: Configuration options to consider:
 --

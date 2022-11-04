@@ -29,6 +29,7 @@ common common-exts
     LambdaCase
     OverloadedLabels
     OverloadedStrings
+    PatternSynonyms
     TypeFamilies
 
 library

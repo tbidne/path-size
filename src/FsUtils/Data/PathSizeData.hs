@@ -7,6 +7,7 @@
 module FsUtils.Data.PathSizeData
   ( Path (..),
     PathSizeData (..),
+    SubPathSizeData (MkSubPathSizeData),
     sort,
     takeLargestN,
     display,
@@ -70,8 +71,38 @@ newtype PathSizeData = MkPathSizeData
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''PathSizeData
 
--- TODO:
--- Try unboxed types
+-- | Structure representing the entire 'PathSizeData' tree corresponding
+-- to a given path. That is, for a path @P@, 'SubPathSizeData' contains
+-- a 'PathSizeData' for @P@ and _each of its sub-paths_.
+--
+-- @since 0.1
+newtype SubPathSizeData = UnsafeSubPathSizeData (Seq PathSizeData)
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Generic,
+      -- | @since 0.1
+      Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1
+      NFData
+    )
+
+-- | Pattern synonym for 'SubPathSizeData'. Note that construction
+-- sorts the 'Seq'.
+--
+-- @since 0.1
+pattern MkSubPathSizeData :: Seq PathSizeData -> SubPathSizeData
+pattern MkSubPathSizeData xs <- UnsafeSubPathSizeData xs
+  where
+    MkSubPathSizeData xs = UnsafeSubPathSizeData (sort xs)
+
+{-# COMPLETE MkSubPathSizeData #-}
+
+unSubPathSizeData :: SubPathSizeData -> Seq PathSizeData
+unSubPathSizeData (MkSubPathSizeData xs) = xs
 
 -- | Sorts the path size.
 --
@@ -82,14 +113,17 @@ sort = Seq.sortOn (Down . view (#unPathSizeData % _2))
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: Natural -> Seq PathSizeData -> Seq PathSizeData
-takeLargestN n = Seq.take (fromIntegral n) . sort
+takeLargestN :: Natural -> Seq PathSizeData -> SubPathSizeData
+takeLargestN n =
+  UnsafeSubPathSizeData
+    . Seq.take (fromIntegral n)
+    . sort
 
 -- | Displays the data.
 --
 -- @since 0.1
-display :: Seq PathSizeData -> Text
-display = showList' . sort
+display :: SubPathSizeData -> Text
+display = showList' . unSubPathSizeData
   where
     showList' :: Seq PathSizeData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldl' go ""
