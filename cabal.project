@@ -6,6 +6,7 @@ package fs-utils
     -Wincomplete-record-updates -Wincomplete-uni-patterns
     -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
     -Wredundant-constraints -Wunused-packages -Wmissing-deriving-strategies
+    -Wno-unticked-promoted-constructors -Wprepositive-qualified-module
     
 
   benchmark-options:
@@ -15,3 +16,18 @@ package fs-utils
 
 optimization: 2
 test-show-details: direct
+
+source-repository-package
+    type: git
+    location: https://github.com/tbidne/algebra-simple.git
+    tag: c8aaa4495964ecea9bb898c4fcb8b1c718ecc813
+
+source-repository-package
+    type: git
+    location: https://github.com/tbidne/bounds.git
+    tag: 7a8832ef4a55d565e72fab553a4d485329235bf7
+
+source-repository-package
+    type: git
+    location: https://github.com/tbidne/byte-types.git
+    tag: a7e1cd9824ca72c970a8a33ecd77256863bfc071

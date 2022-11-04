@@ -16,6 +16,13 @@ module FsUtils.Data.PathSizeData
 where
 
 import Control.DeepSeq (NFData)
+import Data.Bytes
+  ( Bytes (MkBytes),
+    FloatingFormatter (MkFloatingFormatter),
+    Normalize (normalize),
+    Size (B),
+  )
+import Data.Bytes qualified as Bytes
 import Data.Foldable (Foldable (foldl'))
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq)
@@ -48,6 +55,10 @@ data Path
     ( -- | @since 0.1
       NFData
     )
+
+unPath :: Path -> FilePath
+unPath (Directory fp) = fp
+unPath (File fp) = fp
 
 -- | Associates a 'Path' to its total (recursive) size in the file-system.
 --
@@ -126,15 +137,23 @@ display :: SubPathSizeData -> Text
 display = showList' . unSubPathSizeData
   where
     showList' :: Seq PathSizeData -> Text
-    showList' = TL.toStrict . TLB.toLazyText . foldl' go ""
-    go acc (MkPathSizeData (path, size)) =
+    showList' = TL.toStrict . TLB.toLazyText . foldr go ""
+    go (MkPathSizeData (path, size)) acc =
       mconcat
-        [ TLB.fromString $ show path,
+        [ TLB.fromString $ unPath path,
           ": ",
-          TLB.fromString $ show size,
+          TLB.fromLazyText $ TL.fromStrict $ formatSize size,
           "\n",
           acc
         ]
+    formatSize :: Natural -> Text
+    formatSize =
+      Bytes.formatSized
+        (MkFloatingFormatter (Just 2))
+        Bytes.sizedFormatterUnix
+        . normalize
+        . MkBytes @B
+        . fromIntegral @_ @Double
 
 -- | Gives the total size for a 'Seq' 'PathSizeData'.
 --

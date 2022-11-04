@@ -1,5 +1,89 @@
 {
   "nodes": {
+    "algebra-simple": {
+      "inputs": {
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1666488762,
+        "narHash": "sha256-H8yOEZ8qDowm2z7mKa9hmG4QgI/rBhQmQTSHdOssmAU=",
+        "owner": "tbidne",
+        "repo": "algebra-simple",
+        "rev": "c8aaa4495964ecea9bb898c4fcb8b1c718ecc813",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "algebra-simple",
+        "type": "github"
+      }
+    },
+    "bounds": {
+      "inputs": {
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1666392820,
+        "narHash": "sha256-EV8srKQfD05u/Rq6LpPUVdT6WyY9VLsvu5vJ+2oBemg=",
+        "owner": "tbidne",
+        "repo": "bounds",
+        "rev": "7a8832ef4a55d565e72fab553a4d485329235bf7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "bounds",
+        "type": "github"
+      }
+    },
+    "byte-types": {
+      "inputs": {
+        "algebra-simple": [
+          "algebra-simple"
+        ],
+        "bounds": [
+          "bounds"
+        ],
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1666645183,
+        "narHash": "sha256-Q2Seyqe6HMe8RY5FaN7wDCC28xuaZDSGowZBEfPErto=",
+        "owner": "tbidne",
+        "repo": "byte-types",
+        "rev": "a7e1cd9824ca72c970a8a33ecd77256863bfc071",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "byte-types",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -49,6 +133,9 @@
     },
     "root": {
       "inputs": {
+        "algebra-simple": "algebra-simple",
+        "bounds": "bounds",
+        "byte-types": "byte-types",
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
