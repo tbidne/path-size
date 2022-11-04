@@ -104,7 +104,9 @@ pathDataRecursive traverseT = go []
       isFile <- withCallStack $ Dir.doesFileExist path
       if isFile
         then do
-          size <- withCallStack $ Dir.getFileSize path
+          -- NOTE: The fromIntegral :: Integer -> Natural comes w/ a slight
+          -- performance penalty.
+          size <- withCallStack $ fromIntegral <$> Dir.getFileSize path
           pure $ MkPathSizeData (File path, size) <| subPaths
         else do
           isDir <- withCallStack $ Dir.doesDirectoryExist path

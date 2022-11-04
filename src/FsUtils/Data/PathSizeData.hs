@@ -52,9 +52,7 @@ data Path
 --
 -- @since 0.1
 newtype PathSizeData = MkPathSizeData
-  { -- TODO: Switch to natural if performance does not suffer too much.
-    -- Maybe we should try UNPACK?
-    unPathSizeData :: (Path, Integer)
+  { unPathSizeData :: (Path, Natural)
   }
   deriving stock
     ( -- | @since 0.1
@@ -107,5 +105,5 @@ display = showList' . sort
 -- | Gives the total size for a 'Seq' 'PathSizeData'.
 --
 -- @since 0.1
-sumSize :: Seq PathSizeData -> Integer
+sumSize :: Seq PathSizeData -> Natural
 sumSize = foldl' (\acc (MkPathSizeData (_, x)) -> x + acc) 0
