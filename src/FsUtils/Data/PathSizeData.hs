@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -5,12 +6,18 @@
 --
 -- @since 0.1
 module FsUtils.Data.PathSizeData
-  ( Path (..),
+  ( -- * Base types
+    Path (..),
     PathSizeData (..),
-    SubPathSizeData (MkSubPathSizeData),
-    sort,
+
+    -- * Aggregate paths
+    PathTree (..),
     takeLargestN,
+    SubPathSizeData,
+    mkSubPathSizeData,
     display,
+
+    -- * Misc
     sumSize,
   )
 where
@@ -25,7 +32,7 @@ import Data.Bytes
 import Data.Bytes qualified as Bytes
 import Data.Foldable (Foldable (foldl'))
 import Data.Ord (Down (Down))
-import Data.Sequence (Seq)
+import Data.Sequence (Seq, (<|))
 import Data.Sequence qualified as Seq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
@@ -82,9 +89,31 @@ newtype PathSizeData = MkPathSizeData
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''PathSizeData
 
--- | Structure representing the entire 'PathSizeData' tree corresponding
--- to a given path. That is, for a path @P@, 'SubPathSizeData' contains
--- a 'PathSizeData' for @P@ and _each of its sub-paths_.
+-- | Given a path, represents the directory tree, with each subpath
+-- associated to its size. This structure is essentially a rose tree.
+--
+-- @since 0.1
+data PathTree
+  = Node !PathSizeData !(Seq PathTree)
+  | Leaf !PathSizeData
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Generic,
+      -- | @since 0.1
+      Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1
+      NFData
+    )
+
+toSeq :: PathTree -> Seq PathSizeData
+toSeq (Leaf x) = Seq.singleton x
+toSeq (Node x subTrees) = x <| (subTrees >>= toSeq)
+
+-- | A flattened and sorted representation of 'PathTree'.
 --
 -- @since 0.1
 newtype SubPathSizeData = UnsafeSubPathSizeData (Seq PathSizeData)
@@ -101,19 +130,14 @@ newtype SubPathSizeData = UnsafeSubPathSizeData (Seq PathSizeData)
       NFData
     )
 
--- | Pattern synonym for 'SubPathSizeData'. Note that construction
--- sorts the 'Seq'.
+-- | Creates a 'SubPathSizeData' from a 'PathTree'.
 --
 -- @since 0.1
-pattern MkSubPathSizeData :: Seq PathSizeData -> SubPathSizeData
-pattern MkSubPathSizeData xs <- UnsafeSubPathSizeData xs
-  where
-    MkSubPathSizeData xs = UnsafeSubPathSizeData (sort xs)
-
-{-# COMPLETE MkSubPathSizeData #-}
+mkSubPathSizeData :: PathTree -> SubPathSizeData
+mkSubPathSizeData = UnsafeSubPathSizeData . sort . toSeq
 
 unSubPathSizeData :: SubPathSizeData -> Seq PathSizeData
-unSubPathSizeData (MkSubPathSizeData xs) = xs
+unSubPathSizeData (UnsafeSubPathSizeData xs) = xs
 
 -- | Sorts the path size.
 --
@@ -124,11 +148,12 @@ sort = Seq.sortOn (Down . view (#unPathSizeData % _2))
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: Natural -> Seq PathSizeData -> SubPathSizeData
+takeLargestN :: Natural -> PathTree -> SubPathSizeData
 takeLargestN n =
   UnsafeSubPathSizeData
     . Seq.take (fromIntegral n)
     . sort
+    . toSeq
 
 -- | Displays the data.
 --

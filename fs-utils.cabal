@@ -26,6 +26,7 @@ common common-exts
     DataKinds
     DeriveAnyClass
     DerivingStrategies
+    DerivingVia
     LambdaCase
     OverloadedLabels
     OverloadedStrings
@@ -72,6 +73,24 @@ executable fs-utils
 
   hs-source-dirs:   app
   ghc-options:      -threaded -with-rtsopts=-N
+  default-language: GHC2021
+
+test-suite functional
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:    Functional.FsUtils.PathSize
+  build-depends:
+    , base
+    , bytestring
+    , directory
+    , filepath
+    , fs-utils
+    , tasty         >=1.1.0.3  && <1.5
+    , tasty-golden  ^>=2.3.1.1
+    , text
+
+  hs-source-dirs:   test/functional
   default-language: GHC2021
 
 benchmark benchmarks

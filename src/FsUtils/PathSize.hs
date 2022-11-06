@@ -1,11 +1,9 @@
-{-# LANGUAGE OverloadedLists #-}
-
 -- | @since 0.1
 module FsUtils.PathSize
   ( -- * Types
     Path (..),
     PathSizeData (..),
-    SubPathSizeData (MkSubPathSizeData),
+    SubPathSizeData,
 
     -- ** Configuration
     PathSizeConfig (..),
@@ -14,28 +12,25 @@ module FsUtils.PathSize
     -- * High level functions
     findLargestPaths,
     PathSizeData.display,
-
-    -- * Calculating total size
-    pathDataRecursiveSync,
-    pathDataRecursiveAsync,
-    pathDataRecursiveAsyncPooled,
   )
 where
 
-import Control.Monad (join)
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
-import Data.Sequence (Seq, (<|))
+import Data.Sequence (Seq)
+import Data.Sequence qualified as Seq
 import FsUtils.Control.Exception (withCallStack)
 import FsUtils.Data.PathSizeConfig (PathSizeConfig (..), Strategy (..))
 import FsUtils.Data.PathSizeData
   ( Path (..),
     PathSizeData (..),
-    SubPathSizeData (MkSubPathSizeData),
+    PathTree (..),
+    SubPathSizeData,
   )
 import FsUtils.Data.PathSizeData qualified as PathSizeData
+import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
-import Optics.Core ((^.))
+import Optics.Core ((%), (^.), _2)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import UnliftIO.Async qualified as Async
@@ -50,7 +45,7 @@ findLargestPaths ::
   -- | Path to search.
   FilePath ->
   IO SubPathSizeData
-findLargestPaths cfg path = f path <&> \dataSeq -> takeLargestN dataSeq
+findLargestPaths cfg path = f path <&> \pathTree -> takeLargestN pathTree
   where
     f = case cfg ^. #strategy of
       Sync -> pathDataRecursiveSync
@@ -58,7 +53,7 @@ findLargestPaths cfg path = f path <&> \dataSeq -> takeLargestN dataSeq
       AsyncPooled -> pathDataRecursiveAsyncPooled
     takeLargestN =
       maybe
-        MkSubPathSizeData
+        PathSizeData.mkSubPathSizeData
         PathSizeData.takeLargestN
         (cfg ^. #numPaths)
 
@@ -78,20 +73,20 @@ findLargestPaths cfg path = f path <&> \dataSeq -> takeLargestN dataSeq
 -- The searching is performed sequentially.
 --
 -- @since 0.1
-pathDataRecursiveSync :: HasCallStack => FilePath -> IO (Seq PathSizeData)
+pathDataRecursiveSync :: HasCallStack => FilePath -> IO PathTree
 pathDataRecursiveSync = pathDataRecursive traverse
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
 -- thread.
 --
 -- @since 0.1
-pathDataRecursiveAsync :: HasCallStack => FilePath -> IO (Seq PathSizeData)
+pathDataRecursiveAsync :: HasCallStack => FilePath -> IO PathTree
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
 --
 -- @since 0.1
-pathDataRecursiveAsyncPooled :: HasCallStack => FilePath -> IO (Seq PathSizeData)
+pathDataRecursiveAsyncPooled :: HasCallStack => FilePath -> IO PathTree
 pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -104,32 +99,32 @@ pathDataRecursive ::
   (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
   -- | Start path.
   FilePath ->
-  IO (Seq PathSizeData)
-pathDataRecursive traverseT = go []
+  IO PathTree
+pathDataRecursive traverseT = go
   where
-    go :: HasCallStack => Seq PathSizeData -> FilePath -> IO (Seq PathSizeData)
-    go subPaths path = do
+    go :: HasCallStack => FilePath -> IO PathTree
+    go path = do
       isFile <- withCallStack $ Dir.doesFileExist path
       if isFile
         then do
           -- NOTE: The fromIntegral :: Integer -> Natural comes w/ a slight
           -- performance penalty.
           size <- withCallStack $ fromIntegral <$> Dir.getFileSize path
-          pure $ MkPathSizeData (File path, size) <| subPaths
+          pure $ Leaf $ MkPathSizeData (File path, size)
         else do
           isDir <- withCallStack $ Dir.doesDirectoryExist path
           if isDir
             then do
               files <- withCallStack $ Dir.listDirectory path
-              -- NOTE: Benchmarking shows it is significantly better to do
-              -- the "list to seq + join" here as opposed to after.
-              allSubPaths <-
-                join
-                  <$> traverseT
-                    (go subPaths)
-                    (foldl' (\acc f -> (path </> f) <| acc) [] files)
-              let size = PathSizeData.sumSize allSubPaths
-              pure $ MkPathSizeData (Directory path, size) <| (subPaths <> allSubPaths)
+              subTrees <- traverseT (go . (path </>)) (Seq.fromList files)
+              let size = sumTrees subTrees
+              pure $ Node (MkPathSizeData (Directory path, size)) subTrees
             else do
               -- NOTE: Assuming this is a symbolic link. Maybe we should warn?
-              pure subPaths
+              pure $ Leaf $ MkPathSizeData (File path, 0)
+
+    sumTrees :: Seq PathTree -> Natural
+    sumTrees = foldl' (\acc t -> acc + getSum t) 0
+
+    getSum (Leaf x) = x ^. (#unPathSizeData % _2)
+    getSum (Node x _) = x ^. (#unPathSizeData % _2)
