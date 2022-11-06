@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | @since 0.1
 module FsUtils.PathSize
   ( -- * Types
@@ -110,7 +112,7 @@ pathDataRecursive traverseT = go
           -- NOTE: The fromIntegral :: Integer -> Natural comes w/ a slight
           -- performance penalty.
           size <- withCallStack $ fromIntegral <$> Dir.getFileSize path
-          pure $ Leaf $ MkPathSizeData (File path, size)
+          pure $ Node (MkPathSizeData (File path, size)) []
         else do
           isDir <- withCallStack $ Dir.doesDirectoryExist path
           if isDir
@@ -121,10 +123,9 @@ pathDataRecursive traverseT = go
               pure $ Node (MkPathSizeData (Directory path, size)) subTrees
             else do
               -- NOTE: Assuming this is a symbolic link. Maybe we should warn?
-              pure $ Leaf $ MkPathSizeData (File path, 0)
+              pure $ Node (MkPathSizeData (File path, 0)) []
 
     sumTrees :: Seq PathTree -> Natural
     sumTrees = foldl' (\acc t -> acc + getSum t) 0
 
-    getSum (Leaf x) = x ^. (#unPathSizeData % _2)
     getSum (Node x _) = x ^. (#unPathSizeData % _2)
