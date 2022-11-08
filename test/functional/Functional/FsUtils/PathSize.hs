@@ -7,10 +7,11 @@ module Functional.FsUtils.PathSize
 where
 
 import Data.ByteString.Lazy qualified as BSL
+import Data.HashSet qualified as HSet
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Encoding qualified as TLEnc
-import FsUtils.Data.PathSizeConfig (PathSizeConfig (searchAll))
+import FsUtils.Data.PathSizeConfig (PathSizeConfig (exclude, searchAll))
 import FsUtils.PathSize qualified as PathSize
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
@@ -23,7 +24,8 @@ tests =
   testGroup
     "FsUtils.PathSize"
     [ calculatesSizes,
-      calculatesAll
+      calculatesAll,
+      calculatesExcluded
     ]
 
 calculatesSizes :: TestTree
@@ -46,6 +48,17 @@ calculatesAll = goldenVsStringDiff desc diff gpath $ do
     cfg = mempty {searchAll = True}
     desc = "Includes hidden files"
     gpath = goldenPath </> "all.golden"
+
+calculatesExcluded :: TestTree
+calculatesExcluded = goldenVsStringDiff desc diff gpath $ do
+  testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
+  result <- PathSize.display <$> PathSize.findLargestPaths cfg testDir
+  currDir <- Dir.getCurrentDirectory
+  pure $ replaceDir currDir result
+  where
+    cfg = mempty {exclude = HSet.fromList ["d2", "f2"]}
+    desc = "Excludes paths"
+    gpath = goldenPath </> "excluded.golden"
 
 goldenPath :: FilePath
 goldenPath = "test/functional/Functional/FsUtils/"

@@ -19,6 +19,8 @@ where
 
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HSet
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
 import FsUtils.Control.Exception (withCallStack)
@@ -51,9 +53,12 @@ findLargestPaths ::
 findLargestPaths cfg path = f path <&> \pathTree -> takeLargestN pathTree
   where
     f = case cfg ^. #strategy of
-      Sync -> pathDataRecursiveSync (cfg ^. #searchAll)
-      Async -> pathDataRecursiveAsync (cfg ^. #searchAll)
-      AsyncPooled -> pathDataRecursiveAsyncPooled (cfg ^. #searchAll)
+      Sync -> pathDataRecursiveSync (cfg ^. #exclude) (cfg ^. #searchAll)
+      Async -> pathDataRecursiveAsync (cfg ^. #exclude) (cfg ^. #searchAll)
+      AsyncPooled ->
+        pathDataRecursiveAsyncPooled
+          (cfg ^. #exclude)
+          (cfg ^. #searchAll)
     takeLargestN =
       maybe
         PathSizeData.mkSubPathSizeData
@@ -64,20 +69,35 @@ findLargestPaths cfg path = f path <&> \pathTree -> takeLargestN pathTree
 -- The searching is performed sequentially.
 --
 -- @since 0.1
-pathDataRecursiveSync :: HasCallStack => Bool -> FilePath -> IO PathTree
+pathDataRecursiveSync ::
+  HasCallStack =>
+  HashSet FilePath ->
+  Bool ->
+  FilePath ->
+  IO PathTree
 pathDataRecursiveSync = pathDataRecursive traverse
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
 -- thread.
 --
 -- @since 0.1
-pathDataRecursiveAsync :: HasCallStack => Bool -> FilePath -> IO PathTree
+pathDataRecursiveAsync ::
+  HasCallStack =>
+  HashSet FilePath ->
+  Bool ->
+  FilePath ->
+  IO PathTree
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
 --
 -- @since 0.1
-pathDataRecursiveAsyncPooled :: HasCallStack => Bool -> FilePath -> IO PathTree
+pathDataRecursiveAsyncPooled ::
+  HasCallStack =>
+  HashSet FilePath ->
+  Bool ->
+  FilePath ->
+  IO PathTree
 pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -88,12 +108,14 @@ pathDataRecursive ::
   HasCallStack =>
   -- | Traversal function.
   (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
+  -- | Paths to exclude.
+  HashSet FilePath ->
   -- | If true, searches hidden files/directories.
   Bool ->
   -- | Start path.
   FilePath ->
   IO PathTree
-pathDataRecursive traverseFn = \case
+pathDataRecursive traverseFn excluded = \case
   True -> goHidden
   False -> goSkipHidden
   where
@@ -104,8 +126,8 @@ pathDataRecursive traverseFn = \case
     goHidden = go (const False)
 
     go :: HasCallStack => (FilePath -> Bool) -> FilePath -> IO PathTree
-    go skipPath path =
-      if skipPath path
+    go skipHidden path =
+      if ((\p -> skipHidden p || HSet.member p excluded) . FP.takeFileName) path
         then pure Nil
         else do
           isFile <- withCallStack $ Dir.doesFileExist path
@@ -122,7 +144,7 @@ pathDataRecursive traverseFn = \case
                   files <- withCallStack $ Dir.listDirectory path
                   subTrees <-
                     traverseFn
-                      (go skipPath . (path </>))
+                      (go skipHidden . (path </>))
                       (Seq.fromList files)
                   let size = sumTrees subTrees
                   pure $ Node (MkPathSizeData (Directory path, size)) subTrees
@@ -137,10 +159,8 @@ pathDataRecursive traverseFn = \case
     getSum (Node x _) = x ^. (#unPathSizeData % _2)
     getSum Nil = 0
 
-    hidden = hidden' . FP.takeFileName
-
     -- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
     -- exception for the current directory ./.
-    hidden' ('.' : '/' : _) = False
-    hidden' ('.' : _) = True
-    hidden' _ = False
+    hidden ('.' : '/' : _) = False
+    hidden ('.' : _) = True
+    hidden _ = False

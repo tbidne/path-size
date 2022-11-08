@@ -10,6 +10,8 @@ module Args
   )
 where
 
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HSet
 import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Version.Package qualified as PV
@@ -111,6 +113,7 @@ pathSizeConfigParser :: Parser PathSizeConfig
 pathSizeConfigParser =
   MkPathSizeConfig
     <$> numPathsParser
+    <*> skipPathsParser
     <*> allParser
     <*> strategyParser
 
@@ -133,6 +136,27 @@ numPathsParser =
     helpTxt =
       mconcat
         [ "The number of paths to display. If unspecified, returns all paths."
+        ]
+
+skipPathsParser :: Parser (HashSet FilePath)
+skipPathsParser =
+  HSet.fromList
+    <$> OA.many
+      ( OA.option
+          OA.str
+          $ mconcat
+            [ OA.long "exclude",
+              OA.short 'e',
+              OA.metavar "PATHS...",
+              OA.help helpTxt
+            ]
+      )
+  where
+    helpTxt =
+      mconcat
+        [ "Paths to skip. These must match the desired directory/file name ",
+          "e.g. to skip /path/to/dir you would pass '-e dir'. Note that this ",
+          "will exclude _all_ subpaths that match 'dir'."
         ]
 
 allParser :: Parser Bool

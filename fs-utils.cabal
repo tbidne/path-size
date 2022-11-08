@@ -42,16 +42,17 @@ library
     FsUtils.PathSize
 
   build-depends:
-    , base         >=4.14.0.0 && <4.18
-    , byte-types   ^>=0.1
-    , containers   ^>=0.6.3.1
-    , deepseq      ^>=1.4.4.0
-    , directory    ^>=1.3.5.0
-    , filepath     ^>=1.4.2.1
-    , optics-core  ^>=0.4
-    , optics-th    ^>=0.4
-    , text         >=1.2.3.2  && <2.1
-    , unliftio     ^>=0.2.0.0
+    , base                  >=4.14.0.0  && <4.18
+    , byte-types            ^>=0.1
+    , containers            ^>=0.6.3.1
+    , deepseq               ^>=1.4.4.0
+    , directory             ^>=1.3.5.0
+    , filepath              ^>=1.4.2.1
+    , optics-core           ^>=0.4
+    , optics-th             ^>=0.4
+    , text                  >=1.2.3.2   && <2.1
+    , unliftio              ^>=0.2.0.0
+    , unordered-containers  ^>=0.2.14.0
 
   hs-source-dirs:   src
   default-language: GHC2021
@@ -70,6 +71,7 @@ executable fs-utils
     , package-version       >=0.1.0.0  && <0.4
     , text
     , unliftio
+    , unordered-containers
 
   hs-source-dirs:   app
   ghc-options:      -threaded -with-rtsopts=-N
@@ -86,9 +88,10 @@ test-suite functional
     , directory
     , filepath
     , fs-utils
-    , tasty         >=1.1.0.3  && <1.5
-    , tasty-golden  ^>=2.3.1.1
+    , tasty                 >=1.1.0.3  && <1.5
+    , tasty-golden          ^>=2.3.1.1
     , text
+    , unordered-containers
 
   hs-source-dirs:   test/functional
   default-language: GHC2021
