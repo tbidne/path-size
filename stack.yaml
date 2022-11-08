@@ -9,6 +9,7 @@ ghc-options:
     -Wredundant-constraints -Wunused-packages -Wmissing-deriving-strategies
     -Wno-unticked-promoted-constructors -Wprepositive-qualified-module
 extra-deps:
+- package-version-0.3@sha256:190490fde31f673054d317c7eb8c0638591c5b41b96860cb2ce232ea75665dcd,2792
 - git: https://github.com/tbidne/algebra-simple.git
   commit: c8aaa4495964ecea9bb898c4fcb8b1c718ecc813
 - git: https://github.com/tbidne/bounds.git
