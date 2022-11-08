@@ -10,6 +10,7 @@ import Data.ByteString.Lazy qualified as BSL
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Encoding qualified as TLEnc
+import FsUtils.Data.PathSizeConfig (PathSizeConfig (searchAll))
 import FsUtils.PathSize qualified as PathSize
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
@@ -21,7 +22,8 @@ tests :: TestTree
 tests =
   testGroup
     "FsUtils.PathSize"
-    [ calculatesSizes
+    [ calculatesSizes,
+      calculatesAll
     ]
 
 calculatesSizes :: TestTree
@@ -33,6 +35,17 @@ calculatesSizes = goldenVsStringDiff desc diff gpath $ do
   where
     desc = "Calculates sizes correctly"
     gpath = goldenPath </> "sizes.golden"
+
+calculatesAll :: TestTree
+calculatesAll = goldenVsStringDiff desc diff gpath $ do
+  testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
+  result <- PathSize.display <$> PathSize.findLargestPaths cfg testDir
+  currDir <- Dir.getCurrentDirectory
+  pure $ replaceDir currDir result
+  where
+    cfg = mempty {searchAll = True}
+    desc = "Includes hidden files"
+    gpath = goldenPath </> "all.golden"
 
 goldenPath :: FilePath
 goldenPath = "test/functional/Functional/FsUtils/"

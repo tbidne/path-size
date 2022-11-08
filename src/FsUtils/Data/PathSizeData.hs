@@ -93,7 +93,9 @@ makeFieldLabelsNoPrefix ''PathSizeData
 -- associated to its size. This structure is essentially a rose tree.
 --
 -- @since 0.1
-data PathTree = Node !PathSizeData !(Seq PathTree)
+data PathTree
+  = Nil
+  | Node !PathSizeData !(Seq PathTree)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -109,6 +111,7 @@ data PathTree = Node !PathSizeData !(Seq PathTree)
 
 toSeq :: PathTree -> Seq PathSizeData
 toSeq (Node x subTrees) = x <| (subTrees >>= toSeq)
+toSeq Nil = []
 
 -- | A flattened and sorted representation of 'PathTree'.
 --

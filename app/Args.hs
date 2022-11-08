@@ -111,6 +111,7 @@ pathSizeConfigParser :: Parser PathSizeConfig
 pathSizeConfigParser =
   MkPathSizeConfig
     <$> numPathsParser
+    <*> allParser
     <*> strategyParser
 
 numPathsParser :: Parser (Maybe Natural)
@@ -132,6 +133,20 @@ numPathsParser =
     helpTxt =
       mconcat
         [ "The number of paths to display. If unspecified, returns all paths."
+        ]
+
+allParser :: Parser Bool
+allParser =
+  OA.switch $
+    mconcat
+      [ OA.long "all",
+        OA.short 'a',
+        OA.help helpTxt
+      ]
+  where
+    helpTxt =
+      mconcat
+        [ "If enabled, searches hidden files/directories."
         ]
 
 strategyParser :: Parser Strategy
