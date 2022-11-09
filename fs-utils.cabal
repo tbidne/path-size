@@ -51,6 +51,7 @@ library
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
     , text                  >=1.2.3.2   && <2.1
+    , unix                  >=2.7.3     && <2.9
     , unliftio              ^>=0.2.0.0
     , unordered-containers  ^>=0.2.14.0
 

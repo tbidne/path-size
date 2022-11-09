@@ -38,6 +38,7 @@ import Optics.Core ((%), (^.), _2)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import System.FilePath qualified as FP
+import System.Posix.Files qualified as Posix
 import UnliftIO.Async qualified as Async
 import UnliftIO.Exception (Exception (displayException), SomeException, catch)
 
@@ -144,23 +145,36 @@ pathDataRecursive traverseFn excluded = \case
       where
         calcTree :: HasCallStack => IO PathTree
         calcTree = do
-          isDir <- withCallStack $ Dir.doesDirectoryExist path
-          if isDir
-            then do
-              files <- withCallStack $ Dir.listDirectory path
-              subTrees <-
-                traverseFn
-                  (go skipHidden . (path </>))
-                  (Seq.fromList files)
-              -- add the cost of the directory itself.
-              dirSize <- withCallStack $ Dir.getFileSize path
-              let size = fromIntegral dirSize + sumTrees subTrees
-              pure $ Node (MkPathSizeData (Directory path, size)) subTrees
+          -- NOTE: Do not chase symlinks, and ensure we call the right size
+          -- function (Dir.getFileSize errors on dangling symlinks since it
+          -- operates on the target)
+          isSymLink <- withCallStack $ Dir.pathIsSymbolicLink path
+          if isSymLink
+            then
+              withCallStack $
+                getSymLinkSize path <&> \size ->
+                  Node (MkPathSizeData (File path, size)) []
             else do
-              -- NOTE: We do not distinguish between symlinks and regular
-              -- files.
-              size <- withCallStack $ Dir.getFileSize path
-              pure $ Node (MkPathSizeData (File path, fromIntegral size)) []
+              isDir <- withCallStack $ Dir.doesDirectoryExist path
+              if isDir
+                then do
+                  files <- withCallStack $ Dir.listDirectory path
+                  subTrees <-
+                    traverseFn
+                      (go skipHidden . (path </>))
+                      (Seq.fromList files)
+                  -- add the cost of the directory itself.
+                  dirSize <- withCallStack $ Dir.getFileSize path
+                  let size = fromIntegral dirSize + sumTrees subTrees
+                  pure $ Node (MkPathSizeData (Directory path, size)) subTrees
+                else
+                  withCallStack $
+                    Dir.getFileSize path <&> \size ->
+                      Node (MkPathSizeData (File path, fromIntegral size)) []
+
+    getSymLinkSize :: FilePath -> IO Natural
+    getSymLinkSize =
+      fmap (fromIntegral . Posix.fileSize) . Posix.getSymbolicLinkStatus
 
     sumTrees :: Seq PathTree -> Natural
     sumTrees = foldl' (\acc t -> acc + getSum t) 0
