@@ -130,28 +130,23 @@ pathDataRecursive traverseFn excluded = \case
       if ((\p -> skipHidden p || HSet.member p excluded) . FP.takeFileName) path
         then pure Nil
         else do
-          isFile <- withCallStack $ Dir.doesFileExist path
-          if isFile
+          isDir <- withCallStack $ Dir.doesDirectoryExist path
+          if isDir
             then do
-              -- NOTE: The fromIntegral :: Integer -> Natural comes w/ a slight
-              -- performance penalty.
-              size <- withCallStack $ fromIntegral <$> Dir.getFileSize path
-              pure $ Node (MkPathSizeData (File path, size)) []
+              files <- withCallStack $ Dir.listDirectory path
+              subTrees <-
+                traverseFn
+                  (go skipHidden . (path </>))
+                  (Seq.fromList files)
+              -- add the cost of the directory itself.
+              dirSize <- withCallStack $ Dir.getFileSize path
+              let size = fromIntegral dirSize + sumTrees subTrees
+              pure $ Node (MkPathSizeData (Directory path, size)) subTrees
             else do
-              isDir <- withCallStack $ Dir.doesDirectoryExist path
-              if isDir
-                then do
-                  files <- withCallStack $ Dir.listDirectory path
-                  subTrees <-
-                    traverseFn
-                      (go skipHidden . (path </>))
-                      (Seq.fromList files)
-                  let size = sumTrees subTrees
-                  pure $ Node (MkPathSizeData (Directory path, size)) subTrees
-                else do
-                  -- NOTE: Assuming this is a symbolic link. Maybe we should
-                  -- warn? Or add the size of the link itself?
-                  pure $ Node (MkPathSizeData (File path, 0)) []
+              -- NOTE: We do not distinguish between symlinks and regular
+              -- files.
+              size <- withCallStack $ Dir.getFileSize path
+              pure $ Node (MkPathSizeData (File path, fromIntegral size)) []
 
     sumTrees :: Seq PathTree -> Natural
     sumTrees = foldl' (\acc t -> acc + getSum t) 0

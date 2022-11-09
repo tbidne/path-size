@@ -1,10 +1,10 @@
-<dir>/test/functional/data: 25.00B
-<dir>/test/functional/data/d2: 16.00B
-<dir>/test/functional/data/d2/d2: 14.00B
-<dir>/test/functional/data/d2/d2/d1: 14.00B
+<dir>/test/functional/data: 24.60K
+<dir>/test/functional/data/d2: 16.40K
+<dir>/test/functional/data/d2/d2: 8.21K
+<dir>/test/functional/data/d2/d2/d1: 4.11K
+<dir>/test/functional/data/d1: 4.10K
+<dir>/test/functional/data/d2/d1: 4.10K
 <dir>/test/functional/data/d2/d2/d1/f1: 14.00B
-<dir>/test/functional/data/d1: 9.00B
 <dir>/test/functional/data/d1/f2: 5.00B
 <dir>/test/functional/data/d1/f1: 4.00B
-<dir>/test/functional/data/d2/d1: 2.00B
 <dir>/test/functional/data/d2/d1/f1: 2.00B
