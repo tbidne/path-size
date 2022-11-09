@@ -39,6 +39,7 @@ import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import System.FilePath qualified as FP
 import UnliftIO.Async qualified as Async
+import UnliftIO.Exception (Exception (displayException), SomeException, catch)
 
 -- | Given a path, finds the size of all subpaths, recursively.
 --
@@ -129,7 +130,20 @@ pathDataRecursive traverseFn excluded = \case
     go skipHidden path =
       if ((\p -> skipHidden p || HSet.member p excluded) . FP.takeFileName) path
         then pure Nil
-        else do
+        else
+          calcTree `catch` \(e :: SomeException) -> do
+            putStrLn $
+              mconcat
+                [ "Exception with path '",
+                  path,
+                  "': ",
+                  displayException e,
+                  "\n"
+                ]
+            pure Nil
+      where
+        calcTree :: HasCallStack => IO PathTree
+        calcTree = do
           isDir <- withCallStack $ Dir.doesDirectoryExist path
           if isDir
             then do
