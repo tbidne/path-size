@@ -34,7 +34,7 @@ import FsUtils.Data.PathSizeData
 import FsUtils.Data.PathSizeData qualified as PathSizeData
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
-import Optics.Core ((%), (^.), _2)
+import Optics.Core ((^.))
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import System.FilePath qualified as FP
@@ -152,7 +152,7 @@ pathDataRecursive traverseFn excluded = \case
             then
               withCallStack $
                 getSymLinkSize path <&> \size ->
-                  Node (MkPathSizeData (File path, size)) []
+                  Node (MkPathSizeData (File path, size, 1, 0)) []
             else do
               isDir <- withCallStack $ Dir.doesDirectoryExist path
               if isDir
@@ -164,22 +164,30 @@ pathDataRecursive traverseFn excluded = \case
                       (Seq.fromList files)
                   -- add the cost of the directory itself.
                   dirSize <- withCallStack $ Dir.getFileSize path
-                  let size = fromIntegral dirSize + sumTrees subTrees
-                  pure $ Node (MkPathSizeData (Directory path, size)) subTrees
+                  let (!size, !numFiles, !numDirs) = sumTrees subTrees
+                      !totalDirs = numDirs + 1
+                      !totalSize = fromIntegral dirSize + size
+                  pure $ Node
+                    (MkPathSizeData
+                      (Directory path, totalSize, numFiles, totalDirs)) subTrees
                 else
                   withCallStack $
                     Dir.getFileSize path <&> \size ->
-                      Node (MkPathSizeData (File path, fromIntegral size)) []
+                      Node (MkPathSizeData (File path, fromIntegral size, 1, 0)) []
 
     getSymLinkSize :: FilePath -> IO Natural
     getSymLinkSize =
       fmap (fromIntegral . Posix.fileSize) . Posix.getSymbolicLinkStatus
 
-    sumTrees :: Seq PathTree -> Natural
-    sumTrees = foldl' (\acc t -> acc + getSum t) 0
+    sumTrees :: Seq PathTree -> (Natural, Natural, Natural)
+    sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
 
-    getSum (Node x _) = x ^. (#unPathSizeData % _2)
-    getSum Nil = 0
+    getSum :: PathTree -> (Natural, Natural, Natural)
+    getSum (Node (MkPathSizeData (_, size, numFiles, numDirs)) _) =
+      (size, numFiles, numDirs)
+    getSum Nil = (0, 0, 0)
+
+    addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
 
     -- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
     -- exception for the current directory ./.

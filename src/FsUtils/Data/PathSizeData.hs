@@ -16,9 +16,6 @@ module FsUtils.Data.PathSizeData
     SubPathSizeData,
     mkSubPathSizeData,
     display,
-
-    -- * Misc
-    sumSize,
   )
 where
 
@@ -30,7 +27,6 @@ import Data.Bytes
     Size (B),
   )
 import Data.Bytes qualified as Bytes
-import Data.Foldable (Foldable (foldl'))
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq, (<|))
 import Data.Sequence qualified as Seq
@@ -71,7 +67,9 @@ unPath (File fp) = fp
 --
 -- @since 0.1
 newtype PathSizeData = MkPathSizeData
-  { unPathSizeData :: (Path, Natural)
+  { -- NOTE: benchmarks show that a tuple is significantly faster than
+    -- data w/ strict fields.
+    unPathSizeData :: (Path, Natural, Natural, Natural)
   }
   deriving stock
     ( -- | @since 0.1
@@ -163,11 +161,15 @@ display = showList' . unSubPathSizeData
   where
     showList' :: Seq PathSizeData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldr go ""
-    go (MkPathSizeData (path, size)) acc =
+    go (MkPathSizeData (path, size, numFiles, numDirectories)) acc =
       mconcat
         [ TLB.fromString $ unPath path,
           ": ",
           TLB.fromLazyText $ TL.fromStrict $ formatSize size,
+          ", Directories: ",
+          TLB.fromString $ show numDirectories,
+          ", Files: ",
+          TLB.fromString $ show numFiles,
           "\n",
           acc
         ]
@@ -179,9 +181,3 @@ display = showList' . unSubPathSizeData
         . normalize
         . MkBytes @B
         . fromIntegral @_ @Double
-
--- | Gives the total size for a 'Seq' 'PathSizeData'.
---
--- @since 0.1
-sumSize :: Seq PathSizeData -> Natural
-sumSize = foldl' (\acc (MkPathSizeData (_, x)) -> x + acc) 0
