@@ -52,15 +52,14 @@ findLargestPaths ::
   -- | Path to search.
   FilePath ->
   IO SubPathSizeData
-findLargestPaths cfg path = f path <&> \pathTree -> takeLargestN pathTree
+findLargestPaths cfg path =
+  f (cfg ^. #exclude) (cfg ^. #searchAll) path
+    <&> \pathTree -> takeLargestN pathTree
   where
     f = case cfg ^. #strategy of
-      Sync -> pathDataRecursiveSync (cfg ^. #exclude) (cfg ^. #searchAll)
-      Async -> pathDataRecursiveAsync (cfg ^. #exclude) (cfg ^. #searchAll)
-      AsyncPooled ->
-        pathDataRecursiveAsyncPooled
-          (cfg ^. #exclude)
-          (cfg ^. #searchAll)
+      Sync -> pathDataRecursiveSync
+      Async -> pathDataRecursiveAsync
+      AsyncPooled -> pathDataRecursiveAsyncPooled
     takeLargestN =
       maybe
         PathSizeData.mkSubPathSizeData

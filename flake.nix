@@ -76,7 +76,7 @@
             byte-types =
               pkgs.haskell.lib.doJailbreak
                 (final.callCabal2nix "byte-types" byte-types { });
-            
+
             # FIXME: Not only is this weird (why does prev.X give us infinite
             # recursion errors), but it doesn't actually work? We get an error
             # about missing dependency filepath >=1.4.100.0 && <1.5 ...
