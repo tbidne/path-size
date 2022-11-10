@@ -9,7 +9,11 @@ ghc-options:
     -Wredundant-constraints -Wunused-packages -Wmissing-deriving-strategies
     -Wno-unticked-promoted-constructors -Wprepositive-qualified-module
 extra-deps:
+- directory-1.3.8.0@sha256:89f3645066c8a1456d237adcbc955c668abe7beca3ccc61a5843b3c4fbf426c6,2878
+- filepath-1.4.100.0@sha256:45a49fc8c379b33fdba3c8cc96dcf22b15c50995d0f4b8638e9b6b9423d1b877,5875
 - package-version-0.3@sha256:190490fde31f673054d317c7eb8c0638591c5b41b96860cb2ce232ea75665dcd,2792
+- process-1.6.16.0@sha256:1b9c267e475d4492b80edc1f58d08c458d4a10d17ea95294356443855b125616,2845
+- unix-2.8.0.0@sha256:5e4626217ca5b00e0589e09f491c6448289b625d99bb132a112d8c3dc724d8ce,6856
 - git: https://github.com/tbidne/algebra-simple.git
   commit: c8aaa4495964ecea9bb898c4fcb8b1c718ecc813
 - git: https://github.com/tbidne/bounds.git
