@@ -80,8 +80,8 @@
             # FIXME: Not only is this weird (why does prev.X give us infinite
             # recursion errors), but it doesn't actually work? We get an error
             # about missing dependency filepath >=1.4.100.0 && <1.5 ...
-            filepath = compiler.filepath_1_4_100_0;
-            unix = compiler.unix_2_8_0_0;
+            #filepath = compiler.filepath_1_4_100_0;
+            #unix = compiler.unix_2_8_0_0;
           };
         };
     in
