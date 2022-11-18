@@ -28,6 +28,7 @@ common common-exts
     DerivingStrategies
     DerivingVia
     LambdaCase
+    NamedFieldPuns
     OverloadedLabels
     OverloadedStrings
     PatternSynonyms

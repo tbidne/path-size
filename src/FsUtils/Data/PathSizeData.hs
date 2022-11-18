@@ -35,7 +35,7 @@ import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
-import Optics.Core (view, (%), _2)
+import Optics.Core (view)
 import Optics.TH (makeFieldLabelsNoPrefix)
 
 -- | Path types.
@@ -66,10 +66,11 @@ unPath (File fp) = fp
 -- | Associates a 'Path' to its total (recursive) size in the file-system.
 --
 -- @since 0.1
-newtype PathSizeData = MkPathSizeData
-  { -- NOTE: benchmarks show that a tuple is significantly faster than
-    -- data w/ strict fields.
-    unPathSizeData :: (Path, Natural, Natural, Natural)
+data PathSizeData = MkPathSizeData
+  { path :: !Path,
+    size :: !Natural,
+    numFiles :: !Natural,
+    numDirectories :: !Natural
   }
   deriving stock
     ( -- | @since 0.1
@@ -141,7 +142,7 @@ unSubPathSizeData (UnsafeSubPathSizeData xs) = xs
 --
 -- @since 0.1
 sort :: Seq PathSizeData -> Seq PathSizeData
-sort = Seq.sortOn (Down . view (#unPathSizeData % _2))
+sort = Seq.sortOn (Down . view #size)
 
 -- | Retrieves the largest N paths.
 --
@@ -161,7 +162,7 @@ display = showList' . unSubPathSizeData
   where
     showList' :: Seq PathSizeData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldr go ""
-    go (MkPathSizeData (path, size, numFiles, numDirectories)) acc =
+    go (MkPathSizeData {path, size, numFiles, numDirectories}) acc =
       mconcat
         [ TLB.fromString $ unPath path,
           ": ",

@@ -13,13 +13,13 @@ module FsUtils.Control.Exception
   )
 where
 
-import Control.Exception
+import GHC.Stack (CallStack, HasCallStack, prettyCallStack)
+import UnliftIO.Exception
   ( Exception (displayException),
     SomeException,
-    catch,
+    catchAny,
     throwIO,
   )
-import GHC.Stack (CallStack, HasCallStack, prettyCallStack)
 
 -- | Wraps a 'SomeException' with a 'CallStack.
 --
@@ -44,8 +44,8 @@ instance Exception ArbitraryE where
 --
 -- @since 0.1
 withCallStack :: HasCallStack => IO a -> IO a
-withCallStack action = do
-  catch @SomeException action $ \e -> throwIO $ MkArbitraryE e ?callStack
+withCallStack action =
+  catchAny action $ \e -> throwIO $ MkArbitraryE e ?callStack
 
 -- | Throws with 'CallStack'.
 --

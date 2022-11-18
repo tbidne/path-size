@@ -40,7 +40,7 @@ import System.FilePath ((</>))
 import System.FilePath qualified as FP
 import System.Posix.Files qualified as Posix
 import UnliftIO.Async qualified as Async
-import UnliftIO.Exception (Exception (displayException), SomeException, catch)
+import UnliftIO.Exception (Exception (displayException), catchAny)
 
 -- | Given a path, finds the size of all subpaths, recursively.
 --
@@ -131,7 +131,7 @@ pathDataRecursive traverseFn excluded = \case
       if ((\p -> skipHidden p || HSet.member p excluded) . FP.takeFileName) path
         then pure Nil
         else
-          calcTree `catch` \(e :: SomeException) -> do
+          calcTree `catchAny` \e -> do
             putStrLn $
               mconcat
                 [ "Exception with path '",
@@ -152,7 +152,7 @@ pathDataRecursive traverseFn excluded = \case
             then
               withCallStack $
                 getSymLinkSize path <&> \size ->
-                  Node (MkPathSizeData (File path, size, 1, 0)) []
+                  Node (MkPathSizeData (File path) size 1 0) []
             else do
               isDir <- withCallStack $ Dir.doesDirectoryExist path
               if isDir
@@ -164,16 +164,29 @@ pathDataRecursive traverseFn excluded = \case
                       (Seq.fromList files)
                   -- add the cost of the directory itself.
                   dirSize <- withCallStack $ Dir.getFileSize path
-                  let (!size, !numFiles, !numDirs) = sumTrees subTrees
-                      !totalDirs = numDirs + 1
-                      !totalSize = fromIntegral dirSize + size
-                  pure $ Node
-                    (MkPathSizeData
-                      (Directory path, totalSize, numFiles, totalDirs)) subTrees
+                  let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
+                      !numDirectories = subDirs + 1
+                      !size = fromIntegral dirSize + subSize
+                  pure $
+                    Node
+                      MkPathSizeData
+                        { path = Directory path,
+                          size,
+                          numFiles,
+                          numDirectories
+                        }
+                      subTrees
                 else
                   withCallStack $
                     Dir.getFileSize path <&> \size ->
-                      Node (MkPathSizeData (File path, fromIntegral size, 1, 0)) []
+                      Node
+                        MkPathSizeData
+                          { path = File path,
+                            size = fromIntegral size,
+                            numFiles = 1,
+                            numDirectories = 0
+                          }
+                        []
 
     getSymLinkSize :: FilePath -> IO Natural
     getSymLinkSize =
@@ -183,8 +196,8 @@ pathDataRecursive traverseFn excluded = \case
     sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
 
     getSum :: PathTree -> (Natural, Natural, Natural)
-    getSum (Node (MkPathSizeData (_, size, numFiles, numDirs)) _) =
-      (size, numFiles, numDirs)
+    getSum (Node (MkPathSizeData {size, numFiles, numDirectories}) _) =
+      (size, numFiles, numDirectories)
     getSum Nil = (0, 0, 0)
 
     addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
