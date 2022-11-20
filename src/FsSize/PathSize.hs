@@ -116,6 +116,7 @@ pathDataRecursive traverseFn cfg =
     else goSkipHidden
   where
     excluded = cfg ^. #exclude
+    skipExcluded p = HSet.member p excluded
 
     -- NOTE: If filesOnly is on, then we do not calculate sizes for the
     -- directories themselves.
@@ -136,6 +137,9 @@ pathDataRecursive traverseFn cfg =
     goHidden :: HasCallStack => FilePath -> IO PathTree
     goHidden = go (const False) 0
 
+    -- Base recursive function. If the path is determined to be a symlink or
+    -- file, calculates the size. If it is a directory, we recursively call
+    -- go on all subpaths.
     go ::
       HasCallStack =>
       (FilePath -> Bool) ->
@@ -143,9 +147,11 @@ pathDataRecursive traverseFn cfg =
       FilePath ->
       IO PathTree
     go skipHidden !depth path =
-      if ((\p -> skipHidden p || HSet.member p excluded) . FP.takeFileName) path
+      -- Determine if we should skip.
+      if ((\p -> skipHidden p || skipExcluded p) . FP.takeFileName) path
         then pure Nil
-        else
+        else -- If an exception is encountered, print and continue.
+
           calcTree `catchAny` \e -> do
             putStrLn $
               mconcat
@@ -157,18 +163,20 @@ pathDataRecursive traverseFn cfg =
                 ]
             pure Nil
       where
+        -- Perform actual calculation.
         calcTree :: HasCallStack => IO PathTree
         calcTree = do
-          -- NOTE: Do not chase symlinks, and ensure we call the right size
-          -- function (Dir.getFileSize errors on dangling symlinks since it
-          -- operates on the target)
+          -- 1. Symlinks
+          --
+          -- NOTE: Need to handle symlinks separately so that we:
+          --   a. Do not chase.
+          --   b. Ensure we call the right size function (Dir.getFileSize
+          --      errors on dangling symlinks since it operates on the target).
           isSymLink <- withCallStack $ Dir.pathIsSymbolicLink path
           if isSymLink
-            then
-              withCallStack $
-                getSymLinkSize path <&> \size ->
-                  Node (MkPathSizeData (File path) size 1 0) []
+            then withCallStack $ calcSymLink path
             else do
+              -- 2. Directories
               isDir <- withCallStack $ Dir.doesDirectoryExist path
               if isDir
                 then do
@@ -177,11 +185,12 @@ pathDataRecursive traverseFn cfg =
                     traverseFn
                       (go skipHidden (depth + 1) . (path </>))
                       (Seq.fromList files)
-                  -- add the cost of the directory itself.
+                  -- Add the cost of the directory itself.
                   dirSize <- withCallStack $ Dir.getFileSize path
                   let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
                       !numDirectories = subDirs + 1
                       !size = dirSizeFn (fromIntegral dirSize) subSize
+                      -- Do not report subpaths if the depth is exceeded.
                       subTrees'
                         | depthExceeded depth = []
                         | otherwise = subTrees
@@ -194,21 +203,8 @@ pathDataRecursive traverseFn cfg =
                           numDirectories
                         }
                       subTrees'
-                else
-                  withCallStack $
-                    Dir.getFileSize path <&> \size ->
-                      Node
-                        MkPathSizeData
-                          { path = File path,
-                            size = fromIntegral size,
-                            numFiles = 1,
-                            numDirectories = 0
-                          }
-                        []
-
-    getSymLinkSize :: FilePath -> IO Natural
-    getSymLinkSize =
-      fmap (fromIntegral . Posix.fileSize) . Posix.getSymbolicLinkStatus
+                else -- 3. Files
+                  withCallStack $ calcFile path
 
     sumTrees :: Seq PathTree -> (Natural, Natural, Natural)
     sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
@@ -225,3 +221,24 @@ pathDataRecursive traverseFn cfg =
     hidden ('.' : '/' : _) = False
     hidden ('.' : _) = True
     hidden _ = False
+
+calcSymLink :: FilePath -> IO PathTree
+calcSymLink path =
+  getSymLinkSize path <&> \size ->
+    Node (MkPathSizeData (File path) size 1 0) []
+  where
+    getSymLinkSize :: FilePath -> IO Natural
+    getSymLinkSize =
+      fmap (fromIntegral . Posix.fileSize) . Posix.getSymbolicLinkStatus
+
+calcFile :: FilePath -> IO PathTree
+calcFile path =
+  Dir.getFileSize path <&> \size ->
+    Node
+      MkPathSizeData
+        { path = File path,
+          size = fromIntegral size,
+          numFiles = 1,
+          numDirectories = 0
+        }
+      []
