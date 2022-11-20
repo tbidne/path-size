@@ -76,12 +76,14 @@ parserInfoArgs =
       infoPolicy = Intersperse
     }
   where
-    headerTxt = Just "fs-size: Provides file-system utils."
+    headerTxt =
+      Just
+        "fs-size: A utility for reporting the recursive size of a directory."
     footerTxt = Just $ fromString versNum
     desc =
       Just $
         mconcat
-          [ "\nfs-size allows one to find large files on the file-system. ",
+          [ "\nfs-size allows one to find large paths on the file-system. ",
             "In particular, the command will recursively associate a given ",
             "path and all of its subpaths to their respective sizes."
           ]
