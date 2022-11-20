@@ -19,7 +19,6 @@ where
 
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
-import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
@@ -53,7 +52,7 @@ findLargestPaths ::
   FilePath ->
   IO SubPathSizeData
 findLargestPaths cfg path =
-  f (cfg ^. #exclude) (cfg ^. #searchAll) path
+  f cfg path
     <&> \pathTree -> takeLargestN pathTree
   where
     f = case cfg ^. #strategy of
@@ -72,8 +71,7 @@ findLargestPaths cfg path =
 -- @since 0.1
 pathDataRecursiveSync ::
   HasCallStack =>
-  HashSet FilePath ->
-  Bool ->
+  PathSizeConfig ->
   FilePath ->
   IO PathTree
 pathDataRecursiveSync = pathDataRecursive traverse
@@ -84,8 +82,7 @@ pathDataRecursiveSync = pathDataRecursive traverse
 -- @since 0.1
 pathDataRecursiveAsync ::
   HasCallStack =>
-  HashSet FilePath ->
-  Bool ->
+  PathSizeConfig ->
   FilePath ->
   IO PathTree
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
@@ -95,8 +92,7 @@ pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 -- @since 0.1
 pathDataRecursiveAsyncPooled ::
   HasCallStack =>
-  HashSet FilePath ->
-  Bool ->
+  PathSizeConfig ->
   FilePath ->
   IO PathTree
 pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
@@ -109,17 +105,24 @@ pathDataRecursive ::
   HasCallStack =>
   -- | Traversal function.
   (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
-  -- | Paths to exclude.
-  HashSet FilePath ->
-  -- | If true, searches hidden files/directories.
-  Bool ->
+  -- | The config.
+  PathSizeConfig ->
   -- | Start path.
   FilePath ->
   IO PathTree
-pathDataRecursive traverseFn excluded = \case
-  True -> goHidden
-  False -> goSkipHidden
+pathDataRecursive traverseFn cfg =
+  if cfg ^. #searchAll
+    then goHidden
+    else goSkipHidden
   where
+    excluded = cfg ^. #exclude
+
+    -- NOTE: If filesOnly is on, then we do not calculate sizes for the
+    -- directories themselves.
+    dirSizeFn
+      | cfg ^. #filesOnly = \_ _ -> 0
+      | otherwise = (+)
+
     goSkipHidden :: HasCallStack => FilePath -> IO PathTree
     goSkipHidden = go hidden
 
@@ -166,7 +169,7 @@ pathDataRecursive traverseFn excluded = \case
                   dirSize <- withCallStack $ Dir.getFileSize path
                   let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
                       !numDirectories = subDirs + 1
-                      !size = fromIntegral dirSize + subSize
+                      !size = dirSizeFn (fromIntegral dirSize) subSize
                   pure $
                     Node
                       MkPathSizeData

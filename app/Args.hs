@@ -115,6 +115,7 @@ pathSizeConfigParser =
     <$> numPathsParser
     <*> skipPathsParser
     <*> allParser
+    <*> filesOnlyParser
     <*> strategyParser
 
 numPathsParser :: Parser (Maybe Natural)
@@ -168,9 +169,21 @@ allParser =
         OA.help helpTxt
       ]
   where
+    helpTxt = "If enabled, searches hidden files/directories."
+
+filesOnlyParser :: Parser Bool
+filesOnlyParser =
+  OA.switch $
+    mconcat
+      [ OA.long "files-only",
+        OA.short 'f',
+        OA.help helpTxt
+      ]
+  where
     helpTxt =
       mconcat
-        [ "If enabled, searches hidden files/directories."
+        [ "If enabled, only sizes fore files are calculated. All directories ",
+          "are given size 0."
         ]
 
 strategyParser :: Parser Strategy

@@ -67,6 +67,10 @@ data PathSizeConfig = MkPathSizeConfig
     --
     -- @since 0.1
     searchAll :: !Bool,
+    -- | Whether to limit our search to just files.
+    --
+    -- @since 0.1
+    filesOnly :: !Bool,
     -- | The search strategy.
     --
     -- @since 0.1
@@ -84,9 +88,14 @@ makeFieldLabelsNoPrefix ''PathSizeConfig
 
 -- | @since 0.1
 instance Semigroup PathSizeConfig where
-  MkPathSizeConfig a b c d <> MkPathSizeConfig a' b' c' d' =
-    MkPathSizeConfig (a <|> a') (HSet.union b b') (c || c') (d <> d')
+  MkPathSizeConfig a b c d e <> MkPathSizeConfig a' b' c' d' e' =
+    MkPathSizeConfig
+      (a <|> a')
+      (HSet.union b b')
+      (c || c')
+      (d || d')
+      (e <> e')
 
 -- | @since 0.1
 instance Monoid PathSizeConfig where
-  mempty = MkPathSizeConfig empty HSet.empty False mempty
+  mempty = MkPathSizeConfig empty HSet.empty False False mempty
