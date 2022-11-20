@@ -4,7 +4,7 @@
 -- | Provides configuration for size functions.
 --
 -- @since 0.1
-module FsUtils.Data.PathSizeConfig
+module FsSize.Data.PathSizeConfig
   ( PathSizeConfig (..),
     Strategy (..),
   )

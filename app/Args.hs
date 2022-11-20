@@ -16,7 +16,7 @@ import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
-import FsUtils.Data.PathSizeConfig
+import FsSize.Data.PathSizeConfig
   ( PathSizeConfig (MkPathSizeConfig),
     Strategy (..),
   )
@@ -76,12 +76,12 @@ parserInfoArgs =
       infoPolicy = Intersperse
     }
   where
-    headerTxt = Just "fs-utils: Provides file-system utils."
+    headerTxt = Just "fs-size: Provides file-system utils."
     footerTxt = Just $ fromString versNum
     desc =
       Just $
         mconcat
-          [ "\nfs-utils allows one to find large files on the file-system. ",
+          [ "\nfs-size allows one to find large files on the file-system. ",
             "In particular, the command will recursively associate a given ",
             "path and all of its subpaths to their respective sizes."
           ]

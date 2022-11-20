@@ -26,14 +26,14 @@ test:
 
 repl:
 	if [ -z "$(ARGS)" ]; then \
-		cabal repl fs-utils; \
+		cabal repl fs-size; \
 	else \
 		cabal repl $(ARGS); \
 	fi
 
 watch:
 	if [ -z "$(ARGS)" ]; then \
-		ghcid --command "cabal repl fs-utils" ; \
+		ghcid --command "cabal repl fs-size" ; \
 	else \
 		ghcid --command "cabal repl $(ARGS)" ; \
 	fi
@@ -70,7 +70,7 @@ haddock:
 	cabal haddock --haddock-hyperlink-source --haddock-quickjump ;\
 	mkdir -p docs/ ;\
 	find docs/ -type f | xargs -I % sh -c "rm -r %" ;\
-	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.4/fs-utils-0.1/opt/doc/html/fs-utils/* docs/
+	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.4/fs-size-0.1/opt/doc/html/fs-size/* docs/
 
 .PHONY: haddockc
 haddockc:

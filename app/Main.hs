@@ -5,7 +5,7 @@ module Main (main) where
 
 import Args (getArgs)
 import Data.Text qualified as T
-import FsUtils.PathSize (display, findLargestPaths)
+import FsSize.PathSize (display, findLargestPaths)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))

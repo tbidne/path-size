@@ -11,12 +11,12 @@ import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Word (Word8)
-import FsUtils.Control.Exception (withCallStack)
-import FsUtils.Data.PathSizeConfig
+import FsSize.Control.Exception (withCallStack)
+import FsSize.Data.PathSizeConfig
   ( PathSizeConfig (numPaths, strategy),
     Strategy (Async, AsyncPooled, Sync),
   )
-import FsUtils.PathSize (display, findLargestPaths)
+import FsSize.PathSize (display, findLargestPaths)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
 import System.Directory qualified as Dir

@@ -1,4 +1,4 @@
-# Revision history for fs-utils
+# Revision history for fs-size
 
 ## 0.1 -- YYYY-mm-dd
 

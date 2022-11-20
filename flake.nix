@@ -1,5 +1,5 @@
 {
-  description = "A Template for Haskell Packages";
+  description = "A utility for reporting file-system sizes.";
   inputs = {
 
     # nix
@@ -62,7 +62,7 @@
       mkPkg = returnShellEnv: withDevTools:
         compiler.developPackage {
           inherit returnShellEnv;
-          name = "fs-utils";
+          name = "fs-size";
           root = ./.;
           modifier = drv:
             pkgs.haskell.lib.addBuildTools drv
@@ -78,7 +78,6 @@
     in
     {
       packages.default = mkPkg false false;
-
       devShells.default = mkPkg true true;
       devShells.ci = mkPkg true false;
     });

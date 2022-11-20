@@ -5,7 +5,7 @@
 -- | Supplies the 'PathSizeData' data type and related functions.
 --
 -- @since 0.1
-module FsUtils.Data.PathSizeData
+module FsSize.Data.PathSizeData
   ( -- * Base types
     Path (..),
     PathSizeData (..),

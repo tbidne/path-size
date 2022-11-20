@@ -27,7 +27,7 @@ let
   ];
 in
 pkgs.haskell.lib.buildStackProject {
-  name = "fs-utils";
+  name = "fs-size";
 
   buildInputs = with pkgs; [
     git

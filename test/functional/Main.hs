@@ -3,7 +3,7 @@
 -- @since 0.1
 module Main (main) where
 
-import Functional.FsUtils.PathSize qualified as FsUtils.PathSize
+import Functional.FsSize.PathSize qualified as FsSize.PathSize
 import Test.Tasty qualified as Tasty
 
 -- | Runs functional tests.
@@ -14,5 +14,5 @@ main =
   Tasty.defaultMain $
     Tasty.testGroup
       "Functional Tests"
-      [ FsUtils.PathSize.tests
+      [ FsSize.PathSize.tests
       ]

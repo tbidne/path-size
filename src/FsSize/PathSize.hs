@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 
 -- | @since 0.1
-module FsUtils.PathSize
+module FsSize.PathSize
   ( -- * Types
     Path (..),
     PathSizeData (..),
@@ -22,15 +22,15 @@ import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
-import FsUtils.Control.Exception (withCallStack)
-import FsUtils.Data.PathSizeConfig (PathSizeConfig (..), Strategy (..))
-import FsUtils.Data.PathSizeData
+import FsSize.Control.Exception (withCallStack)
+import FsSize.Data.PathSizeConfig (PathSizeConfig (..), Strategy (..))
+import FsSize.Data.PathSizeData
   ( Path (..),
     PathSizeData (..),
     PathTree (..),
     SubPathSizeData,
   )
-import FsUtils.Data.PathSizeData qualified as PathSizeData
+import FsSize.Data.PathSizeData qualified as PathSizeData
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))
