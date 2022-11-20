@@ -123,14 +123,26 @@ pathDataRecursive traverseFn cfg =
       | cfg ^. #filesOnly = \_ _ -> 0
       | otherwise = (+)
 
+    -- NOTE: If a maxDepth is given, we do not include paths that exceed
+    -- the depth. Note that they are still included in size calculation for
+    -- parent directories.
+    depthExceeded = case cfg ^. #maxDepth of
+      Nothing -> const False
+      Just d -> (>= d)
+
     goSkipHidden :: HasCallStack => FilePath -> IO PathTree
-    goSkipHidden = go hidden
+    goSkipHidden = go hidden 0
 
     goHidden :: HasCallStack => FilePath -> IO PathTree
-    goHidden = go (const False)
+    goHidden = go (const False) 0
 
-    go :: HasCallStack => (FilePath -> Bool) -> FilePath -> IO PathTree
-    go skipHidden path =
+    go ::
+      HasCallStack =>
+      (FilePath -> Bool) ->
+      Natural ->
+      FilePath ->
+      IO PathTree
+    go skipHidden !depth path =
       if ((\p -> skipHidden p || HSet.member p excluded) . FP.takeFileName) path
         then pure Nil
         else
@@ -163,13 +175,16 @@ pathDataRecursive traverseFn cfg =
                   files <- withCallStack $ Dir.listDirectory path
                   subTrees <-
                     traverseFn
-                      (go skipHidden . (path </>))
+                      (go skipHidden (depth + 1) . (path </>))
                       (Seq.fromList files)
                   -- add the cost of the directory itself.
                   dirSize <- withCallStack $ Dir.getFileSize path
                   let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
                       !numDirectories = subDirs + 1
                       !size = dirSizeFn (fromIntegral dirSize) subSize
+                      subTrees'
+                        | depthExceeded depth = []
+                        | otherwise = subTrees
                   pure $
                     Node
                       MkPathSizeData
@@ -178,7 +193,7 @@ pathDataRecursive traverseFn cfg =
                           numFiles,
                           numDirectories
                         }
-                      subTrees
+                      subTrees'
                 else
                   withCallStack $
                     Dir.getFileSize path <&> \size ->

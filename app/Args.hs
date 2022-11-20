@@ -116,6 +116,7 @@ pathSizeConfigParser =
     <*> skipPathsParser
     <*> allParser
     <*> filesOnlyParser
+    <*> depthParser
     <*> strategyParser
 
 numPathsParser :: Parser (Maybe Natural)
@@ -135,9 +136,7 @@ numPathsParser =
         Just n -> pure n
         Nothing -> fail $ "Could not read natural: " <> s
     helpTxt =
-      mconcat
-        [ "The number of paths to display. If unspecified, returns all paths."
-        ]
+      "The number of paths to display. If unspecified, returns all paths."
 
 skipPathsParser :: Parser (HashSet FilePath)
 skipPathsParser =
@@ -184,6 +183,30 @@ filesOnlyParser =
       mconcat
         [ "If enabled, only sizes fore files are calculated. All directories ",
           "are given size 0."
+        ]
+
+depthParser :: Parser (Maybe Natural)
+depthParser =
+  OA.optional
+    $ OA.option
+      readNat
+    $ mconcat
+      [ OA.long "depth",
+        OA.short 'd',
+        OA.metavar "NAT",
+        OA.help helpTxt
+      ]
+  where
+    readNat =
+      OA.str >>= \s -> case TR.readMaybe s of
+        Just n -> pure n
+        Nothing -> fail $ "Could not read natural: " <> s
+    helpTxt =
+      mconcat
+        [ "The depth limit of our search. Note that we still need to fully ",
+          "traverse the file system to get accurate data; this argument ",
+          "merely affects what is reported i.e. any depths > d are ",
+          "implicitly included in parent directories, but not directly."
         ]
 
 strategyParser :: Parser Strategy

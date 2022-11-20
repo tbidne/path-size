@@ -15,10 +15,12 @@ import FsUtils.Data.PathSizeConfig
   ( PathSizeConfig
       ( exclude,
         filesOnly,
+        maxDepth,
         searchAll
       ),
   )
 import FsUtils.PathSize qualified as PathSize
+import GHC.Num.Natural (Natural)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
@@ -32,7 +34,10 @@ tests =
     [ calculatesSizes,
       calculatesAll,
       calculatesExcluded,
-      calculatesFilesOnly
+      calculatesFilesOnly,
+      calculatesDepthN 0,
+      calculatesDepthN 1,
+      calculatesDepthN 2
     ]
 
 calculatesSizes :: TestTree
@@ -77,6 +82,17 @@ calculatesFilesOnly = goldenVsStringDiff desc diff gpath $ do
     cfg = mempty {filesOnly = True}
     desc = "Includes only files"
     gpath = goldenPath </> "files-only.golden"
+
+calculatesDepthN :: Natural -> TestTree
+calculatesDepthN n = goldenVsStringDiff desc diff gpath $ do
+  testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
+  result <- PathSize.display <$> PathSize.findLargestPaths cfg testDir
+  currDir <- Dir.getCurrentDirectory
+  pure $ replaceDir currDir result
+  where
+    cfg = mempty {maxDepth = Just n}
+    desc = "Calculates depth = " <> show n
+    gpath = goldenPath </> "depth-" <> show n <> ".golden"
 
 goldenPath :: FilePath
 goldenPath = "test/functional/Functional/FsUtils/"

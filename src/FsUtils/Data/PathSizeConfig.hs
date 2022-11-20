@@ -45,14 +45,6 @@ instance Semigroup Strategy where
 instance Monoid Strategy where
   mempty = Sync
 
--- TODO: Configuration options to consider:
---
--- 1. Depth: limit the depth for the data we hold. That is, past some d, do not
---    store any paths lower than d. Note we still have to recurse to the end
---    to get accurate sizes. We can experiment with a utility like du,
---    to see if there is any benefit to delegating that final calculation to
---    to du rather than doing it ourselves directly.
-
 -- | @since 0.1
 data PathSizeConfig = MkPathSizeConfig
   { -- | The number of paths to return.
@@ -71,6 +63,11 @@ data PathSizeConfig = MkPathSizeConfig
     --
     -- @since 0.1
     filesOnly :: !Bool,
+    -- | The depth limit of our search. Note that we still need to fully
+    -- traverse the file system to get accurate data; this argument merely
+    -- affects what is reported i.e. any depths > d are implicitly included
+    -- in parent directories, but not directly.
+    maxDepth :: !(Maybe Natural),
     -- | The search strategy.
     --
     -- @since 0.1
@@ -88,14 +85,15 @@ makeFieldLabelsNoPrefix ''PathSizeConfig
 
 -- | @since 0.1
 instance Semigroup PathSizeConfig where
-  MkPathSizeConfig a b c d e <> MkPathSizeConfig a' b' c' d' e' =
+  MkPathSizeConfig a b c d e f <> MkPathSizeConfig a' b' c' d' e' f' =
     MkPathSizeConfig
       (a <|> a')
       (HSet.union b b')
       (c || c')
       (d || d')
-      (e <> e')
+      (e <|> e')
+      (f <> f')
 
 -- | @since 0.1
 instance Monoid PathSizeConfig where
-  mempty = MkPathSizeConfig empty HSet.empty False False mempty
+  mempty = MkPathSizeConfig empty HSet.empty False False empty mempty
