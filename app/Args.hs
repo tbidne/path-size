@@ -102,14 +102,14 @@ version = OA.infoOption txt (OA.long "version")
     txt =
       L.intercalate
         "\n"
-        [ "SafeRm",
+        [ "FsSize",
           versNum,
           "Revision: " <> $(GitRev.gitHash),
           "Date: " <> $(GitRev.gitCommitDate)
         ]
 
 versNum :: String
-versNum = "Version: " <> $$(PV.packageVersionStringTH "safe-rm.cabal")
+versNum = "Version: " <> $$(PV.packageVersionStringTH "fs-size.cabal")
 
 pathSizeConfigParser :: Parser PathSizeConfig
 pathSizeConfigParser =
@@ -123,22 +123,27 @@ pathSizeConfigParser =
 
 numPathsParser :: Parser (Maybe Natural)
 numPathsParser =
-  OA.optional
-    $ OA.option
-      readNat
+  OA.option
+    readNat
     $ mconcat
-      [ OA.long "num-paths",
+      [ OA.value (Just 10),
+        OA.long "num-paths",
         OA.short 'n',
-        OA.metavar "NAT",
+        OA.metavar "(NAT | all)",
         OA.help helpTxt
       ]
   where
     readNat =
-      OA.str >>= \s -> case TR.readMaybe s of
-        Just n -> pure n
-        Nothing -> fail $ "Could not read natural: " <> s
+      OA.str >>= \case
+        "all" -> pure Nothing
+        s -> case TR.readMaybe s of
+          Just n -> pure $ Just n
+          Nothing -> fail $ "Expected 'all' or a natural, received: " <> s
     helpTxt =
-      "The number of paths to display. If unspecified, returns all paths."
+      mconcat
+        [ "The number of paths to display. If unspecified, defaults to 10.",
+          "The option 'all' returns everything."
+        ]
 
 skipPathsParser :: Parser (HashSet FilePath)
 skipPathsParser =
