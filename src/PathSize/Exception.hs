@@ -1,9 +1,9 @@
 {-# LANGUAGE ImplicitParams #-}
 
--- | Provides exception types/functions for usage with fs-size.
+-- | Provides exception types/functions for usage with path-size.
 --
 -- @since 0.1
-module FsSize.Control.Exception
+module PathSize.Exception
   ( -- * Functions
     withCallStack,
     throwCallStack,

@@ -1,7 +1,7 @@
 -- | Tests for logging.
 --
 -- @since 0.1
-module Functional.FsSize.PathSize
+module Functional.PathSize
   ( tests,
   )
 where
@@ -11,16 +11,16 @@ import Data.HashSet qualified as HSet
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Encoding qualified as TLEnc
-import FsSize.Data.PathSizeConfig
-  ( PathSizeConfig
+import GHC.Num.Natural (Natural)
+import PathSize qualified
+import PathSize.Data
+  ( Config
       ( exclude,
         filesOnly,
         maxDepth,
         searchAll
       ),
   )
-import FsSize.PathSize qualified as PathSize
-import GHC.Num.Natural (Natural)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
@@ -95,7 +95,7 @@ calculatesDepthN n = goldenVsStringDiff desc diff gpath $ do
     gpath = goldenPath </> "depth-" <> show n <> ".golden"
 
 goldenPath :: FilePath
-goldenPath = "test/functional/Functional/FsSize/"
+goldenPath = "test/functional/Functional/"
 
 diff :: FilePath -> FilePath -> [FilePath]
 diff ref new = ["diff", "-u", ref, new]

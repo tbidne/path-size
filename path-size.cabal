@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               fs-size
+name:               path-size
 version:            0.1
 license:            MIT
 license-file:       LICENSE
@@ -7,8 +7,8 @@ tested-with:        GHC ==9.2.4 || ==9.4.2
 copyright:          2022 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
-homepage:           https://github.com/tbidne/fs-size/
-bug-reports:        https://github.com/tbidne/fs-size/issues
+homepage:           https://github.com/tbidne/path-size/
+bug-reports:        https://github.com/tbidne/path-size/issues
 synopsis:           Utility for reporting file-system sizes.
 description:        Utility for reporting file-system sizes.
 category:           CLI
@@ -18,7 +18,7 @@ extra-source-files:
 
 source-repository head
   type:     git
-  location: https://github.com/tbidne/fs-size
+  location: https://github.com/tbidne/path-size
 
 common common-exts
   default-extensions:
@@ -37,10 +37,9 @@ common common-exts
 library
   import:           common-exts
   exposed-modules:
-    FsSize.Control.Exception
-    FsSize.Data.PathSizeConfig
-    FsSize.Data.PathSizeData
-    FsSize.PathSize
+    PathSize
+    PathSize.Data
+    PathSize.Exception
 
   build-depends:
     , base                  >=4.14.0.0  && <4.18
@@ -59,13 +58,13 @@ library
   hs-source-dirs:   src
   default-language: GHC2021
 
-executable fs-size
+executable path-size
   import:           common-exts
   main-is:          Main.hs
   other-modules:    Args
   build-depends:
     , base
-    , fs-size
+    , path-size
     , gitrev                >=1.2.0    && <1.4
     , optics-core
     , optics-th
@@ -83,13 +82,13 @@ test-suite functional
   import:           common-exts
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
-  other-modules:    Functional.FsSize.PathSize
+  other-modules:    Functional.PathSize
   build-depends:
     , base
     , bytestring
     , directory
     , filepath
-    , fs-size
+    , path-size
     , tasty                 >=1.1.0.3  && <1.5
     , tasty-golden          ^>=2.3.1.1
     , text
@@ -109,7 +108,7 @@ benchmark benchmarks
     , directory
     , env-guard   ^>=0.2
     , filepath
-    , fs-size
+    , path-size
     , unliftio
 
   hs-source-dirs:   benchmarks

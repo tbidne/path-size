@@ -1,4 +1,4 @@
-# Revision history for fs-size
+# Revision history for path-size
 
 ## 0.1 -- YYYY-mm-dd
 

@@ -5,10 +5,10 @@ module Main (main) where
 
 import Args (getArgs)
 import Data.Text qualified as T
-import FsSize.PathSize (display, findLargestPaths)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))
+import PathSize (display, findLargestPaths)
 import UnliftIO.Exception (displayException)
 
 -- | Executable entry-point.
@@ -20,6 +20,6 @@ main = do
 
   args <- getArgs
 
-  result <- findLargestPaths (args ^. #pathSizeConfig) (args ^. #path)
+  result <- findLargestPaths (args ^. #config) (args ^. #path)
 
   putStrLn $ T.unpack $ display result

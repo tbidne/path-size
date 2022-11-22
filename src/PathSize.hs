@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedLists #-}
 
 -- | @since 0.1
-module FsSize.PathSize
+module PathSize
   ( -- * Types
-    Path (..),
-    PathSizeData (..),
-    SubPathSizeData,
+    PathType (..),
+    PathData (..),
+    SubPathData,
 
     -- ** Configuration
-    PathSizeConfig (..),
+    Config (..),
     Strategy (..),
 
     -- * High level functions
@@ -22,18 +22,19 @@ import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
-import FsSize.Control.Exception (withCallStack)
-import FsSize.Data.PathSizeConfig (PathSizeConfig (..), Strategy (..))
-import FsSize.Data.PathSizeData
-  ( Path (..),
-    PathSizeData (..),
-    PathTree (..),
-    SubPathSizeData,
-  )
-import FsSize.Data.PathSizeData qualified as PathSizeData
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))
+import PathSize.Data
+  ( Config (..),
+    PathData (..),
+    PathTree (..),
+    PathType (..),
+    Strategy (..),
+    SubPathData,
+  )
+import PathSize.Data qualified as PathSizeData
+import PathSize.Exception (withCallStack)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import System.FilePath qualified as FP
@@ -47,10 +48,10 @@ import UnliftIO.Exception (Exception (displayException), catchAny)
 findLargestPaths ::
   HasCallStack =>
   -- | Configuration.
-  PathSizeConfig ->
+  Config ->
   -- | Path to search.
   FilePath ->
-  IO SubPathSizeData
+  IO SubPathData
 findLargestPaths cfg path =
   f cfg path
     <&> \pathTree -> takeLargestN pathTree
@@ -61,7 +62,7 @@ findLargestPaths cfg path =
       AsyncPooled -> pathDataRecursiveAsyncPooled
     takeLargestN =
       maybe
-        PathSizeData.mkSubPathSizeData
+        PathSizeData.mkSubPathData
         PathSizeData.takeLargestN
         (cfg ^. #numPaths)
 
@@ -71,7 +72,7 @@ findLargestPaths cfg path =
 -- @since 0.1
 pathDataRecursiveSync ::
   HasCallStack =>
-  PathSizeConfig ->
+  Config ->
   FilePath ->
   IO PathTree
 pathDataRecursiveSync = pathDataRecursive traverse
@@ -82,7 +83,7 @@ pathDataRecursiveSync = pathDataRecursive traverse
 -- @since 0.1
 pathDataRecursiveAsync ::
   HasCallStack =>
-  PathSizeConfig ->
+  Config ->
   FilePath ->
   IO PathTree
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
@@ -92,7 +93,7 @@ pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 -- @since 0.1
 pathDataRecursiveAsyncPooled ::
   HasCallStack =>
-  PathSizeConfig ->
+  Config ->
   FilePath ->
   IO PathTree
 pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
@@ -106,7 +107,7 @@ pathDataRecursive ::
   -- | Traversal function.
   (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
   -- | The config.
-  PathSizeConfig ->
+  Config ->
   -- | Start path.
   FilePath ->
   IO PathTree
@@ -196,7 +197,7 @@ pathDataRecursive traverseFn cfg =
                         | otherwise = subTrees
                   pure $
                     Node
-                      MkPathSizeData
+                      MkPathData
                         { path = Directory path,
                           size,
                           numFiles,
@@ -210,7 +211,7 @@ pathDataRecursive traverseFn cfg =
     sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
 
     getSum :: PathTree -> (Natural, Natural, Natural)
-    getSum (Node (MkPathSizeData {size, numFiles, numDirectories}) _) =
+    getSum (Node (MkPathData {size, numFiles, numDirectories}) _) =
       (size, numFiles, numDirectories)
     getSum Nil = (0, 0, 0)
 
@@ -225,7 +226,7 @@ pathDataRecursive traverseFn cfg =
 calcSymLink :: FilePath -> IO PathTree
 calcSymLink path =
   getSymLinkSize path <&> \size ->
-    Node (MkPathSizeData (File path) size 1 0) []
+    Node (MkPathData (File path) size 1 0) []
   where
     getSymLinkSize :: FilePath -> IO Natural
     getSymLinkSize =
@@ -235,7 +236,7 @@ calcFile :: FilePath -> IO PathTree
 calcFile path =
   Dir.getFileSize path <&> \size ->
     Node
-      MkPathSizeData
+      MkPathData
         { path = File path,
           size = fromIntegral size,
           numFiles = 1,

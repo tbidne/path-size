@@ -16,10 +16,6 @@ import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
-import FsSize.Data.PathSizeConfig
-  ( PathSizeConfig (MkPathSizeConfig),
-    Strategy (..),
-  )
 import GHC.Natural (Natural)
 import Optics.TH (makeFieldLabelsNoPrefix)
 import Options.Applicative
@@ -39,13 +35,17 @@ import Options.Applicative
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Types (ArgPolicy (Intersperse))
+import PathSize.Data
+  ( Config (MkConfig),
+    Strategy (..),
+  )
 import Text.Read qualified as TR
 
 -- | CLI args.
 --
 -- @since 0.1
 data Args = MkArgs
-  { pathSizeConfig :: PathSizeConfig,
+  { config :: Config,
     path :: FilePath
   }
   deriving stock
@@ -78,12 +78,12 @@ parserInfoArgs =
   where
     headerTxt =
       Just
-        "fs-size: A utility for reporting the recursive size of a directory."
+        "path-size: A utility for reporting the recursive size of a directory."
     footerTxt = Just $ fromString versNum
     desc =
       Just $
         mconcat
-          [ "\nfs-size allows one to find large paths on the file-system. ",
+          [ "\npath-size allows one to find large paths on the file-system. ",
             "In particular, the command will recursively associate a given ",
             "path and all of its subpaths to their respective sizes."
           ]
@@ -91,7 +91,7 @@ parserInfoArgs =
 argsParser :: Parser Args
 argsParser =
   MkArgs
-    <$> pathSizeConfigParser
+    <$> configParser
     <*> pathParser
     <**> OA.helper
     <**> version
@@ -109,11 +109,11 @@ version = OA.infoOption txt (OA.long "version")
         ]
 
 versNum :: String
-versNum = "Version: " <> $$(PV.packageVersionStringTH "fs-size.cabal")
+versNum = "Version: " <> $$(PV.packageVersionStringTH "path-size.cabal")
 
-pathSizeConfigParser :: Parser PathSizeConfig
-pathSizeConfigParser =
-  MkPathSizeConfig
+configParser :: Parser Config
+configParser =
+  MkConfig
     <$> numPathsParser
     <*> skipPathsParser
     <*> allParser

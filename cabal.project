@@ -1,6 +1,6 @@
 packages: .
 
-package fs-size
+package path-size
   ghc-options:
     -Wall -Wcompat -Werror -Widentities
     -Wincomplete-record-updates -Wincomplete-uni-patterns

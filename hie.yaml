@@ -1,16 +1,16 @@
 cradle:
   cabal:
     - path: "./src"
-      component: "lib:fs-size"
+      component: "lib:path-size"
 
     - path: "./app/Main.hs"
-      component: "fs-size:exe:fs-size"
+      component: "path-size:exe:path-size"
 
     - path: "./app/Args.hs"
-      component: "fs-size:exe:fs-size"
+      component: "path-size:exe:path-size"
 
     - path: "./test/functional"
-      component: "fs-size:test:functional"
+      component: "path-size:test:functional"
 
     - path: "./benchmarks/Main.hs"
-      component: "fs-size:bench:benchmarks"
+      component: "path-size:bench:benchmarks"

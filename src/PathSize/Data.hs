@@ -2,23 +2,28 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
--- | Supplies the 'PathSizeData' data type and related functions.
+-- | Supplies types and related functions.
 --
 -- @since 0.1
-module FsSize.Data.PathSizeData
+module PathSize.Data
   ( -- * Base types
-    Path (..),
-    PathSizeData (..),
+    PathType (..),
+    PathData (..),
 
-    -- * Aggregate paths
+    -- ** Aggregate paths
     PathTree (..),
     takeLargestN,
-    SubPathSizeData,
-    mkSubPathSizeData,
+    SubPathData,
+    mkSubPathData,
     display,
+
+    -- * Config
+    Config (..),
+    Strategy (..),
   )
 where
 
+import Control.Applicative (Alternative (empty, (<|>)))
 import Control.DeepSeq (NFData)
 import Data.Bytes
   ( Bytes (MkBytes),
@@ -27,6 +32,8 @@ import Data.Bytes
     Size (B),
   )
 import Data.Bytes qualified as Bytes
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HSet
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq, (<|))
 import Data.Sequence qualified as Seq
@@ -38,10 +45,10 @@ import GHC.Natural (Natural)
 import Optics.Core (view)
 import Optics.TH (makeFieldLabelsNoPrefix)
 
--- | Path types.
+-- | Path delineated by type.
 
 --- @since 0.1
-data Path
+data PathType
   = -- | @since 0.1
     Directory !FilePath
   | -- | @since 0.1
@@ -59,15 +66,15 @@ data Path
       NFData
     )
 
-unPath :: Path -> FilePath
+unPath :: PathType -> FilePath
 unPath (Directory fp) = fp
 unPath (File fp) = fp
 
 -- | Associates a 'Path' to its total (recursive) size in the file-system.
 --
 -- @since 0.1
-data PathSizeData = MkPathSizeData
-  { path :: !Path,
+data PathData = MkPathData
+  { path :: !PathType,
     size :: !Natural,
     numFiles :: !Natural,
     numDirectories :: !Natural
@@ -86,7 +93,7 @@ data PathSizeData = MkPathSizeData
     )
 
 -- | @since 0.1
-makeFieldLabelsNoPrefix ''PathSizeData
+makeFieldLabelsNoPrefix ''PathData
 
 -- | Given a path, represents the directory tree, with each subpath
 -- associated to its size. This structure is essentially a rose tree.
@@ -94,7 +101,7 @@ makeFieldLabelsNoPrefix ''PathSizeData
 -- @since 0.1
 data PathTree
   = Nil
-  | Node !PathSizeData !(Seq PathTree)
+  | Node !PathData !(Seq PathTree)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -108,14 +115,14 @@ data PathTree
       NFData
     )
 
-toSeq :: PathTree -> Seq PathSizeData
+toSeq :: PathTree -> Seq PathData
 toSeq (Node x subTrees) = x <| (subTrees >>= toSeq)
 toSeq Nil = []
 
 -- | A flattened and sorted representation of 'PathTree'.
 --
 -- @since 0.1
-newtype SubPathSizeData = UnsafeSubPathSizeData (Seq PathSizeData)
+newtype SubPathData = UnsafeSubPathData (Seq PathData)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -132,24 +139,24 @@ newtype SubPathSizeData = UnsafeSubPathSizeData (Seq PathSizeData)
 -- | Creates a 'SubPathSizeData' from a 'PathTree'.
 --
 -- @since 0.1
-mkSubPathSizeData :: PathTree -> SubPathSizeData
-mkSubPathSizeData = UnsafeSubPathSizeData . sort . toSeq
+mkSubPathData :: PathTree -> SubPathData
+mkSubPathData = UnsafeSubPathData . sort . toSeq
 
-unSubPathSizeData :: SubPathSizeData -> Seq PathSizeData
-unSubPathSizeData (UnsafeSubPathSizeData xs) = xs
+unSubPathData :: SubPathData -> Seq PathData
+unSubPathData (UnsafeSubPathData xs) = xs
 
 -- | Sorts the path size.
 --
 -- @since 0.1
-sort :: Seq PathSizeData -> Seq PathSizeData
+sort :: Seq PathData -> Seq PathData
 sort = Seq.sortOn (Down . view #size)
 
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: Natural -> PathTree -> SubPathSizeData
+takeLargestN :: Natural -> PathTree -> SubPathData
 takeLargestN n =
-  UnsafeSubPathSizeData
+  UnsafeSubPathData
     . Seq.take (fromIntegral n)
     . sort
     . toSeq
@@ -157,12 +164,12 @@ takeLargestN n =
 -- | Displays the data.
 --
 -- @since 0.1
-display :: SubPathSizeData -> Text
-display = showList' . unSubPathSizeData
+display :: SubPathData -> Text
+display = showList' . unSubPathData
   where
-    showList' :: Seq PathSizeData -> Text
+    showList' :: Seq PathData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldr go ""
-    go (MkPathSizeData {path, size, numFiles, numDirectories}) acc =
+    go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
         [ TLB.fromString $ unPath path,
           ": ",
@@ -182,3 +189,85 @@ display = showList' . unSubPathSizeData
         . normalize
         . MkBytes @B
         . fromIntegral @_ @Double
+
+-- | Describes the path search strategy.
+--
+-- @since 0.1
+data Strategy
+  = -- | @since 0.1
+    Sync
+  | -- | @since 0.1
+    Async
+  | -- | @since 0.1
+    AsyncPooled
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Show
+    )
+
+-- | @since 0.1
+instance Semigroup Strategy where
+  AsyncPooled <> _ = AsyncPooled
+  _ <> AsyncPooled = AsyncPooled
+  Async <> _ = Async
+  _ <> Async = Async
+  Sync <> Sync = Sync
+
+-- | @since 0.1
+instance Monoid Strategy where
+  mempty = Sync
+
+-- | @since 0.1
+data Config = MkConfig
+  { -- | The number of paths to return.
+    --
+    -- @since 0.1
+    numPaths :: !(Maybe Natural),
+    -- | Paths to skip.
+    --
+    -- @since 0.1
+    exclude :: !(HashSet FilePath),
+    -- | Whether to search hidden files/directories.
+    --
+    -- @since 0.1
+    searchAll :: !Bool,
+    -- | Whether to limit our search to just files.
+    --
+    -- @since 0.1
+    filesOnly :: !Bool,
+    -- | The depth limit of our search. Note that we still need to fully
+    -- traverse the file system to get accurate data; this argument merely
+    -- affects what is reported i.e. any depths > d are implicitly included
+    -- in parent directories, but not directly.
+    maxDepth :: !(Maybe Natural),
+    -- | The search strategy.
+    --
+    -- @since 0.1
+    strategy :: !Strategy
+  }
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Show
+    )
+
+-- | @since 0.1
+makeFieldLabelsNoPrefix ''Config
+
+-- | @since 0.1
+instance Semigroup Config where
+  MkConfig a b c d e f <> MkConfig a' b' c' d' e' f' =
+    MkConfig
+      (a <|> a')
+      (HSet.union b b')
+      (c || c')
+      (d || d')
+      (e <|> e')
+      (f <> f')
+
+-- | @since 0.1
+instance Monoid Config where
+  mempty = MkConfig empty HSet.empty False False empty mempty

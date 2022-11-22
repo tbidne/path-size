@@ -1,5 +1,5 @@
 {
-  description = "A utility for reporting file-system sizes.";
+  description = "A utility for reporting path sizes.";
   inputs = {
 
     # nix
@@ -62,7 +62,7 @@
       mkPkg = returnShellEnv: withDevTools:
         compiler.developPackage {
           inherit returnShellEnv;
-          name = "fs-size";
+          name = "path-size";
           root = ./.;
           modifier = drv:
             pkgs.haskell.lib.addBuildTools drv
