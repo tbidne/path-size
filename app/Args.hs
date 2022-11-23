@@ -224,7 +224,7 @@ strategyParser =
       [ OA.value Async,
         OA.long "strategy",
         OA.short 's',
-        OA.metavar "[async|sync|pool]",
+        OA.metavar "(async|sync|pool)",
         OA.help helpTxt
       ]
   where
