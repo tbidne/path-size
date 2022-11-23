@@ -27,6 +27,7 @@ common common-exts
     DeriveAnyClass
     DerivingStrategies
     DerivingVia
+    DuplicateRecordFields
     LambdaCase
     NamedFieldPuns
     OverloadedLabels

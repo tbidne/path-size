@@ -3,7 +3,7 @@
 -- @since 0.1
 module Main (main) where
 
-import Args (getArgs)
+import Args (getArgs, argsToConfig)
 import Data.Text qualified as T
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
@@ -19,8 +19,8 @@ main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
 
   args <- getArgs
-  let config = args ^. #config
+  let config = argsToConfig args
 
   result <- findLargestPaths config (args ^. #path)
 
-  putStrLn $ T.unpack $ display (config ^. #reverseSort) result
+  putStrLn $ T.unpack $ display (args ^. #reverseSort) result

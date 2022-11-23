@@ -220,10 +220,6 @@ data Config = MkConfig
     --
     -- @since 0.1
     numPaths :: !(Maybe Natural),
-    -- | If true, prints paths in ascending order.
-    --
-    -- @since 0.1
-    reverseSort :: !Bool,
     -- | The search strategy.
     --
     -- @since 0.1
@@ -248,7 +244,6 @@ instance Semigroup Config where
         exclude = merge HSet.union #exclude,
         filesOnly = mergeOr #filesOnly,
         numPaths = mergeAlt #numPaths,
-        reverseSort = mergeOr #reverseSort,
         strategy = merge (<>) #strategy
       }
     where
@@ -269,6 +264,5 @@ instance Monoid Config where
         exclude = HSet.empty,
         filesOnly = False,
         numPaths = empty,
-        reverseSort = False,
         strategy = mempty
       }

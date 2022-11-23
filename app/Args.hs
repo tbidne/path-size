@@ -5,8 +5,9 @@
 --
 -- @since 0.1
 module Args
-  ( getArgs,
-    Args (..),
+  ( Args (..),
+    getArgs,
+    argsToConfig,
   )
 where
 
@@ -36,16 +37,23 @@ import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Types (ArgPolicy (Intersperse))
 import PathSize.Data
-  ( Config (MkConfig),
+  ( Config (..),
     Strategy (..),
   )
 import Text.Read qualified as TR
+import Optics.Core ((^.))
 
 -- | CLI args.
 --
 -- @since 0.1
 data Args = MkArgs
-  { config :: Config,
+  { searchAll :: !Bool,
+    maxDepth :: !(Maybe Natural),
+    exclude :: !(HashSet FilePath),
+    filesOnly :: !Bool,
+    numPaths :: !(Maybe Natural),
+    reverseSort :: !Bool,
+    strategy :: !Strategy,
     path :: FilePath
   }
   deriving stock
@@ -57,6 +65,17 @@ data Args = MkArgs
 
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''Args
+
+argsToConfig :: Args -> Config
+argsToConfig args =
+  MkConfig
+    { searchAll = args ^. #searchAll,
+      maxDepth = args ^. #maxDepth,
+      exclude = args ^. #exclude,
+      filesOnly = args ^. #filesOnly,
+      numPaths = args ^. #numPaths,
+      strategy = args ^. #strategy
+    }
 
 -- | Retrieves CLI args.
 --
@@ -91,7 +110,13 @@ parserInfoArgs =
 argsParser :: Parser Args
 argsParser =
   MkArgs
-    <$> configParser
+    <$> allParser
+    <*> depthParser
+    <*> excludeParser
+    <*> filesOnlyParser
+    <*> numPathsParser
+    <*> reverseSortParser
+    <*> strategyParser
     <*> pathParser
     <**> OA.helper
     <**> version
@@ -110,17 +135,6 @@ version = OA.infoOption txt (OA.long "version")
 
 versNum :: String
 versNum = "Version: " <> $$(PV.packageVersionStringTH "path-size.cabal")
-
-configParser :: Parser Config
-configParser =
-  MkConfig
-    <$> allParser
-    <*> depthParser
-    <*> excludeParser
-    <*> filesOnlyParser
-    <*> numPathsParser
-    <*> reverseSortParser
-    <*> strategyParser
 
 numPathsParser :: Parser (Maybe Natural)
 numPathsParser =
