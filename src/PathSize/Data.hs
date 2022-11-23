@@ -31,6 +31,7 @@ import Data.Bytes
     Size (B),
   )
 import Data.Bytes qualified as Bytes
+import Data.Foldable (Foldable (foldl'))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import Data.Ord (Down (Down))
@@ -138,11 +139,11 @@ takeLargestN n =
 -- | Displays the data.
 --
 -- @since 0.1
-display :: SubPathData -> Text
-display = showList' . unSubPathData
+display :: Bool -> SubPathData -> Text
+display revSort = showList' . unSubPathData
   where
     showList' :: Seq PathData -> Text
-    showList' = TL.toStrict . TLB.toLazyText . foldr go ""
+    showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
         [ TLB.fromString path,
@@ -163,6 +164,9 @@ display = showList' . unSubPathData
         . normalize
         . MkBytes @B
         . fromIntegral @_ @Double
+    foldSeq
+      | revSort = foldl' . flip
+      | otherwise = foldr
 
 -- | Describes the path search strategy.
 --
@@ -216,6 +220,10 @@ data Config = MkConfig
     --
     -- @since 0.1
     numPaths :: !(Maybe Natural),
+    -- | If true, prints paths in ascending order.
+    --
+    -- @since 0.1
+    reverseSort :: !Bool,
     -- | The search strategy.
     --
     -- @since 0.1
@@ -240,6 +248,7 @@ instance Semigroup Config where
         exclude = merge HSet.union #exclude,
         filesOnly = mergeOr #filesOnly,
         numPaths = mergeAlt #numPaths,
+        reverseSort = mergeOr #reverseSort,
         strategy = merge (<>) #strategy
       }
     where
@@ -260,5 +269,6 @@ instance Monoid Config where
         exclude = HSet.empty,
         filesOnly = False,
         numPaths = empty,
+        reverseSort = False,
         strategy = mempty
       }

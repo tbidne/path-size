@@ -32,6 +32,7 @@ tests =
   testGroup
     "FsSize.PathSize"
     [ calculatesSizes,
+      calculatesReverse,
       calculatesAll,
       calculatesExcluded,
       calculatesFilesOnly,
@@ -43,17 +44,27 @@ tests =
 calculatesSizes :: TestTree
 calculatesSizes = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display <$> PathSize.findLargestPaths mempty testDir
+  result <- PathSize.display False <$> PathSize.findLargestPaths mempty testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
     desc = "Calculates sizes correctly"
     gpath = goldenPath </> "sizes.golden"
 
+calculatesReverse :: TestTree
+calculatesReverse = goldenVsStringDiff desc diff gpath $ do
+  testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
+  result <- PathSize.display True <$> PathSize.findLargestPaths mempty testDir
+  currDir <- Dir.getCurrentDirectory
+  pure $ replaceDir currDir result
+  where
+    desc = "Calculates reverse correctly"
+    gpath = goldenPath </> "reverse.golden"
+
 calculatesAll :: TestTree
 calculatesAll = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -64,7 +75,7 @@ calculatesAll = goldenVsStringDiff desc diff gpath $ do
 calculatesExcluded :: TestTree
 calculatesExcluded = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -75,7 +86,7 @@ calculatesExcluded = goldenVsStringDiff desc diff gpath $ do
 calculatesFilesOnly :: TestTree
 calculatesFilesOnly = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -86,7 +97,7 @@ calculatesFilesOnly = goldenVsStringDiff desc diff gpath $ do
 calculatesDepthN :: Natural -> TestTree
 calculatesDepthN n = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where

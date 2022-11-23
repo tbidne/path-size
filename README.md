@@ -25,6 +25,7 @@
   - [Files only](#files-only)
   - [Depth](#depth)
   - [Number of paths](#number-of-paths)
+  - [Reverse](#reverse)
   - [Strategy](#strategy)
 - [Building](#building)
   - [Cabal](#cabal)
@@ -41,7 +42,7 @@
 path-size: A utility for reporting the recursive size of a directory.
 
 Usage: path-size [-a|--all] [-d|--depth NAT] [-e|--exclude PATHS...]
-                 [-f|--files-only] [-n|--num-paths (NAT | all)]
+                 [-f|--files-only] [-n|--num-paths (NAT | all)] [-r|--reverse]
                  [-s|--strategy (async|sync|pool)] PATH [--version]
 
 path-size allows one to find large paths on the file-system. In particular, the command will recursively associate a given path and all of its subpaths to their respective sizes.
@@ -62,6 +63,8 @@ Available options:
   -n,--num-paths (NAT | all)
                            The number of paths to display. If unspecified,
                            defaults to 10. The option 'all' returns everything.
+  -r,--reverse             If enabled, paths are sorted in reverse (ascending)
+                           order.
   -s,--strategy (async|sync|pool)
                            The search strategy is intended to improve
                            performance. The default is 'async', which uses
@@ -141,11 +144,23 @@ $ path-size -n all ./
 ...
 ```
 
+## Reverse
+
+**Arg:** `-r,--reverse`
+
+**Description:** If enabled, paths are sorted in reverse (ascending) order.
+
+**Examples:**
+
+```
+$ path-size -r ./
+```
+
 ## Strategy
 
 **Arg:** `-s,--strategy (async|sync|pool)`
 
-**Description:**  The search strategy is intended to improve performance. The default is `async`, which uses lightweight threads. The `sync` option is a sequential search and likely the slowest. Finally, `pool` uses an explicit thread pool for concurrency. This is potentially the fastest, though experimentation is recommended.
+**Description:** The search strategy is intended to improve performance. The default is `async`, which uses lightweight threads. The `sync` option is a sequential search and likely the slowest. Finally, `pool` uses an explicit thread pool for concurrency. This is potentially the fastest, though experimentation is recommended.
 
 **Examples:**
 

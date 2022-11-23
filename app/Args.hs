@@ -119,6 +119,7 @@ configParser =
     <*> excludeParser
     <*> filesOnlyParser
     <*> numPathsParser
+    <*> reverseSortParser
     <*> strategyParser
 
 numPathsParser :: Parser (Maybe Natural)
@@ -215,6 +216,17 @@ depthParser =
           "merely affects what is reported i.e. any depths > d are ",
           "implicitly included in parent directories, but not directly."
         ]
+
+reverseSortParser :: Parser Bool
+reverseSortParser =
+  OA.switch $
+    mconcat
+      [ OA.long "reverse",
+        OA.short 'r',
+        OA.help helpTxt
+      ]
+  where
+    helpTxt = "If enabled, paths are sorted in reverse (ascending) order."
 
 strategyParser :: Parser Strategy
 strategyParser =

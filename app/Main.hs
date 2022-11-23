@@ -19,7 +19,8 @@ main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
 
   args <- getArgs
+  let config = args ^. #config
 
-  result <- findLargestPaths (args ^. #config) (args ^. #path)
+  result <- findLargestPaths config (args ^. #path)
 
-  putStrLn $ T.unpack $ display result
+  putStrLn $ T.unpack $ display (config ^. #reverseSort) result
