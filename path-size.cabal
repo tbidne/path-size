@@ -64,12 +64,12 @@ executable path-size
   other-modules:    Args
   build-depends:
     , base
-    , path-size
     , gitrev                >=1.2.0    && <1.4
     , optics-core
     , optics-th
     , optparse-applicative  >=0.16.1.0 && <0.18
     , package-version       >=0.1.0.0  && <0.4
+    , path-size
     , text
     , unliftio
     , unordered-containers
