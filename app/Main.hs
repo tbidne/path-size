@@ -3,7 +3,7 @@
 -- @since 0.1
 module Main (main) where
 
-import Args (getArgs, argsToConfig)
+import Args (argsToConfig, getArgs)
 import Data.Text qualified as T
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)

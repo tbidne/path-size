@@ -18,6 +18,7 @@ import Data.String (IsString (fromString))
 import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
 import GHC.Natural (Natural)
+import Optics.Core ((^.))
 import Optics.TH (makeFieldLabelsNoPrefix)
 import Options.Applicative
   ( Parser,
@@ -41,7 +42,6 @@ import PathSize.Data
     Strategy (..),
   )
 import Text.Read qualified as TR
-import Optics.Core ((^.))
 
 -- | CLI args.
 --
