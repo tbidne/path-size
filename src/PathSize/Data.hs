@@ -41,7 +41,7 @@ import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
-import Optics.Core (view)
+import Optics.Core (Lens', view, (^.))
 import Optics.TH (makeFieldLabelsNoPrefix)
 
 -- | Associates a 'Path' to its total (recursive) size in the file-system.
@@ -233,15 +233,32 @@ makeFieldLabelsNoPrefix ''Config
 
 -- | @since 0.1
 instance Semigroup Config where
-  MkConfig a b c d e f <> MkConfig a' b' c' d' e' f' =
+  lhs <> rhs =
     MkConfig
-      (a <|> a')
-      (HSet.union b b')
-      (c || c')
-      (d || d')
-      (e <|> e')
-      (f <> f')
+      { numPaths = mergeAlt #numPaths,
+        exclude = merge HSet.union #exclude,
+        searchAll = mergeOr #searchAll,
+        filesOnly = mergeOr #filesOnly,
+        maxDepth = mergeAlt #maxDepth,
+        strategy = merge (<>) #strategy
+      }
+    where
+      mergeAlt = merge (<|>)
+      mergeOr = merge (||)
+      merge ::
+        (a -> a -> a) ->
+        Lens' Config a ->
+        a
+      merge f o = (lhs ^. o) `f` (rhs ^. o)
 
 -- | @since 0.1
 instance Monoid Config where
-  mempty = MkConfig empty HSet.empty False False empty mempty
+  mempty =
+    MkConfig
+      { numPaths = empty,
+        exclude = HSet.empty,
+        searchAll = False,
+        filesOnly = False,
+        maxDepth = empty,
+        strategy = mempty
+      }
