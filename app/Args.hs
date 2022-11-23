@@ -141,7 +141,7 @@ numPathsParser =
           Nothing -> fail $ "Expected 'all' or a natural, received: " <> s
     helpTxt =
       mconcat
-        [ "The number of paths to display. If unspecified, defaults to 10.",
+        [ "The number of paths to display. If unspecified, defaults to 10. ",
           "The option 'all' returns everything."
         ]
 
