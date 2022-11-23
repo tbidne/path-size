@@ -188,7 +188,7 @@ filesOnlyParser =
   where
     helpTxt =
       mconcat
-        [ "If enabled, only sizes fore files are calculated. All directories ",
+        [ "If enabled, only sizes for files are calculated. All directories ",
           "are given size 0."
         ]
 
@@ -221,10 +221,10 @@ strategyParser =
   OA.option
     readStrategy
     $ mconcat
-      [ OA.value Sync,
+      [ OA.value Async,
         OA.long "strategy",
         OA.short 's',
-        OA.metavar "[sync|async|pool]",
+        OA.metavar "[async|sync|pool]",
         OA.help helpTxt
       ]
   where
@@ -241,11 +241,11 @@ strategyParser =
               ]
     helpTxt =
       mconcat
-        [ "The search strategy intended to improve performance. The default ",
-          "is 'sync', as in, a sequential search. The 'async' option uses ",
-          "lightweight threads. Finally, 'pool' uses an explicit thread ",
-          "pool for concurrency. This is potentially the fastest, though ",
-          "experimentation is recommended."
+        [ "The search strategy is intended to improve performance. The ",
+          "default is 'async', which uses lightweight threads. The 'sync' ",
+          "option is a sequential search and likely the slowest. Finally, ",
+          "'pool' uses an explicit thread pool for concurrency. This is ",
+          "potentially the fastest, though experimentation is recommended."
         ]
 
 pathParser :: Parser FilePath
