@@ -195,27 +195,27 @@ instance Monoid Strategy where
 
 -- | @since 0.1
 data Config = MkConfig
-  { -- | The number of paths to return.
-    --
-    -- @since 0.1
-    numPaths :: !(Maybe Natural),
-    -- | Paths to skip.
-    --
-    -- @since 0.1
-    exclude :: !(HashSet FilePath),
-    -- | Whether to search hidden files/directories.
+  { -- | Whether to search hidden files/directories.
     --
     -- @since 0.1
     searchAll :: !Bool,
-    -- | Whether to limit our search to just files.
-    --
-    -- @since 0.1
-    filesOnly :: !Bool,
     -- | The depth limit of our search. Note that we still need to fully
     -- traverse the file system to get accurate data; this argument merely
     -- affects what is reported i.e. any depths > d are implicitly included
     -- in parent directories, but not directly.
     maxDepth :: !(Maybe Natural),
+    -- | Paths to skip.
+    --
+    -- @since 0.1
+    exclude :: !(HashSet FilePath),
+    -- | Whether to limit our search to just files.
+    --
+    -- @since 0.1
+    filesOnly :: !Bool,
+    -- | The number of paths to return.
+    --
+    -- @since 0.1
+    numPaths :: !(Maybe Natural),
     -- | The search strategy.
     --
     -- @since 0.1
@@ -235,11 +235,11 @@ makeFieldLabelsNoPrefix ''Config
 instance Semigroup Config where
   lhs <> rhs =
     MkConfig
-      { numPaths = mergeAlt #numPaths,
-        exclude = merge HSet.union #exclude,
-        searchAll = mergeOr #searchAll,
-        filesOnly = mergeOr #filesOnly,
+      { searchAll = mergeOr #searchAll,
         maxDepth = mergeAlt #maxDepth,
+        exclude = merge HSet.union #exclude,
+        filesOnly = mergeOr #filesOnly,
+        numPaths = mergeAlt #numPaths,
         strategy = merge (<>) #strategy
       }
     where
@@ -255,10 +255,10 @@ instance Semigroup Config where
 instance Monoid Config where
   mempty =
     MkConfig
-      { numPaths = empty,
-        exclude = HSet.empty,
-        searchAll = False,
-        filesOnly = False,
+      { searchAll = False,
         maxDepth = empty,
+        exclude = HSet.empty,
+        filesOnly = False,
+        numPaths = empty,
         strategy = mempty
       }

@@ -114,11 +114,11 @@ versNum = "Version: " <> $$(PV.packageVersionStringTH "path-size.cabal")
 configParser :: Parser Config
 configParser =
   MkConfig
-    <$> numPathsParser
-    <*> skipPathsParser
-    <*> allParser
-    <*> filesOnlyParser
+    <$> allParser
     <*> depthParser
+    <*> excludeParser
+    <*> filesOnlyParser
+    <*> numPathsParser
     <*> strategyParser
 
 numPathsParser :: Parser (Maybe Natural)
@@ -145,8 +145,8 @@ numPathsParser =
           "The option 'all' returns everything."
         ]
 
-skipPathsParser :: Parser (HashSet FilePath)
-skipPathsParser =
+excludeParser :: Parser (HashSet FilePath)
+excludeParser =
   HSet.fromList
     <$> OA.many
       ( OA.option

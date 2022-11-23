@@ -20,11 +20,11 @@
 - [Introduction](#introduction)
   - [Usage](#usage)
 - [Options](#options)
-  - [Number of paths](#number-of-paths)
-  - [Exclude](#exclude)
   - [All](#all)
+  - [Exclude](#exclude)
   - [Files only](#files-only)
   - [Depth](#depth)
+  - [Number of paths](#number-of-paths)
   - [Strategy](#strategy)
 - [Building](#building)
   - [Cabal](#cabal)
@@ -40,28 +40,28 @@
 ```
 path-size: A utility for reporting the recursive size of a directory.
 
-Usage: path-size [-n|--num-paths (NAT | all)] [-e|--exclude PATHS...] [-a|--all]
-                 [-f|--files-only] [-d|--depth NAT]
+Usage: path-size [-a|--all] [-d|--depth NAT] [-e|--exclude PATHS...]
+                 [-f|--files-only] [-n|--num-paths (NAT | all)]
                  [-s|--strategy (async|sync|pool)] PATH [--version]
 
 path-size allows one to find large paths on the file-system. In particular, the command will recursively associate a given path and all of its subpaths to their respective sizes.
 
 Available options:
-  -n,--num-paths (NAT | all)
-                           The number of paths to display. If unspecified,
-                           defaults to 10. The option 'all' returns everything.
-  -e,--exclude PATHS...    Paths to skip. These must match the desired
-                           directory/file name e.g. to skip /path/to/dir you
-                           would pass '-e dir'. Note that this will exclude
-                           _all_ subpaths that match 'dir'.
   -a,--all                 If enabled, searches hidden files/directories.
-  -f,--files-only          If enabled, only sizes for files are calculated. All
-                           directories are given size 0.
   -d,--depth NAT           The depth limit of our search. Note that we still
                            need to fully traverse the file system to get
                            accurate data; this argument merely affects what is
                            reported i.e. any depths > d are implicitly included
                            in parent directories, but not directly.
+  -e,--exclude PATHS...    Paths to skip. These must match the desired
+                           directory/file name e.g. to skip /path/to/dir you
+                           would pass '-e dir'. Note that this will exclude
+                           _all_ subpaths that match 'dir'.
+  -f,--files-only          If enabled, only sizes for files are calculated. All
+                           directories are given size 0.
+  -n,--num-paths (NAT | all)
+                           The number of paths to display. If unspecified,
+                           defaults to 10. The option 'all' returns everything.
   -s,--strategy (async|sync|pool)
                            The search strategy is intended to improve
                            performance. The default is 'async', which uses
@@ -77,20 +77,28 @@ Version: 0.1
 
 # Options
 
-## Number of paths
+## All
 
-**Arg:** `-n,--num-paths (NAT | all)`
+**Arg:** `-a, --all`
 
-**Description:** The number of paths to display. Defaults to 10. Can be a natural number of the string `all`, in which case all paths are returned.
+**Description:** If enabled, searches hidden files/directories.
 
 **Examples:**
 
 ```
-$ path-size -n 20 ./
-...
+$ path-size -a ./
+```
 
-$ path-size -n all ./
-...
+## Depth
+
+**Arg:** `-d,--depth NAT`
+
+**Description:** The depth limit of our search. Note that we still need to fully traverse the file system to get accurate data; this argument merely affects what is reported i.e. any depths > d are implicitly included in parent directories, but not directly.
+
+**Examples:**
+
+```
+$ path-size -d 1 ./
 ```
 
 ## Exclude
@@ -105,18 +113,6 @@ $ path-size -n all ./
 $ path-size -e bar -e foo ./
 ```
 
-## All
-
-**Arg:** `-a, --all`
-
-**Description:** If enabled, searches hidden files/directories.
-
-**Examples:**
-
-```
-$ path-size -a ./
-```
-
 ## Files only
 
 **Arg:** `-f,--files-only`
@@ -129,16 +125,20 @@ $ path-size -a ./
 $ path-size -f ./
 ```
 
-## Depth
+## Number of paths
 
-**Arg:** `-d,--depth NAT`
+**Arg:** `-n,--num-paths (NAT | all)`
 
-**Description:** The depth limit of our search. Note that we still need to fully traverse the file system to get accurate data; this argument merely affects what is reported i.e. any depths > d are implicitly included in parent directories, but not directly.
+**Description:** The number of paths to display. Defaults to 10. Can be a natural number of the string `all`, in which case all paths are returned.
 
 **Examples:**
 
 ```
-$ path-size -d 1 ./
+$ path-size -n 20 ./
+...
+
+$ path-size -n all ./
+...
 ```
 
 ## Strategy
