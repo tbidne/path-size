@@ -43,7 +43,7 @@ library
     PathSize.Exception
 
   build-depends:
-    , base                  >=4.14.0.0  && <4.18
+    , base                  >=4.16.0.0  && <4.18
     , byte-types            ^>=0.1
     , containers            ^>=0.6.3.1
     , deepseq               ^>=1.4.4.0
