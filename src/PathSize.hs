@@ -3,7 +3,6 @@
 -- | @since 0.1
 module PathSize
   ( -- * Types
-    PathType (..),
     PathData (..),
     SubPathData,
 
@@ -29,7 +28,6 @@ import PathSize.Data
   ( Config (..),
     PathData (..),
     PathTree (..),
-    PathType (..),
     Strategy (..),
     SubPathData,
   )
@@ -198,7 +196,7 @@ pathDataRecursive traverseFn cfg =
                   pure $
                     Node
                       MkPathData
-                        { path = Directory path,
+                        { path,
                           size,
                           numFiles,
                           numDirectories
@@ -226,7 +224,7 @@ pathDataRecursive traverseFn cfg =
 calcSymLink :: FilePath -> IO PathTree
 calcSymLink path =
   getSymLinkSize path <&> \size ->
-    Node (MkPathData (File path) size 1 0) []
+    Node (MkPathData path size 1 0) []
   where
     getSymLinkSize :: FilePath -> IO Natural
     getSymLinkSize =
@@ -237,7 +235,7 @@ calcFile path =
   Dir.getFileSize path <&> \size ->
     Node
       MkPathData
-        { path = File path,
+        { path = path,
           size = fromIntegral size,
           numFiles = 1,
           numDirectories = 0

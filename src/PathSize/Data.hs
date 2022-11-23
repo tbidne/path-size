@@ -7,7 +7,6 @@
 -- @since 0.1
 module PathSize.Data
   ( -- * Base types
-    PathType (..),
     PathData (..),
 
     -- ** Aggregate paths
@@ -45,36 +44,11 @@ import GHC.Natural (Natural)
 import Optics.Core (view)
 import Optics.TH (makeFieldLabelsNoPrefix)
 
--- | Path delineated by type.
-
---- @since 0.1
-data PathType
-  = -- | @since 0.1
-    Directory !FilePath
-  | -- | @since 0.1
-    File !FilePath
-  deriving stock
-    ( -- | @since 0.1
-      Eq,
-      -- | @since 0.1
-      Generic,
-      -- | @since 0.1
-      Show
-    )
-  deriving anyclass
-    ( -- | @since 0.1
-      NFData
-    )
-
-unPath :: PathType -> FilePath
-unPath (Directory fp) = fp
-unPath (File fp) = fp
-
 -- | Associates a 'Path' to its total (recursive) size in the file-system.
 --
 -- @since 0.1
 data PathData = MkPathData
-  { path :: !PathType,
+  { path :: !FilePath,
     size :: !Natural,
     numFiles :: !Natural,
     numDirectories :: !Natural
@@ -171,7 +145,7 @@ display = showList' . unSubPathData
     showList' = TL.toStrict . TLB.toLazyText . foldr go ""
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
-        [ TLB.fromString $ unPath path,
+        [ TLB.fromString path,
           ": ",
           TLB.fromLazyText $ TL.fromStrict $ formatSize size,
           ", Directories: ",
