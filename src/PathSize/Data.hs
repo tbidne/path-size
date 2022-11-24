@@ -45,7 +45,7 @@ import GHC.Natural (Natural)
 import Optics.Core (Lens', view, (^.))
 import Optics.TH (makeFieldLabelsNoPrefix)
 
--- | Associates a 'Path' to its total (recursive) size in the file-system.
+-- | Associates a path to its total (recursive) size in the file-system.
 --
 -- @since 0.1
 data PathData = MkPathData
@@ -111,7 +111,7 @@ newtype SubPathData = UnsafeSubPathData (Seq PathData)
       NFData
     )
 
--- | Creates a 'SubPathSizeData' from a 'PathTree'.
+-- | Creates a 'SubPathData' from a 'PathTree'.
 --
 -- @since 0.1
 mkSubPathData :: PathTree -> SubPathData
