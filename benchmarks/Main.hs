@@ -125,7 +125,7 @@ benchDisplayPathSize testDir =
     runDisplayPathSize desc =
       bench desc
         . nfIO
-        . fmap display
+        . fmap (display False)
         . findLargestPaths mempty
 
 setup :: HasCallStack => IO FilePath
