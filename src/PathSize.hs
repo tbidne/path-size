@@ -4,7 +4,7 @@
 module PathSize
   ( -- * Types
     PathData (..),
-    SubPathData,
+    SubPathData (MkSubPathData),
 
     -- ** Configuration
     Config (..),
@@ -29,7 +29,7 @@ import PathSize.Data
     PathData (..),
     PathTree (..),
     Strategy (..),
-    SubPathData,
+    SubPathData (MkSubPathData),
   )
 import PathSize.Data qualified as PathSizeData
 import PathSize.Exception (withCallStack)
@@ -149,9 +149,9 @@ pathDataRecursive traverseFn cfg =
       -- Determine if we should skip.
       if ((\p -> skipHidden p || skipExcluded p) . FP.takeFileName) path
         then pure Nil
-        else -- If an exception is encountered, print and continue.
-
+        else
           calcTree `catchAny` \e -> do
+            -- If an exception is encountered, print and continue.
             putStrLn $
               mconcat
                 [ "Exception with path '",
@@ -222,17 +222,17 @@ pathDataRecursive traverseFn cfg =
     hidden _ = False
 
 calcSymLink :: FilePath -> IO PathTree
-calcSymLink path =
-  getSymLinkSize path <&> \size ->
-    Node (MkPathData path size 1 0) []
+calcSymLink = calcSizeFn getSymLinkSize
   where
-    getSymLinkSize :: FilePath -> IO Natural
     getSymLinkSize =
-      fmap (fromIntegral . Posix.fileSize) . Posix.getSymbolicLinkStatus
+      fmap Posix.fileSize . Posix.getSymbolicLinkStatus
 
 calcFile :: FilePath -> IO PathTree
-calcFile path =
-  Dir.getFileSize path <&> \size ->
+calcFile = calcSizeFn Dir.getFileSize
+
+calcSizeFn :: Integral a => (FilePath -> IO a) -> FilePath -> IO PathTree
+calcSizeFn sizeFn path =
+  sizeFn path <&> \size ->
     Node
       MkPathData
         { path = path,

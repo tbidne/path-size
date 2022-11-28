@@ -12,8 +12,9 @@ module PathSize.Data
     -- ** Aggregate paths
     PathTree (..),
     takeLargestN,
-    SubPathData,
+    SubPathData (MkSubPathData),
     mkSubPathData,
+    toSeq,
     display,
 
     -- * Config
@@ -90,9 +91,9 @@ data PathTree
       NFData
     )
 
-toSeq :: PathTree -> Seq PathData
-toSeq (Node x subTrees) = x <| (subTrees >>= toSeq)
-toSeq Nil = []
+pathTreeToSeq :: PathTree -> Seq PathData
+pathTreeToSeq (Node x subTrees) = x <| (subTrees >>= pathTreeToSeq)
+pathTreeToSeq Nil = []
 
 -- | A flattened and sorted representation of 'PathTree'.
 --
@@ -111,14 +112,27 @@ newtype SubPathData = UnsafeSubPathData (Seq PathData)
       NFData
     )
 
+-- | Pattern synonym for 'SubPathData'.
+--
+-- @since 0.1
+pattern MkSubPathData :: Seq PathData -> SubPathData
+pattern MkSubPathData xs <- UnsafeSubPathData xs
+  where
+    MkSubPathData xs = UnsafeSubPathData $ sort xs
+
+{-# COMPLETE MkSubPathData #-}
+
 -- | Creates a 'SubPathData' from a 'PathTree'.
 --
 -- @since 0.1
 mkSubPathData :: PathTree -> SubPathData
-mkSubPathData = UnsafeSubPathData . sort . toSeq
+mkSubPathData = UnsafeSubPathData . sort . pathTreeToSeq
 
-unSubPathData :: SubPathData -> Seq PathData
-unSubPathData (UnsafeSubPathData xs) = xs
+-- | Returns a 'Seq' representation of 'SubPathData'.
+--
+-- @since 0.1
+toSeq :: SubPathData -> Seq PathData
+toSeq (UnsafeSubPathData xs) = xs
 
 -- | Sorts the path size.
 --
@@ -134,13 +148,13 @@ takeLargestN n =
   UnsafeSubPathData
     . Seq.take (fromIntegral n)
     . sort
-    . toSeq
+    . pathTreeToSeq
 
 -- | Displays the data.
 --
 -- @since 0.1
 display :: Bool -> SubPathData -> Text
-display revSort = showList' . unSubPathData
+display revSort = showList' . toSeq
   where
     showList' :: Seq PathData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
