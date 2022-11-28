@@ -4,6 +4,7 @@
 module Main (main) where
 
 import Args (argsToConfig, getArgs)
+import Data.Foldable (for_)
 import Data.Text qualified as T
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
@@ -21,6 +22,7 @@ main = do
   args <- getArgs
   let config = argsToConfig args
 
-  result <- findLargestPaths config (args ^. #path)
+  (errs, result) <- findLargestPaths config (args ^. #path)
+  for_ errs (putStrLn . displayException)
 
   putStrLn $ T.unpack $ display (args ^. #reverseSort) result

@@ -16,10 +16,12 @@ module PathSize
   )
 where
 
+import Control.Exception (Exception (displayException))
+import Data.Bifunctor (Bifunctor (second))
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
-import Data.Sequence (Seq)
+import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
@@ -32,13 +34,13 @@ import PathSize.Data
     SubPathData (MkSubPathData),
   )
 import PathSize.Data qualified as PathSizeData
-import PathSize.Exception (withCallStack)
+import PathSize.Exception (PathE (MkPathE), withCallStack)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import System.FilePath qualified as FP
 import System.Posix.Files qualified as Posix
 import UnliftIO.Async qualified as Async
-import UnliftIO.Exception (Exception (displayException), catchAny)
+import UnliftIO.Exception (catchAny)
 
 -- | Given a path, finds the size of all subpaths, recursively.
 --
@@ -49,10 +51,10 @@ findLargestPaths ::
   Config ->
   -- | Path to search.
   FilePath ->
-  IO SubPathData
-findLargestPaths cfg path =
-  f cfg path
-    <&> \pathTree -> takeLargestN pathTree
+  -- | The results. The left element are any errors encountered, while the
+  -- right element is the path size data.
+  IO (Seq PathE, SubPathData)
+findLargestPaths cfg path = f cfg path <&> second takeLargestN
   where
     f = case cfg ^. #strategy of
       Sync -> pathDataRecursiveSync
@@ -72,7 +74,7 @@ pathDataRecursiveSync ::
   HasCallStack =>
   Config ->
   FilePath ->
-  IO PathTree
+  IO (Seq PathE, PathTree)
 pathDataRecursiveSync = pathDataRecursive traverse
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
@@ -83,7 +85,7 @@ pathDataRecursiveAsync ::
   HasCallStack =>
   Config ->
   FilePath ->
-  IO PathTree
+  IO (Seq PathE, PathTree)
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
@@ -93,7 +95,7 @@ pathDataRecursiveAsyncPooled ::
   HasCallStack =>
   Config ->
   FilePath ->
-  IO PathTree
+  IO (Seq PathE, PathTree)
 pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -108,7 +110,7 @@ pathDataRecursive ::
   Config ->
   -- | Start path.
   FilePath ->
-  IO PathTree
+  IO (Seq PathE, PathTree)
 pathDataRecursive traverseFn cfg =
   if cfg ^. #searchAll
     then goHidden
@@ -130,10 +132,10 @@ pathDataRecursive traverseFn cfg =
       Nothing -> const False
       Just d -> (>= d)
 
-    goSkipHidden :: HasCallStack => FilePath -> IO PathTree
+    goSkipHidden :: HasCallStack => FilePath -> IO (Seq PathE, PathTree)
     goSkipHidden = go hidden 0
 
-    goHidden :: HasCallStack => FilePath -> IO PathTree
+    goHidden :: HasCallStack => FilePath -> IO (Seq PathE, PathTree)
     goHidden = go (const False) 0
 
     -- Base recursive function. If the path is determined to be a symlink or
@@ -144,26 +146,18 @@ pathDataRecursive traverseFn cfg =
       (FilePath -> Bool) ->
       Natural ->
       FilePath ->
-      IO PathTree
+      IO (Seq PathE, PathTree)
     go skipHidden !depth path =
       -- Determine if we should skip.
       if ((\p -> skipHidden p || skipExcluded p) . FP.takeFileName) path
-        then pure Nil
+        then pure ([], Nil)
         else
           calcTree `catchAny` \e -> do
-            -- If an exception is encountered, print and continue.
-            putStrLn $
-              mconcat
-                [ "Exception with path '",
-                  path,
-                  "': ",
-                  displayException e,
-                  "\n"
-                ]
-            pure Nil
+            -- Save exceptions
+            pure ([MkPathE path (displayException e)], Nil)
       where
         -- Perform actual calculation.
-        calcTree :: HasCallStack => IO PathTree
+        calcTree :: HasCallStack => IO (Seq PathE, PathTree)
         calcTree = do
           -- 1. Symlinks
           --
@@ -173,17 +167,18 @@ pathDataRecursive traverseFn cfg =
           --      errors on dangling symlinks since it operates on the target).
           isSymLink <- withCallStack $ Dir.pathIsSymbolicLink path
           if isSymLink
-            then withCallStack $ calcSymLink path
+            then withCallStack $ ([],) <$> calcSymLink path
             else do
               -- 2. Directories
               isDir <- withCallStack $ Dir.doesDirectoryExist path
               if isDir
                 then do
                   files <- withCallStack $ Dir.listDirectory path
-                  subTrees <-
+                  subTreesErrs <-
                     traverseFn
                       (go skipHidden (depth + 1) . (path </>))
                       (Seq.fromList files)
+                  let (errs, subTrees) = flattenSeq subTreesErrs
                   -- Add the cost of the directory itself.
                   dirSize <- withCallStack $ Dir.getFileSize path
                   let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
@@ -193,17 +188,19 @@ pathDataRecursive traverseFn cfg =
                       subTrees'
                         | depthExceeded depth = []
                         | otherwise = subTrees
-                  pure $
-                    Node
-                      MkPathData
-                        { path,
-                          size,
-                          numFiles,
-                          numDirectories
-                        }
-                      subTrees'
+                  pure
+                    ( errs,
+                      Node
+                        MkPathData
+                          { path,
+                            size,
+                            numFiles,
+                            numDirectories
+                          }
+                        subTrees'
+                    )
                 else -- 3. Files
-                  withCallStack $ calcFile path
+                  withCallStack $ ([],) <$> calcFile path
 
     sumTrees :: Seq PathTree -> (Natural, Natural, Natural)
     sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
@@ -241,3 +238,9 @@ calcSizeFn sizeFn path =
           numDirectories = 0
         }
       []
+
+flattenSeq :: Seq (Seq a, b) -> (Seq a, Seq b)
+flattenSeq Empty = (Empty, Empty)
+flattenSeq ((xs, y) :<| zs) = (xs <> xs', y <| ys)
+  where
+    (xs', ys) = flattenSeq zs

@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedLists #-}
+
 -- | Tests for logging.
 --
 -- @since 0.1
@@ -6,12 +8,16 @@ module Functional.PathSize
   )
 where
 
+import Control.Exception (Exception (displayException), throwIO)
 import Data.ByteString.Lazy qualified as BSL
+import Data.Foldable (Foldable (foldl'))
 import Data.HashSet qualified as HSet
+import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Encoding qualified as TLEnc
 import GHC.Num.Natural (Natural)
+import PathSize (SubPathData)
 import PathSize qualified
 import PathSize.Data
   ( Config
@@ -21,6 +27,7 @@ import PathSize.Data
         searchAll
       ),
   )
+import PathSize.Exception (PathE)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import Test.Tasty (TestTree, testGroup)
@@ -44,7 +51,7 @@ tests =
 calculatesSizes :: TestTree
 calculatesSizes = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display False <$> PathSize.findLargestPaths mempty testDir
+  result <- PathSize.display False <$> runTest mempty testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -54,7 +61,7 @@ calculatesSizes = goldenVsStringDiff desc diff gpath $ do
 calculatesReverse :: TestTree
 calculatesReverse = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display True <$> PathSize.findLargestPaths mempty testDir
+  result <- PathSize.display True <$> runTest mempty testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -64,7 +71,7 @@ calculatesReverse = goldenVsStringDiff desc diff gpath $ do
 calculatesAll :: TestTree
 calculatesAll = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> runTest cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -75,7 +82,7 @@ calculatesAll = goldenVsStringDiff desc diff gpath $ do
 calculatesExcluded :: TestTree
 calculatesExcluded = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> runTest cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -86,7 +93,7 @@ calculatesExcluded = goldenVsStringDiff desc diff gpath $ do
 calculatesFilesOnly :: TestTree
 calculatesFilesOnly = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> runTest cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -97,7 +104,7 @@ calculatesFilesOnly = goldenVsStringDiff desc diff gpath $ do
 calculatesDepthN :: Natural -> TestTree
 calculatesDepthN n = goldenVsStringDiff desc diff gpath $ do
   testDir <- (</> "test/functional/data") <$> Dir.getCurrentDirectory
-  result <- PathSize.display False <$> PathSize.findLargestPaths cfg testDir
+  result <- PathSize.display False <$> runTest cfg testDir
   currDir <- Dir.getCurrentDirectory
   pure $ replaceDir currDir result
   where
@@ -110,6 +117,23 @@ goldenPath = "test/functional/Functional/"
 
 diff :: FilePath -> FilePath -> [FilePath]
 diff ref new = ["diff", "-u", ref, new]
+
+newtype StringE = MkStringE String
+  deriving stock (Show)
+  deriving (IsString) via String
+
+instance Exception StringE where
+  displayException (MkStringE e) = e
+
+runTest :: Config -> FilePath -> IO SubPathData
+runTest cfg testDir = do
+  (errs, result) <- PathSize.findLargestPaths cfg testDir
+  case errs of
+    [] -> pure result
+    es -> throwIO $ MkStringE $ foldl' foldErrs "" es
+  where
+    foldErrs :: String -> PathE -> String
+    foldErrs s e = s <> displayException e
 
 -- HACK: Our naive golden tests require exact string quality, which is a
 -- problem since the full paths are non-deterministic, depending on the
