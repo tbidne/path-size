@@ -222,13 +222,13 @@ pathDataRecursive traverseFn cfg =
     hidden _ = False
 
 calcSymLink :: HasCallStack => FilePath -> IO PathTree
-calcSymLink = checkpointCallStack . calcSizeFn (getSymLinkSize)
+calcSymLink = checkpointCallStack . calcSizeFn getSymLinkSize
   where
     getSymLinkSize =
       fmap Posix.fileSize . Posix.getSymbolicLinkStatus
 
 calcFile :: HasCallStack => FilePath -> IO PathTree
-calcFile = checkpointCallStack . calcSizeFn (Dir.getFileSize)
+calcFile = checkpointCallStack . calcSizeFn Dir.getFileSize
 
 calcSizeFn ::
   (HasCallStack, Integral a) =>

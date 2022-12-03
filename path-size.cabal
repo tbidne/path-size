@@ -105,11 +105,12 @@ benchmark benchmarks
   main-is:          Main.hs
   build-depends:
     , base
-    , bytestring  >=0.10.12  && <0.12
-    , criterion   ^>=1.6.0.0
+    , bytestring       >=0.10.12  && <0.12
+    , criterion        ^>=1.6.0.0
     , directory
-    , env-guard   ^>=0.2
+    , env-guard        ^>=0.2
     , filepath
+    , monad-callstack
     , path-size
     , unliftio
 

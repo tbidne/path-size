@@ -11,14 +11,16 @@ import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Word (Word8)
+import Effects.MonadCallStack
+  ( HasCallStack,
+    MonadCallStack (checkpointCallStack),
+  )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import GHC.Stack (HasCallStack)
 import PathSize (display, findLargestPaths)
 import PathSize.Data
   ( Config (numPaths, strategy),
     Strategy (Async, AsyncPooled, Sync),
   )
-import PathSize.Exception (withCallStack)
 import System.Directory qualified as Dir
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import System.FilePath ((</>))
@@ -155,7 +157,7 @@ setup = do
 
 teardown :: HasCallStack => FilePath -> IO ()
 teardown rootDir =
-  withCallStack $
+  checkpointCallStack $
     guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     -- rootDir = args ^. #rootDir
@@ -199,4 +201,4 @@ createFileContents ::
   [(FilePath, ByteString)] ->
   IO ()
 createFileContents paths = for_ paths $
-  \(p, c) -> withCallStack $ BS.writeFile p c
+  \(p, c) -> checkpointCallStack $ BS.writeFile p c
