@@ -16,15 +16,18 @@ module PathSize
   )
 where
 
-import Control.Exception (Exception (displayException))
 import Data.Bifunctor (Bifunctor (second))
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
+import Effects.MonadCallStack
+  ( HasCallStack,
+    MonadCallStack (checkpointCallStack),
+    prettyAnnotated,
+  )
 import GHC.Natural (Natural)
-import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))
 import PathSize.Data
   ( Config (..),
@@ -34,7 +37,7 @@ import PathSize.Data
     SubPathData (MkSubPathData),
   )
 import PathSize.Data qualified as PathSizeData
-import PathSize.Exception (PathE (MkPathE), withCallStack)
+import PathSize.Exception (PathE (MkPathE))
 import System.Directory qualified as Dir
 import System.FilePath ((</>))
 import System.FilePath qualified as FP
@@ -154,7 +157,7 @@ pathDataRecursive traverseFn cfg =
         else
           calcTree `catchAny` \e -> do
             -- Save exceptions
-            pure ([MkPathE path (displayException e)], Nil)
+            pure ([MkPathE path (prettyAnnotated e)], Nil)
       where
         -- Perform actual calculation.
         calcTree :: HasCallStack => IO (Seq PathE, PathTree)
@@ -165,22 +168,22 @@ pathDataRecursive traverseFn cfg =
           --   a. Do not chase.
           --   b. Ensure we call the right size function (Dir.getFileSize
           --      errors on dangling symlinks since it operates on the target).
-          isSymLink <- withCallStack $ Dir.pathIsSymbolicLink path
+          isSymLink <- checkpointCallStack $ Dir.pathIsSymbolicLink path
           if isSymLink
-            then withCallStack $ ([],) <$> calcSymLink path
+            then checkpointCallStack $ ([],) <$> calcSymLink path
             else do
               -- 2. Directories
-              isDir <- withCallStack $ Dir.doesDirectoryExist path
+              isDir <- checkpointCallStack $ Dir.doesDirectoryExist path
               if isDir
                 then do
-                  files <- withCallStack $ Dir.listDirectory path
+                  files <- checkpointCallStack $ Dir.listDirectory path
                   subTreesErrs <-
                     traverseFn
                       (go skipHidden (depth + 1) . (path </>))
                       (Seq.fromList files)
                   let (errs, subTrees) = flattenSeq subTreesErrs
                   -- Add the cost of the directory itself.
-                  dirSize <- withCallStack $ Dir.getFileSize path
+                  dirSize <- checkpointCallStack $ Dir.getFileSize path
                   let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
                       !numDirectories = subDirs + 1
                       !size = dirSizeFn (fromIntegral dirSize) subSize
@@ -200,7 +203,7 @@ pathDataRecursive traverseFn cfg =
                         subTrees'
                     )
                 else -- 3. Files
-                  withCallStack $ ([],) <$> calcFile path
+                  ([],) <$> calcFile path
 
     sumTrees :: Seq PathTree -> (Natural, Natural, Natural)
     sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
@@ -218,16 +221,20 @@ pathDataRecursive traverseFn cfg =
     hidden ('.' : _) = True
     hidden _ = False
 
-calcSymLink :: FilePath -> IO PathTree
-calcSymLink = calcSizeFn getSymLinkSize
+calcSymLink :: HasCallStack => FilePath -> IO PathTree
+calcSymLink = checkpointCallStack . calcSizeFn (getSymLinkSize)
   where
     getSymLinkSize =
       fmap Posix.fileSize . Posix.getSymbolicLinkStatus
 
-calcFile :: FilePath -> IO PathTree
-calcFile = calcSizeFn Dir.getFileSize
+calcFile :: HasCallStack => FilePath -> IO PathTree
+calcFile = checkpointCallStack . calcSizeFn (Dir.getFileSize)
 
-calcSizeFn :: Integral a => (FilePath -> IO a) -> FilePath -> IO PathTree
+calcSizeFn ::
+  (HasCallStack, Integral a) =>
+  (HasCallStack => FilePath -> IO a) ->
+  FilePath ->
+  IO PathTree
 calcSizeFn sizeFn path =
   sizeFn path <&> \size ->
     Node

@@ -133,6 +133,32 @@
         "type": "github"
       }
     },
+    "monad-effects": {
+      "inputs": {
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1670093131,
+        "narHash": "sha256-97xFvQAO+fl/15Iwr3Yv/O2T7BbpAEwUQOtV42RqAbY=",
+        "owner": "tbidne",
+        "repo": "monad-effects",
+        "rev": "b3d1b6b414d9a0561da5ed529a9ff663a0345270",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "monad-effects",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1667901915,
@@ -175,6 +201,7 @@
         "flake-compat": "flake-compat",
         "flake-parts": "flake-parts",
         "flake-utils": "flake-utils",
+        "monad-effects": "monad-effects",
         "nixpkgs": "nixpkgs"
       }
     }
