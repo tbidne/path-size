@@ -1,4 +1,4 @@
-resolver: lts-20.3
+resolver: nightly-2022-12-06
 packages:
 - .
 ghc-options:

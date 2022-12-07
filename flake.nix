@@ -7,28 +7,26 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
-
     flake-parts.url = "github:hercules-ci/flake-parts";
-    flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
 
     #haskell
     algebra-simple = {
       url = "github:tbidne/algebra-simple";
       inputs.flake-compat.follows = "flake-compat";
-      inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     bounds = {
       url = "github:tbidne/bounds";
       inputs.flake-compat.follows = "flake-compat";
-      inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     byte-types = {
       url = "github:tbidne/byte-types";
       inputs.flake-compat.follows = "flake-compat";
-      inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
 
       inputs.algebra-simple.follows = "algebra-simple";
@@ -47,7 +45,6 @@
     , byte-types
     , flake-compat
     , flake-parts
-    , flake-utils
     , monad-effects
     , nixpkgs
     , self
@@ -66,8 +63,14 @@
             ghcid
             haskell-language-server
           ];
-          ghc-version = "ghc924";
-          compiler = pkgs.haskell.packages."${ghc-version}";
+          ghc-version = "ghc925";
+          compiler = pkgs.haskell.packages."${ghc-version}".override {
+            overrides = final: prev: {
+              # https://github.com/ddssff/listlike/issues/23
+              ListLike = hlib.dontCheck prev.ListLike;
+            };
+          };
+          hlib = pkgs.haskell.lib;
           mkPkg = returnShellEnv: withDevTools:
             compiler.developPackage {
               inherit returnShellEnv;

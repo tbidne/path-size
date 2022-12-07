@@ -5,19 +5,19 @@
         "flake-compat": [
           "flake-compat"
         ],
-        "flake-utils": [
-          "flake-utils"
+        "flake-parts": [
+          "flake-parts"
         ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1666488762,
-        "narHash": "sha256-H8yOEZ8qDowm2z7mKa9hmG4QgI/rBhQmQTSHdOssmAU=",
+        "lastModified": 1670371950,
+        "narHash": "sha256-hcFAqLXp7N2nE3FRaxjmZ9eRu9k3AiFEMZMgi76XhZM=",
         "owner": "tbidne",
         "repo": "algebra-simple",
-        "rev": "c8aaa4495964ecea9bb898c4fcb8b1c718ecc813",
+        "rev": "2c8a79e8d3bf67c99e4851c557bf68a44c512307",
         "type": "github"
       },
       "original": {
@@ -31,19 +31,19 @@
         "flake-compat": [
           "flake-compat"
         ],
-        "flake-utils": [
-          "flake-utils"
+        "flake-parts": [
+          "flake-parts"
         ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1666392820,
-        "narHash": "sha256-EV8srKQfD05u/Rq6LpPUVdT6WyY9VLsvu5vJ+2oBemg=",
+        "lastModified": 1670372005,
+        "narHash": "sha256-CptBUtBlMGhmq2TnCAEAF3U4KMMeVNT5A1wpzhwLQs4=",
         "owner": "tbidne",
         "repo": "bounds",
-        "rev": "7a8832ef4a55d565e72fab553a4d485329235bf7",
+        "rev": "004f03aec46f29069fd0bf5115a384cd2b3141b3",
         "type": "github"
       },
       "original": {
@@ -63,19 +63,19 @@
         "flake-compat": [
           "flake-compat"
         ],
-        "flake-utils": [
-          "flake-utils"
+        "flake-parts": [
+          "flake-parts"
         ],
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1666645183,
-        "narHash": "sha256-Q2Seyqe6HMe8RY5FaN7wDCC28xuaZDSGowZBEfPErto=",
+        "lastModified": 1670386452,
+        "narHash": "sha256-h3/RrhmDcIDzpD68Yd9G0rfdUhFieKrKQmQ6T9czGto=",
         "owner": "tbidne",
         "repo": "byte-types",
-        "rev": "a7e1cd9824ca72c970a8a33ecd77256863bfc071",
+        "rev": "be3e764d76c530fd3641c133ed2d53adfc8f046d",
         "type": "github"
       },
       "original": {
@@ -87,11 +87,11 @@
     "flake-compat": {
       "flake": false,
       "locked": {
-        "lastModified": 1650374568,
-        "narHash": "sha256-Z+s0J8/r907g149rllvwhb4pKi8Wam5ij0st8PwAh+E=",
+        "lastModified": 1668681692,
+        "narHash": "sha256-Ht91NGdewz8IQLtWZ9LCeNXMSXHUss+9COoqu6JLmXU=",
         "owner": "edolstra",
         "repo": "flake-compat",
-        "rev": "b4a34015c698c7793d592d66adbab377907a2be8",
+        "rev": "009399224d5e398d03b22badca40a37ac85412a1",
         "type": "github"
       },
       "original": {
@@ -115,21 +115,6 @@
       "original": {
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "type": "github"
-      }
-    },
-    "flake-utils": {
-      "locked": {
-        "lastModified": 1667395993,
-        "narHash": "sha256-nuEHfE/LcWyuSWnS8t12N1wc105Qtau+/OdUAjtQ0rA=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "5aed5285a952e0b949eb3ba02c12fa4fcfef535f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
         "type": "github"
       }
     },
@@ -161,11 +146,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1667901915,
-        "narHash": "sha256-IkSou5ox/yZ2YUhGpk8vxd2TNU2pwRlYtir5k55NaxE=",
+        "lastModified": 1670242877,
+        "narHash": "sha256-jBLh7dRHnbfvPPA9znOC6oQfKrCPJ0El8Zoe0BqnCjQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "093268502280540a7f5bf1e2a6330a598ba3b7d0",
+        "rev": "6e51c97f1c849efdfd4f3b78a4870e6aa2da4198",
         "type": "github"
       },
       "original": {
@@ -200,7 +185,6 @@
         "byte-types": "byte-types",
         "flake-compat": "flake-compat",
         "flake-parts": "flake-parts",
-        "flake-utils": "flake-utils",
         "monad-effects": "monad-effects",
         "nixpkgs": "nixpkgs"
       }
