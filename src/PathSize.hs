@@ -24,8 +24,8 @@ import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
 import Effects.MonadCallStack
   ( HasCallStack,
-    MonadCallStack (checkpointCallStack),
-    prettyAnnotated,
+    MonadCallStack (addCallStack),
+    displayCallStack,
   )
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
@@ -157,7 +157,7 @@ pathDataRecursive traverseFn cfg =
         else
           calcTree `catchAny` \e -> do
             -- Save exceptions
-            pure ([MkPathE path (prettyAnnotated e)], Nil)
+            pure ([MkPathE path (displayCallStack e)], Nil)
       where
         -- Perform actual calculation.
         calcTree :: HasCallStack => IO (Seq PathE, PathTree)
@@ -168,22 +168,22 @@ pathDataRecursive traverseFn cfg =
           --   a. Do not chase.
           --   b. Ensure we call the right size function (Dir.getFileSize
           --      errors on dangling symlinks since it operates on the target).
-          isSymLink <- checkpointCallStack $ Dir.pathIsSymbolicLink path
+          isSymLink <- addCallStack $ Dir.pathIsSymbolicLink path
           if isSymLink
-            then checkpointCallStack $ ([],) <$> calcSymLink path
+            then addCallStack $ ([],) <$> calcSymLink path
             else do
               -- 2. Directories
-              isDir <- checkpointCallStack $ Dir.doesDirectoryExist path
+              isDir <- addCallStack $ Dir.doesDirectoryExist path
               if isDir
                 then do
-                  files <- checkpointCallStack $ Dir.listDirectory path
+                  files <- addCallStack $ Dir.listDirectory path
                   subTreesErrs <-
                     traverseFn
                       (go skipHidden (depth + 1) . (path </>))
                       (Seq.fromList files)
                   let (errs, subTrees) = flattenSeq subTreesErrs
                   -- Add the cost of the directory itself.
-                  dirSize <- checkpointCallStack $ Dir.getFileSize path
+                  dirSize <- addCallStack $ Dir.getFileSize path
                   let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
                       !numDirectories = subDirs + 1
                       !size = dirSizeFn (fromIntegral dirSize) subSize
@@ -222,13 +222,13 @@ pathDataRecursive traverseFn cfg =
     hidden _ = False
 
 calcSymLink :: HasCallStack => FilePath -> IO PathTree
-calcSymLink = checkpointCallStack . calcSizeFn getSymLinkSize
+calcSymLink = addCallStack . calcSizeFn getSymLinkSize
   where
     getSymLinkSize =
       fmap Posix.fileSize . Posix.getSymbolicLinkStatus
 
 calcFile :: HasCallStack => FilePath -> IO PathTree
-calcFile = checkpointCallStack . calcSizeFn Dir.getFileSize
+calcFile = addCallStack . calcSizeFn Dir.getFileSize
 
 calcSizeFn ::
   (HasCallStack, Integral a) =>
