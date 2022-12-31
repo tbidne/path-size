@@ -47,6 +47,17 @@ import Optics.Core (Lens', view, (^.))
 import Optics.TH (makeFieldLabelsNoPrefix)
 
 -- | Associates a path to its total (recursive) size in the file-system.
+-- The 'Ord' instance compares the fields in the following order:
+--
+-- @[size, path, numFiles, numDirectories]@
+--
+-- ==== __Examples__
+--
+-- >>> MkPathData "a" 1 0 0 <= MkPathData "a" 2 0 0
+-- True
+--
+-- >>> MkPathData "b" 1 0 0 <= MkPathData "a" 1 0 0
+-- False
 --
 -- @since 0.1
 data PathData = MkPathData
@@ -67,6 +78,24 @@ data PathData = MkPathData
     ( -- | @since 0.1
       NFData
     )
+
+-- | @since 0.1
+instance Ord PathData where
+  (<=) = lteFields
+    [ MkOrdF (view #size),
+      MkOrdF (view #path),
+      MkOrdF (view #numFiles),
+      MkOrdF (view #numDirectories)
+    ]
+
+data OrdF a = forall b. Ord b => MkOrdF (a -> b)
+
+lteFields :: [OrdF a] -> a -> a -> Bool
+lteFields [] _ _ = True
+lteFields (MkOrdF f : fs) x y = case compare (f x) (f y) of
+  EQ -> lteFields fs x y
+  LT -> True
+  GT -> False
 
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''PathData
@@ -138,7 +167,7 @@ toSeq (UnsafeSubPathData xs) = xs
 --
 -- @since 0.1
 sort :: Seq PathData -> Seq PathData
-sort = Seq.sortOn (Down . view #size)
+sort = Seq.sortOn Down
 
 -- | Retrieves the largest N paths.
 --
