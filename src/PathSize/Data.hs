@@ -35,6 +35,8 @@ import Data.Bytes qualified as Bytes
 import Data.Foldable (Foldable (foldl'))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
+-- import Data.Ord (Down (Down))
+
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq, (<|))
 import Data.Sequence qualified as Seq
@@ -43,7 +45,7 @@ import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
-import Optics.Core (Lens', view, (^.))
+import Optics.Core (Lens', (^.))
 import Optics.TH (makeFieldLabelsNoPrefix)
 
 -- | Associates a path to its total (recursive) size in the file-system.
@@ -78,24 +80,6 @@ data PathData = MkPathData
     ( -- | @since 0.1
       NFData
     )
-
--- | @since 0.1
-instance Ord PathData where
-  (<=) = lteFields
-    [ MkOrdF (view #size),
-      MkOrdF (view #path),
-      MkOrdF (view #numFiles),
-      MkOrdF (view #numDirectories)
-    ]
-
-data OrdF a = forall b. Ord b => MkOrdF (a -> b)
-
-lteFields :: [OrdF a] -> a -> a -> Bool
-lteFields [] _ _ = True
-lteFields (MkOrdF f : fs) x y = case compare (f x) (f y) of
-  EQ -> lteFields fs x y
-  LT -> True
-  GT -> False
 
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''PathData
@@ -163,11 +147,17 @@ mkSubPathData = UnsafeSubPathData . sort . pathTreeToSeq
 toSeq :: SubPathData -> Seq PathData
 toSeq (UnsafeSubPathData xs) = xs
 
+-- NOTE: Annoyingly, this sort seems to cost quite a bit of performance over
+-- the previous (Down . view #size). It is now applying an additional sort
+-- to the path. This was done initially to make testing easier (stable order
+-- for paths w/ identical sizes), but the added determinism + usability
+-- seems worth it.
+
 -- | Sorts the path size.
 --
 -- @since 0.1
 sort :: Seq PathData -> Seq PathData
-sort = Seq.sortOn Down
+sort = Seq.sortOn (Down . \(MkPathData p s _ _) -> (s, p))
 
 -- | Retrieves the largest N paths.
 --
