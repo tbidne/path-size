@@ -8,13 +8,19 @@
 module PathSize.Data
   ( -- * Base types
     PathData (..),
+    PathSizeResult (..),
+    _PathSizeSuccess,
+    _PathSizePartial,
+    _PathSizeFailure,
 
     -- ** Aggregate paths
+    NonEmptySeq (.., (:||)),
+    unNonEmptySeq,
     PathTree (..),
     takeLargestN,
-    SubPathData (MkSubPathData),
+    SubPathData,
+    unSubPathData,
     mkSubPathData,
-    toSeq,
     display,
 
     -- * Config
@@ -35,10 +41,8 @@ import Data.Bytes qualified as Bytes
 import Data.Foldable (Foldable (foldl'))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
--- import Data.Ord (Down (Down))
-
 import Data.Ord (Down (Down))
-import Data.Sequence (Seq, (<|))
+import Data.Sequence (Seq ((:<|)), (<|))
 import Data.Sequence qualified as Seq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
@@ -46,26 +50,63 @@ import Data.Text.Lazy.Builder qualified as TLB
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import Optics.Core (Lens', (^.))
-import Optics.TH (makeFieldLabelsNoPrefix)
+import Optics.TH (makeFieldLabelsNoPrefix, makePrisms)
+import PathSize.Exception (PathE (..))
+
+-- | Non-empty 'Seq'.
+--
+-- @since 0.1
+newtype NonEmptySeq a = MkNonEmptySeq (a, Seq a)
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Generic,
+      -- | @since 0.1
+      Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1
+      NFData
+    )
+
+-- | @since 0.1
+instance Foldable NonEmptySeq where
+  foldr f acc (x :|| xs) = foldr f acc (x <| xs)
+
+-- | Pattern synonym for 'NonEmptySeq'.
+--
+-- @since 0.1
+pattern (:||) :: a -> Seq a -> NonEmptySeq a
+pattern pd :|| xs <- MkNonEmptySeq (pd, xs)
+  where
+    pd :|| xs = MkNonEmptySeq (pd, xs)
+
+{-# COMPLETE (:||) #-}
+
+-- | @since 0.1
+unNonEmptySeq :: NonEmptySeq a -> Seq a
+unNonEmptySeq (x :|| xs) = x <| xs
 
 -- | Associates a path to its total (recursive) size in the file-system.
--- The 'Ord' instance compares the fields in the following order:
---
--- @[size, path, numFiles, numDirectories]@
---
--- ==== __Examples__
---
--- >>> MkPathData "a" 1 0 0 <= MkPathData "a" 2 0 0
--- True
---
--- >>> MkPathData "b" 1 0 0 <= MkPathData "a" 1 0 0
--- False
 --
 -- @since 0.1
 data PathData = MkPathData
-  { path :: !FilePath,
+  { -- | Path.
+    --
+    -- @since 0.1
+    path :: !FilePath,
+    -- | Size in bytes.
+    --
+    -- @since 0.1
     size :: !Natural,
+    -- | Number of files.
+    --
+    -- @since 0.1
     numFiles :: !Natural,
+    -- | Number of directories.
+    --
+    -- @since 0.1
     numDirectories :: !Natural
   }
   deriving stock
@@ -83,6 +124,41 @@ data PathData = MkPathData
 
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''PathData
+
+-- | Result of running a path-size computation with multiple notions of
+-- failure.
+--
+-- @since 0.1
+data PathSizeResult a
+  = -- | Successfully computed @a@.
+    --
+    -- @since 0.1
+    PathSizeSuccess !a
+  | -- | Computed @a@ with some errors.
+    --
+    -- @since 0.1
+    PathSizePartial !(NonEmptySeq PathE) !a
+  | -- | Failed computing @a@.
+    --
+    -- @since 0.1
+    PathSizeFailure !(NonEmptySeq PathE)
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Functor,
+      -- | @since 0.1
+      Generic,
+      -- | @since 0.1
+      Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1
+      NFData
+    )
+
+-- | @since 0.1
+makePrisms ''PathSizeResult
 
 -- | Given a path, represents the directory tree, with each subpath
 -- associated to its size. This structure is essentially a rose tree.
@@ -108,10 +184,11 @@ pathTreeToSeq :: PathTree -> Seq PathData
 pathTreeToSeq (Node x subTrees) = x <| (subTrees >>= pathTreeToSeq)
 pathTreeToSeq Nil = []
 
--- | A flattened and sorted representation of 'PathTree'.
+-- | A flattened and sorted representation of 'PathTree'. Contains at least
+-- one element.
 --
 -- @since 0.1
-newtype SubPathData = UnsafeSubPathData (Seq PathData)
+newtype SubPathData = UnsafeSubPathData (NonEmptySeq PathData)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -125,27 +202,25 @@ newtype SubPathData = UnsafeSubPathData (Seq PathData)
       NFData
     )
 
--- | Pattern synonym for 'SubPathData'.
---
--- @since 0.1
-pattern MkSubPathData :: Seq PathData -> SubPathData
-pattern MkSubPathData xs <- UnsafeSubPathData xs
-  where
-    MkSubPathData xs = UnsafeSubPathData $ sort xs
-
-{-# COMPLETE MkSubPathData #-}
+-- | @since 0.1
+unSubPathData :: SubPathData -> NonEmptySeq PathData
+unSubPathData (UnsafeSubPathData sbd) = sbd
 
 -- | Creates a 'SubPathData' from a 'PathTree'.
 --
 -- @since 0.1
-mkSubPathData :: PathTree -> SubPathData
-mkSubPathData = UnsafeSubPathData . sort . pathTreeToSeq
+mkSubPathData :: PathTree -> Maybe SubPathData
+mkSubPathData Nil = Nothing
+mkSubPathData node@(Node _ _) = case sort (pathTreeToSeq node) of
+  (first :<| rest) -> Just $ UnsafeSubPathData (first :|| rest)
+  -- HACK: This should be impossible as sorting preserves size...
+  _ -> Nothing
 
 -- | Returns a 'Seq' representation of 'SubPathData'.
 --
 -- @since 0.1
-toSeq :: SubPathData -> Seq PathData
-toSeq (UnsafeSubPathData xs) = xs
+subPathDataToSeq :: SubPathData -> Seq PathData
+subPathDataToSeq (UnsafeSubPathData (pd :|| xs)) = pd <| xs
 
 -- NOTE: Annoyingly, this sort seems to cost quite a bit of performance over
 -- the previous (Down . view #size). It is now applying an additional sort
@@ -162,18 +237,18 @@ sort = Seq.sortOn (Down . \(MkPathData p s _ _) -> (s, p))
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: Natural -> PathTree -> SubPathData
-takeLargestN n =
-  UnsafeSubPathData
-    . Seq.take (fromIntegral n)
-    . sort
-    . pathTreeToSeq
+takeLargestN :: Natural -> PathTree -> Maybe SubPathData
+takeLargestN _ Nil = Nothing
+takeLargestN n node@(Node _ _) = case Seq.take (fromIntegral n) (sort (pathTreeToSeq node)) of
+  (first :<| rest) -> Just $ UnsafeSubPathData (first :|| rest)
+  -- NOTE: Should only happen if n == 0
+  _ -> Nothing
 
 -- | Displays the data.
 --
 -- @since 0.1
 display :: Bool -> SubPathData -> Text
-display revSort = showList' . toSeq
+display revSort = showList' . subPathDataToSeq
   where
     showList' :: Seq PathData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""

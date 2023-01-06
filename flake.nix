@@ -92,6 +92,10 @@
                   final.callCabal2nix "monad-callstack"
                     "${monad-effects}/monad-callstack"
                     { };
+                monad-fs =
+                  final.callCabal2nix "monad-fs"
+                    "${monad-effects}/monad-fs"
+                    { };
               };
             };
         in

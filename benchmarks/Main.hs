@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Control.Monad ((>=>))
 import Criterion as X
   ( Benchmark,
     bench,
@@ -11,17 +12,22 @@ import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Word (Word8)
+import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
+import Effects.FileSystem.MonadPathWriter (MonadPathWriter (..))
 import Effects.MonadCallStack
   ( HasCallStack,
-    MonadCallStack (addCallStack),
+    MonadCallStack
+      ( addCallStack,
+        throwWithCallStack
+      ),
   )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import PathSize (display, findLargestPaths)
+import PathSize (NonEmptySeq ((:||)), display, findLargestPaths)
 import PathSize.Data
   ( Config (numPaths, strategy),
+    PathSizeResult (..),
     Strategy (Async, AsyncPooled, Sync),
   )
-import System.Directory qualified as Dir
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import System.FilePath ((</>))
 import UnliftIO.Exception (Exception (displayException), bracket)
@@ -127,13 +133,15 @@ benchDisplayPathSize testDir =
     runDisplayPathSize desc =
       bench desc
         . nfIO
-        . fmap (display False . snd)
-        . findLargestPaths mempty
+        . (findLargestPaths mempty >=> displayResult)
+    displayResult (PathSizeSuccess sbd) = pure $ display False sbd
+    displayResult (PathSizePartial (err :|| _) _) = throwWithCallStack err
+    displayResult (PathSizeFailure (err :|| _)) = throwWithCallStack err
 
 setup :: HasCallStack => IO FilePath
 setup = do
-  rootDir <- (</> "bench") <$> Dir.getTemporaryDirectory
-  Dir.createDirectoryIfMissing False rootDir
+  rootDir <- (</> "bench") <$> getTemporaryDirectory
+  createDirectoryIfMissing False rootDir
 
   -- flat directories
   createFlatDir (rootDir </> "flat-100") files100
@@ -160,8 +168,7 @@ teardown rootDir =
   addCallStack $
     guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
-    -- rootDir = args ^. #rootDir
-    cleanup = Dir.removePathForcibly rootDir
+    cleanup = removePathForcibly rootDir
     doNothing =
       putStrLn $ "*** Not cleaning up tmp dir: " <> rootDir
 
@@ -188,7 +195,7 @@ createSpareDirs w root paths = do
 -- | Creates a single directory with the parameter files.
 createFlatDir :: HasCallStack => FilePath -> [FilePath] -> IO ()
 createFlatDir root paths = do
-  Dir.createDirectoryIfMissing False root
+  createDirectoryIfMissing False root
   createFiles ((root </>) <$> paths)
 
 -- | Creates empty files at the specified paths.

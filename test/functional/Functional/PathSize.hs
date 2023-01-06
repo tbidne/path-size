@@ -17,7 +17,7 @@ import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Encoding qualified as TLEnc
 import GHC.Num.Natural (Natural)
-import PathSize (SubPathData)
+import PathSize (PathSizeResult (..), SubPathData)
 import PathSize qualified
 import PathSize.Data
   ( Config
@@ -127,10 +127,10 @@ instance Exception StringE where
 
 runTest :: Config -> FilePath -> IO SubPathData
 runTest cfg testDir = do
-  (errs, result) <- PathSize.findLargestPaths cfg testDir
-  case errs of
-    [] -> pure result
-    es -> throwIO $ MkStringE $ foldl' foldErrs "" es
+  PathSize.findLargestPaths cfg testDir >>= \case
+    PathSizeSuccess result -> pure result
+    PathSizePartial errs _ -> throwIO $ MkStringE $ foldl' foldErrs "" errs
+    PathSizeFailure errs -> throwIO $ MkStringE $ foldl' foldErrs "" errs
   where
     foldErrs :: String -> PathE -> String
     foldErrs s e = s <> displayException e

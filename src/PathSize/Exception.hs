@@ -7,6 +7,7 @@ module PathSize.Exception
 where
 
 import Control.DeepSeq (NFData)
+import Effects.FileSystem.IO.File.MonadFileReader (Path)
 import GHC.Generics (Generic)
 import UnliftIO.Exception (Exception (displayException))
 
@@ -15,9 +16,11 @@ import UnliftIO.Exception (Exception (displayException))
 -- as an exception is so we can have an NFData instance for benchmarking.
 --
 -- @since 0.1
-data PathE = MkPathE !FilePath !String
+data PathE = MkPathE !Path !String
   deriving stock
     ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
       Generic,
       -- | @since 0.1
       Show
@@ -32,7 +35,7 @@ instance Exception PathE where
   displayException (MkPathE p e) =
     mconcat
       [ "Exception for path '",
-        p,
+        show p,
         "':\n",
         e,
         "\n"
