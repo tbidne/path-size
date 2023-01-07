@@ -9,8 +9,6 @@ module PathSize
 
     -- * Types
     PathData (..),
-    NonEmptySeq (..),
-    unNonEmptySeq,
     SubPathData,
     PathSizeResult (..),
 
@@ -21,7 +19,7 @@ module PathSize
     -- * High level functions
     pathSizeRecursive,
     pathSizeRecursiveConfig,
-    PathSizeData.display,
+    SPD.display,
   )
 where
 
@@ -32,23 +30,18 @@ import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
-import Effects.FileSystem.IO.File.MonadFileReader (Path)
+import Data.Sequence.NonEmpty (NonEmptySeq ((:||)))
 import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
+import Effects.FileSystem.Types (Path)
 import Effects.MonadCallStack (HasCallStack, displayCallStack)
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
-import PathSize.Data
-  ( Config (..),
-    NonEmptySeq (..),
-    PathData (..),
-    PathSizeResult (..),
-    PathTree (..),
-    Strategy (..),
-    SubPathData,
-    unNonEmptySeq,
-    unSubPathData,
-  )
-import PathSize.Data qualified as PathSizeData
+import PathSize.Data.Config (Config (..), Strategy (..))
+import PathSize.Data.PathData (PathData (..))
+import PathSize.Data.PathSizeResult (PathSizeResult (..))
+import PathSize.Data.PathTree (PathTree (..))
+import PathSize.Data.SubPathData (SubPathData)
+import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Exception (PathE (MkPathE))
 #if MIN_VERSION_filepath(1,4,100)
 import System.OsPath ((</>))
@@ -123,8 +116,8 @@ pathSizeRecursiveConfig ::
   m (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg path =
   findLargestPaths cfg path <&> \case
-    PathSizeSuccess (unSubPathData -> pd :|| _) -> PathSizeSuccess $ pd ^. #size
-    PathSizePartial errs (unSubPathData -> pd :|| _) -> PathSizePartial errs (pd ^. #size)
+    PathSizeSuccess (SPD.unSubPathData -> pd :|| _) -> PathSizeSuccess $ pd ^. #size
+    PathSizePartial errs (SPD.unSubPathData -> pd :|| _) -> PathSizePartial errs (pd ^. #size)
     PathSizeFailure errs -> PathSizeFailure errs
 
 -- | Given a path, finds the size of all subpaths, recursively.
@@ -169,8 +162,8 @@ findLargestPathsIO cfg path = do
       AsyncPooled -> pathDataRecursiveAsyncPooled
     takeLargestN =
       maybe
-        PathSizeData.mkSubPathData
-        PathSizeData.takeLargestN
+        SPD.mkSubPathData
+        SPD.takeLargestN
         (cfg ^. #numPaths)
 
 -- | Given a path, associates all subpaths to their size, recursively.

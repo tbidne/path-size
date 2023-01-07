@@ -19,14 +19,7 @@ import Data.Text.Lazy.Encoding qualified as TLEnc
 import GHC.Num.Natural (Natural)
 import PathSize (PathSizeResult (..), SubPathData)
 import PathSize qualified
-import PathSize.Data
-  ( Config
-      ( exclude,
-        filesOnly,
-        maxDepth,
-        searchAll
-      ),
-  )
+import PathSize.Data.Config (Config (..))
 import PathSize.Exception (PathE)
 import System.Directory qualified as Dir
 import System.FilePath ((</>))

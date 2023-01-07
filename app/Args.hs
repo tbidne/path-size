@@ -37,7 +37,7 @@ import Options.Applicative
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Types (ArgPolicy (Intersperse))
-import PathSize.Data
+import PathSize.Data.Config
   ( Config (..),
     Strategy (..),
   )

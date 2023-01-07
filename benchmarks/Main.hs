@@ -23,11 +23,11 @@ import Effects.MonadCallStack
   )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import PathSize (NonEmptySeq ((:||)), display, findLargestPaths)
-import PathSize.Data
+import PathSize.Data.Config
   ( Config (numPaths, strategy),
-    PathSizeResult (..),
     Strategy (Async, AsyncPooled, Sync),
   )
+import PathSize.Data.PathSizeResult (PathSizeResult (..))
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import System.FilePath ((</>))
 import UnliftIO.Exception (Exception (displayException), bracket)

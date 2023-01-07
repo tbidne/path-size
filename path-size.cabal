@@ -38,8 +38,14 @@ common common-exts
 library
   import:           common-exts
   exposed-modules:
+    Data.Sequence.NonEmpty
     PathSize
-    PathSize.Data
+    PathSize.Data.Config
+    PathSize.Data.PathData
+    PathSize.Data.PathSizeResult
+    PathSize.Data.PathTree
+    PathSize.Data.SubPathData
+    PathSize.Data.SubPathData.Internal
     PathSize.Exception
 
   build-depends:
