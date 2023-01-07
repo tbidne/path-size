@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | Provides 'PathData' type.</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">PathSize.Data.PathData</span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier">PathData</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="PathSize.Data.PathData.html#natify"><span class="hs-identifier">natify</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/deepseq-1.4.6.1/src/Control.DeepSeq.html"><span class="hs-identifier">Control.DeepSeq</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/deepseq-1.4.6.1/src/Control.DeepSeq.html#NFData"><span class="hs-identifier">NFData</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Effects.FileSystem.Path</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Path</span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html"><span class="hs-identifier">GHC.Generics</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html#Generic"><span class="hs-identifier">Generic</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/Numeric.Natural.html"><span class="hs-identifier">Numeric.Natural</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-bignum-1.2/src/GHC.Num.Natural.html#Natural"><span class="hs-identifier">Natural</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/m54ws1xg4qphdx9z60448l0rw9x4l994-optics-th-0.4.1-doc/share/doc/optics-th-0.4.1/html/src/Optics.TH.html"><span class="hs-identifier">Optics.TH</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/m54ws1xg4qphdx9z60448l0rw9x4l994-optics-th-0.4.1-doc/share/doc/optics-th-0.4.1/html/src/Optics.TH.html#makeFieldLabelsNoPrefix"><span class="hs-identifier">makeFieldLabelsNoPrefix</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- | Associates a path to its total (recursive) size in the file-system.</span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- Takes a parameter for the size, allowing us to use a more efficient</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- temporary type (e.g. 'Integer') before finally converting to</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- Natural.</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--</span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-25"></span><span id="local-6989586621679119853"><span id="local-6989586621679119854"></span></span><span class="hs-keyword">data</span><span> </span><span id="PathData"><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-var">PathData</span></a></span></span><span> </span><span id="local-6989586621679119960"><span class="annot"><a href="#local-6989586621679119960"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkPathData"><span class="annot"><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-var">MkPathData</span></a></span></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | Path.</span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-29"></span><span>    </span><span id="%24sel%3Apath%3AMkPathData"><span class="annot"><span class="annottext">forall a. PathData a -&gt; Path
+</span><a href="PathSize.Data.PathData.html#%24sel%3Apath%3AMkPathData"><span class="hs-identifier hs-var hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Path</span></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-comment">-- | Size in bytes.</span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-33"></span><span>    </span><span id="%24sel%3Asize%3AMkPathData"><span class="annot"><span class="annottext">forall a. PathData a -&gt; a
+</span><a href="PathSize.Data.PathData.html#%24sel%3Asize%3AMkPathData"><span class="hs-identifier hs-var hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="#local-6989586621679119960"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-comment">-- | Number of files.</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-37"></span><span>    </span><span id="%24sel%3AnumFiles%3AMkPathData"><span class="annot"><span class="annottext">forall a. PathData a -&gt; a
+</span><a href="PathSize.Data.PathData.html#%24sel%3AnumFiles%3AMkPathData"><span class="hs-identifier hs-var hs-var">numFiles</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="#local-6989586621679119960"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-comment">-- | Number of directories.</span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-41"></span><span>    </span><span id="%24sel%3AnumDirectories%3AMkPathData"><span class="annot"><span class="annottext">forall a. PathData a -&gt; a
+</span><a href="PathSize.Data.PathData.html#%24sel%3AnumDirectories%3AMkPathData"><span class="hs-identifier hs-var hs-var">numDirectories</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="#local-6989586621679119960"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-44"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-45"></span><span>      </span><span id="local-6989586621679119838"><span id="local-6989586621679119846"><span class="annot"><span class="annottext">PathData a -&gt; PathData a -&gt; Bool
+forall a. Eq a =&gt; PathData a -&gt; PathData a -&gt; Bool
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: PathData a -&gt; PathData a -&gt; Bool
+$c/= :: forall a. Eq a =&gt; PathData a -&gt; PathData a -&gt; Bool
+== :: PathData a -&gt; PathData a -&gt; Bool
+$c== :: forall a. Eq a =&gt; PathData a -&gt; PathData a -&gt; Bool
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-prim-0.8.0/src/GHC.Classes.html#Eq"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></a></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-46"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-47"></span><span>      </span><span class="annot"><span class="annottext">forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+forall a x. Rep (PathData a) x -&gt; PathData a
+forall a x. PathData a -&gt; Rep (PathData a) x
+$cto :: forall a x. Rep (PathData a) x -&gt; PathData a
+$cfrom :: forall a x. PathData a -&gt; Rep (PathData a) x
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Generics.html#Generic"><span class="hs-identifier hs-var hs-var hs-var hs-var">Generic</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>      </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-49"></span><span>      </span><span id="local-6989586621679119819"><span id="local-6989586621679119821"><span id="local-6989586621679119831"><span class="annot"><span class="annottext">Int -&gt; PathData a -&gt; ShowS
+forall a. Show a =&gt; Int -&gt; PathData a -&gt; ShowS
+forall a. Show a =&gt; [PathData a] -&gt; ShowS
+forall a. Show a =&gt; PathData a -&gt; Path
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; Path) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [PathData a] -&gt; ShowS
+$cshowList :: forall a. Show a =&gt; [PathData a] -&gt; ShowS
+show :: PathData a -&gt; Path
+$cshow :: forall a. Show a =&gt; PathData a -&gt; Path
+showsPrec :: Int -&gt; PathData a -&gt; ShowS
+$cshowsPrec :: forall a. Show a =&gt; Int -&gt; PathData a -&gt; ShowS
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Show.html#Show"><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></a></span></span></span></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-53"></span><span>      </span><span id="local-6989586621679119815"><span class="annot"><span class="annottext">forall a. NFData a =&gt; PathData a -&gt; ()
+forall a. (a -&gt; ()) -&gt; NFData a
+rnf :: PathData a -&gt; ()
+$crnf :: forall a. NFData a =&gt; PathData a -&gt; ()
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/deepseq-1.4.6.1/src/Control.DeepSeq.html#C%3ANFData"><span class="hs-identifier hs-var hs-var hs-var hs-var">NFData</span></a></span></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-57"></span><span id="local-6989586621679119794"><span id="local-6989586621679119799"><span id="local-6989586621679119804"><span id="local-6989586621679119809"><span id="local-6989586621679119911"><span id="local-6989586621679119912"><span id="local-6989586621679119913"><span id="local-6989586621679119914"><span id="local-6989586621679119915"><span id="local-6989586621679119916"><span id="local-6989586621679119917"><span id="local-6989586621679119918"><span id="local-6989586621679119919"><span id="local-6989586621679119920"><span id="local-6989586621679119921"><span id="local-6989586621679119922"><span id="local-6989586621679119960"><span class="hs-identifier">makeFieldLabelsNoPrefix</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">PathData</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- | @since 0.1</span><span>
+</span><span id="line-60"></span><span class="annot"><a href="PathSize.Data.PathData.html#natify"><span class="hs-identifier hs-type">natify</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-bignum-1.2/src/GHC.Num.Integer.html#Integer"><span class="hs-identifier hs-type">Integer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/ghc-bignum-1.2/src/GHC.Num.Natural.html#Natural"><span class="hs-identifier hs-type">Natural</span></a></span><span>
+</span><span id="line-61"></span><span id="natify"><span class="annot"><span class="annottext">natify :: PathData Integer -&gt; PathData Natural
+</span><a href="PathSize.Data.PathData.html#natify"><span class="hs-identifier hs-var hs-var">natify</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-type">MkPathData</span></a></span><span> </span><span id="local-6989586621679119738"><span class="annot"><span class="annottext">Path
+</span><a href="#local-6989586621679119738"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679119737"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679119737"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679119736"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679119736"><span class="hs-identifier hs-var">nf</span></a></span></span><span> </span><span id="local-6989586621679119735"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679119735"><span class="hs-identifier hs-var">nd</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-62"></span><span>  </span><span class="annot"><span class="annottext">forall a. Path -&gt; a -&gt; a -&gt; a -&gt; PathData a
+</span><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-var">MkPathData</span></a></span><span> </span><span class="annot"><span class="annottext">Path
+</span><a href="#local-6989586621679119738"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Real.html#fromIntegral"><span class="hs-identifier hs-var">fromIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679119737"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Real.html#fromIntegral"><span class="hs-identifier hs-var">fromIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679119736"><span class="hs-identifier hs-var">nf</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><a href="file:///nix/store/1bj5rzwny8qxyy5rlvpahw1pb2g8ihlm-ghc-9.2.5-doc/share/doc/ghc/html/libraries/base-4.16.4.0/src/GHC.Real.html#fromIntegral"><span class="hs-identifier hs-var">fromIntegral</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679119735"><span class="hs-identifier hs-var">nd</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span></pre></body></html>
