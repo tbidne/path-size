@@ -38,7 +38,6 @@ common common-exts
 library
   import:           common-exts
   exposed-modules:
-    Data.Sequence.NonEmpty
     PathSize
     PathSize.Data.Config
     PathSize.Data.PathData
@@ -56,6 +55,7 @@ library
     , filepath              ^>=1.4.2.1
     , monad-callstack       ^>=0.1
     , monad-fs              ^>=0.1
+    , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
     , text                  >=1.2.3.2   && <2.1
@@ -112,12 +112,13 @@ benchmark benchmarks
   main-is:          Main.hs
   build-depends:
     , base
-    , bytestring       >=0.10.12  && <0.12
-    , criterion        ^>=1.6.0.0
-    , env-guard        ^>=0.2
+    , bytestring           >=0.10.12  && <0.12
+    , criterion            ^>=1.6.0.0
+    , env-guard            ^>=0.2
     , filepath
     , monad-callstack
     , monad-fs
+    , nonempty-containers
     , path-size
     , unliftio
 

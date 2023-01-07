@@ -27,7 +27,7 @@ import Data.Foldable (Foldable (foldl'))
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq ((:<|)), (<|))
 import Data.Sequence qualified as Seq
-import Data.Sequence.NonEmpty (NonEmptySeq ((:||)))
+import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
@@ -41,7 +41,7 @@ import PathSize.Data.PathTree (PathTree (..), pathTreeToSeq)
 -- one element.
 --
 -- @since 0.1
-newtype SubPathData = UnsafeSubPathData (NonEmptySeq PathData)
+newtype SubPathData = UnsafeSubPathData (NESeq PathData)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -71,21 +71,21 @@ instance
     A_Getter
     SubPathData
     SubPathData
-    (NonEmptySeq PathData)
-    (NonEmptySeq PathData)
+    (NESeq PathData)
+    (NESeq PathData)
   where
   labelOptic = to (\(UnsafeSubPathData sbd) -> sbd)
 
 -- | Pattern synonym for 'SubPathData'.
 --
 -- @since 0.1
-pattern MkSubPathData :: NonEmptySeq PathData -> SubPathData
+pattern MkSubPathData :: NESeq PathData -> SubPathData
 pattern MkSubPathData sbd = UnsafeSubPathData sbd
 
 {-# COMPLETE MkSubPathData #-}
 
 -- | @since 0.1
-unSubPathData :: SubPathData -> NonEmptySeq PathData
+unSubPathData :: SubPathData -> NESeq PathData
 unSubPathData (UnsafeSubPathData sbd) = sbd
 
 -- | Creates a 'SubPathData' from a 'PathTree'.
@@ -94,7 +94,7 @@ unSubPathData (UnsafeSubPathData sbd) = sbd
 mkSubPathData :: PathTree -> Maybe SubPathData
 mkSubPathData Nil = Nothing
 mkSubPathData node@(Node _ _) = case sort (pathTreeToSeq node) of
-  (first :<| rest) -> Just $ UnsafeSubPathData (first :|| rest)
+  (first :<| rest) -> Just $ UnsafeSubPathData (first :<|| rest)
   -- HACK: This should be impossible as sorting preserves size...
   _ -> Nothing
 
@@ -102,7 +102,7 @@ mkSubPathData node@(Node _ _) = case sort (pathTreeToSeq node) of
 --
 -- @since 0.1
 subPathDataToSeq :: SubPathData -> Seq PathData
-subPathDataToSeq (UnsafeSubPathData (pd :|| xs)) = pd <| xs
+subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 
 -- NOTE: Annoyingly, this sort seems to cost quite a bit of performance over
 -- the previous (Down . view #size). It is now applying an additional sort
@@ -122,7 +122,7 @@ sort = Seq.sortOn (Down . \(MkPathData p s _ _) -> (s, p))
 takeLargestN :: Natural -> PathTree -> Maybe SubPathData
 takeLargestN _ Nil = Nothing
 takeLargestN n node@(Node _ _) = case Seq.take (fromIntegral n) (sort (pathTreeToSeq node)) of
-  (first :<| rest) -> Just $ UnsafeSubPathData (first :|| rest)
+  (first :<| rest) -> Just $ UnsafeSubPathData (first :<|| rest)
   -- NOTE: Should only happen if n == 0
   _ -> Nothing
 

@@ -1,6 +1,5 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE ViewPatterns #-}
 
 -- | @since 0.1
 module PathSize
@@ -9,7 +8,7 @@ module PathSize
 
     -- * Types
     PathData (..),
-    SubPathData,
+    SubPathData (MkSubPathData),
     PathSizeResult (..),
 
     -- ** Configuration
@@ -20,6 +19,9 @@ module PathSize
     pathSizeRecursive,
     pathSizeRecursiveConfig,
     SPD.display,
+
+    -- * Errors
+    PathE (..),
   )
 where
 
@@ -30,7 +32,8 @@ import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
-import Data.Sequence.NonEmpty (NonEmptySeq ((:||)))
+import Data.Sequence.NonEmpty (NESeq ((:<||)))
+import Data.Sequence.NonEmpty qualified as NESeq
 import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
 import Effects.FileSystem.Types (Path)
 import Effects.MonadCallStack (HasCallStack, displayCallStack)
@@ -40,7 +43,7 @@ import PathSize.Data.Config (Config (..), Strategy (..))
 import PathSize.Data.PathData (PathData (..))
 import PathSize.Data.PathSizeResult (PathSizeResult (..))
 import PathSize.Data.PathTree (PathTree (..))
-import PathSize.Data.SubPathData (SubPathData)
+import PathSize.Data.SubPathData (SubPathData (MkSubPathData))
 import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Exception (PathE (MkPathE))
 #if MIN_VERSION_filepath(1,4,100)
@@ -116,8 +119,8 @@ pathSizeRecursiveConfig ::
   m (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg path =
   findLargestPaths cfg path <&> \case
-    PathSizeSuccess (SPD.unSubPathData -> pd :|| _) -> PathSizeSuccess $ pd ^. #size
-    PathSizePartial errs (SPD.unSubPathData -> pd :|| _) -> PathSizePartial errs (pd ^. #size)
+    PathSizeSuccess (MkSubPathData (pd :<|| _)) -> PathSizeSuccess $ pd ^. #size
+    PathSizePartial errs (MkSubPathData (pd :<|| _)) -> PathSizePartial errs (pd ^. #size)
     PathSizeFailure errs -> PathSizeFailure errs
 
 -- | Given a path, finds the size of all subpaths, recursively.
@@ -138,23 +141,25 @@ findLargestPathsIO cfg path = do
     (Empty, nodes@(Node _ _)) -> case takeLargestN nodes of
       -- 1.a. This should only occur if numPaths == 0, as sorting a non-empty
       -- list should return a non-empty list
-      Nothing -> PathSizeFailure (MkPathE path "Found 0 nodes after sorting" :|| [])
+      Nothing ->
+        PathSizeFailure $
+          NESeq.singleton $
+            MkPathE path "Found 0 nodes after sorting"
       -- 1.b. Success,
       Just sbd -> PathSizeSuccess sbd
     -- 2. Partial success, received errs and non-empty data
     (allErrs@(err :<| errs), nodes@(Node _ _)) -> case takeLargestN nodes of
-      Nothing -> PathSizeFailure (MkPathE path "Found 0 nodes" :|| allErrs)
-      Just sbd -> PathSizePartial (err :|| errs) sbd
+      Nothing -> PathSizeFailure (MkPathE path "Found 0 nodes" :<|| allErrs)
+      Just sbd -> PathSizePartial (err :<|| errs) sbd
     -- 3. Received errs and no data.
-    (err :<| errs, Nil) -> PathSizeFailure (err :|| errs)
+    (err :<| errs, Nil) -> PathSizeFailure (err :<|| errs)
     -- 4. Received no errs and no data.
     (Empty, Nil) ->
-      PathSizeFailure
-        ( MkPathE
+      PathSizeFailure $
+        NESeq.singleton $
+          MkPathE
             path
             "Received no errors and no data. Was the top-level path excluded?"
-            :|| []
-        )
   where
     f = case cfg ^. #strategy of
       Sync -> pathDataRecursiveSync

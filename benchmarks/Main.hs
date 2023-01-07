@@ -11,6 +11,7 @@ import Criterion.Main (defaultMain)
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
+import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
 import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
 import Effects.FileSystem.MonadPathWriter (MonadPathWriter (..))
@@ -22,7 +23,7 @@ import Effects.MonadCallStack
       ),
   )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import PathSize (NonEmptySeq ((:||)), display, findLargestPaths)
+import PathSize (display, findLargestPaths)
 import PathSize.Data.Config
   ( Config (numPaths, strategy),
     Strategy (Async, AsyncPooled, Sync),
@@ -135,8 +136,8 @@ benchDisplayPathSize testDir =
         . nfIO
         . (findLargestPaths mempty >=> displayResult)
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
-    displayResult (PathSizePartial (err :|| _) _) = throwWithCallStack err
-    displayResult (PathSizeFailure (err :|| _)) = throwWithCallStack err
+    displayResult (PathSizePartial (err :<|| _) _) = throwWithCallStack err
+    displayResult (PathSizeFailure (err :<|| _)) = throwWithCallStack err
 
 setup :: HasCallStack => IO FilePath
 setup = do

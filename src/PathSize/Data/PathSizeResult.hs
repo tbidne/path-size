@@ -14,7 +14,7 @@ module PathSize.Data.PathSizeResult
 where
 
 import Control.DeepSeq (NFData)
-import Data.Sequence.NonEmpty (NonEmptySeq)
+import Data.Sequence.NonEmpty (NESeq)
 import GHC.Generics (Generic)
 import Optics.TH (makePrisms)
 import PathSize.Exception (PathE (..))
@@ -31,11 +31,11 @@ data PathSizeResult a
   | -- | Computed @a@ with some errors.
     --
     -- @since 0.1
-    PathSizePartial !(NonEmptySeq PathE) !a
+    PathSizePartial !(NESeq PathE) !a
   | -- | Failed computing @a@.
     --
     -- @since 0.1
-    PathSizeFailure !(NonEmptySeq PathE)
+    PathSizeFailure !(NESeq PathE)
   deriving stock
     ( -- | @since 0.1
       Eq,

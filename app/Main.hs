@@ -10,7 +10,7 @@ import Effects.MonadCallStack (displayCallStack)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import GHC.Stack (HasCallStack)
 import Optics.Core ((^.))
-import PathSize (PathSizeResult (..), display, findLargestPaths, unNonEmptySeq)
+import PathSize (PathSizeResult (..), display, findLargestPaths)
 import System.Exit (exitFailure)
 
 -- | Executable entry-point.
@@ -27,8 +27,8 @@ main = do
   findLargestPaths config (args ^. #path) >>= \case
     PathSizeSuccess sbd -> printResults sbd
     PathSizePartial errs sbd -> do
-      for_ (unNonEmptySeq errs) (putStrLn . displayCallStack)
+      for_ errs (putStrLn . displayCallStack)
       printResults sbd
     PathSizeFailure errs -> do
-      for_ (unNonEmptySeq errs) (putStrLn . displayCallStack)
+      for_ errs (putStrLn . displayCallStack)
       exitFailure
