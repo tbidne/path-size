@@ -74,7 +74,10 @@ haddock:
 
 .PHONY: haddockc
 haddockc:
-	nix run github:tbidne/nix-hs-tools/0.7#haddock-cov -- .
+	nix run github:tbidne/nix-hs-tools/0.7#haddock-cov -- . \
+		-m PathSize.Data.Config 65 \
+		-m PathSize.Data.PathTree 75 \
+		-m PathSize.Data.PathSizeResult 55
 
 # generate dist and docs suitable for hackage
 .PHONY: hackage

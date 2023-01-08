@@ -39,6 +39,9 @@ data PathTree
       NFData
     )
 
+-- | Flattens a 'PathTree' into a 'Seq'.
+--
+-- @since 0.1
 pathTreeToSeq :: PathTree -> Seq PathData
 pathTreeToSeq (Node x subTrees) = x <| (subTrees >>= pathTreeToSeq)
 pathTreeToSeq Nil = []
