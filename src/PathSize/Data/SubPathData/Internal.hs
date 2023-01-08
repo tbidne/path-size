@@ -6,11 +6,10 @@
 --
 -- @since 0.1
 module PathSize.Data.SubPathData.Internal
-  ( PathTree (..),
-    takeLargestN,
-    SubPathData (.., MkSubPathData),
+  ( SubPathData (.., MkSubPathData),
     unSubPathData,
     mkSubPathData,
+    takeLargestN,
     display,
   )
 where
@@ -28,9 +27,11 @@ import Data.Ord (Down (Down))
 import Data.Sequence (Seq ((:<|)), (<|))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
+import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
+import Effects.FileSystem.Types (Path)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
@@ -76,11 +77,14 @@ instance
   where
   labelOptic = to (\(UnsafeSubPathData sbd) -> sbd)
 
--- | Pattern synonym for 'SubPathData'.
+-- | Pattern synonym for 'SubPathData'. Note that construction sorts the
+-- underlying 'NESeq', so it is not constant.
 --
 -- @since 0.1
 pattern MkSubPathData :: NESeq PathData -> SubPathData
-pattern MkSubPathData sbd = UnsafeSubPathData sbd
+pattern MkSubPathData sbd <- UnsafeSubPathData sbd
+  where
+    MkSubPathData sbd = UnsafeSubPathData (sortNESeq sbd)
 
 {-# COMPLETE MkSubPathData #-}
 
@@ -93,7 +97,7 @@ unSubPathData (UnsafeSubPathData sbd) = sbd
 -- @since 0.1
 mkSubPathData :: PathTree -> Maybe SubPathData
 mkSubPathData Nil = Nothing
-mkSubPathData node@(Node _ _) = case sort (pathTreeToSeq node) of
+mkSubPathData node@(Node _ _) = case sortSeq (pathTreeToSeq node) of
   (first :<| rest) -> Just $ UnsafeSubPathData (first :<|| rest)
   -- HACK: This should be impossible as sorting preserves size...
   _ -> Nothing
@@ -113,15 +117,21 @@ subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 -- | Sorts the path size.
 --
 -- @since 0.1
-sort :: Seq PathData -> Seq PathData
-sort = Seq.sortOn (Down . \(MkPathData p s _ _) -> (s, p))
+sortSeq :: Seq PathData -> Seq PathData
+sortSeq = Seq.sortOn pathDataOrd
+
+sortNESeq :: NESeq PathData -> NESeq PathData
+sortNESeq = NESeq.sortOn pathDataOrd
+
+pathDataOrd :: PathData -> Down (Natural, Path)
+pathDataOrd = Down . \(MkPathData p s _ _) -> (s, p)
 
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
 takeLargestN :: Natural -> PathTree -> Maybe SubPathData
 takeLargestN _ Nil = Nothing
-takeLargestN n node@(Node _ _) = case Seq.take (fromIntegral n) (sort (pathTreeToSeq node)) of
+takeLargestN n node@(Node _ _) = case Seq.take (fromIntegral n) (sortSeq (pathTreeToSeq node)) of
   (first :<| rest) -> Just $ UnsafeSubPathData (first :<|| rest)
   -- NOTE: Should only happen if n == 0
   _ -> Nothing
