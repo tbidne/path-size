@@ -16,8 +16,12 @@ import Data.String (IsString)
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Encoding qualified as TLEnc
+import Effectful (Eff, IOE, runEff)
+import Effectful.CallStack (CallStackEffect, runCallStackIO)
+import Effectful.Concurrent.Async (Concurrent, runConcurrent)
+import Effectful.FileSystem.PathReader (PathReaderEffect, runPathReaderIO)
 import GHC.Num.Natural (Natural)
-import PathSize (PathSizeResult (..), SubPathData)
+import PathSize (PathSizeEffect, PathSizeResult (..), SubPathData, runPathSizeIO)
 import PathSize qualified
 import PathSize.Data.Config (Config (..))
 import PathSize.Exception (PathE)
@@ -120,13 +124,30 @@ instance Exception StringE where
 
 runTest :: Config -> FilePath -> IO SubPathData
 runTest cfg testDir = do
-  PathSize.findLargestPaths cfg testDir >>= \case
+  runPathSize (PathSize.findLargestPathsIO cfg testDir) >>= \case
     PathSizeSuccess result -> pure result
     PathSizePartial errs _ -> throwIO $ MkStringE $ foldl' foldErrs "" errs
     PathSizeFailure errs -> throwIO $ MkStringE $ foldl' foldErrs "" errs
   where
     foldErrs :: String -> PathE -> String
     foldErrs s e = s <> displayException e
+
+    runPathSize ::
+      Eff
+        '[ PathSizeEffect,
+           PathReaderEffect,
+           CallStackEffect,
+           Concurrent,
+           IOE
+         ]
+        a ->
+      IO a
+    runPathSize =
+      runEff
+        . runConcurrent
+        . runCallStackIO
+        . runPathReaderIO
+        . runPathSizeIO
 
 -- HACK: Our naive golden tests require exact string quality, which is a
 -- problem since the full paths are non-deterministic, depending on the

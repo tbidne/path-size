@@ -84,6 +84,38 @@
         "type": "github"
       }
     },
+    "effectful-effects": {
+      "inputs": {
+        "algebra-simple": [
+          "algebra-simple"
+        ],
+        "bounds": [
+          "bounds"
+        ],
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1673329792,
+        "narHash": "sha256-XyZN93LDxDZPAE7FhVRaw+ol7p0bn3MgVI6BoaXYh8M=",
+        "owner": "tbidne",
+        "repo": "effectful-effects",
+        "rev": "fbaf174c46b6fe6e10ef97ec9fcc2b82c2cddaa7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "effectful-effects",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -115,38 +147,6 @@
       "original": {
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "type": "github"
-      }
-    },
-    "monad-effects": {
-      "inputs": {
-        "algebra-simple": [
-          "algebra-simple"
-        ],
-        "bounds": [
-          "bounds"
-        ],
-        "flake-compat": [
-          "flake-compat"
-        ],
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1673123202,
-        "narHash": "sha256-1ERquLG+ei/cvruu5zj044QlUbQgzj6X41cdysmnK7o=",
-        "owner": "tbidne",
-        "repo": "monad-effects",
-        "rev": "82d1b943ce285bef14c8598d4401f80079baffb3",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tbidne",
-        "repo": "monad-effects",
         "type": "github"
       }
     },
@@ -189,9 +189,9 @@
         "algebra-simple": "algebra-simple",
         "bounds": "bounds",
         "byte-types": "byte-types",
+        "effectful-effects": "effectful-effects",
         "flake-compat": "flake-compat",
         "flake-parts": "flake-parts",
-        "monad-effects": "monad-effects",
         "nixpkgs": "nixpkgs"
       }
     }

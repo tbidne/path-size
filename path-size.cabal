@@ -52,14 +52,14 @@ library
     , byte-types            ^>=0.1
     , containers            ^>=0.6.3.1
     , deepseq               ^>=1.4.4.0
+    , effectful             ^>=2.2.1.0
+    , effectful-callstack   ^>=0.1
+    , effectful-fs          ^>=0.1
     , filepath              ^>=1.4.2.1
-    , monad-callstack       ^>=0.1
-    , monad-fs              ^>=0.1
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
     , text                  >=1.2.3.2   && <2.1
-    , transformers          >=0.5.6.2   && <0.7
     , unix                  >=2.7.2.2   && <2.9
     , unliftio              ^>=0.2.0.0
     , unordered-containers  ^>=0.2.14.0
@@ -73,8 +73,10 @@ executable path-size
   other-modules:    Args
   build-depends:
     , base
+    , effectful
+    , effectful-callstack
+    , effectful-fs
     , gitrev                >=1.2.0    && <1.4
-    , monad-callstack
     , optics-core
     , optics-th
     , optparse-applicative  >=0.16.1.0 && <0.18
@@ -96,6 +98,9 @@ test-suite functional
     , base
     , bytestring
     , directory
+    , effectful
+    , effectful-callstack
+    , effectful-fs
     , filepath
     , path-size
     , tasty                 >=1.1.0.3  && <1.5
@@ -114,10 +119,12 @@ benchmark benchmarks
     , base
     , bytestring           >=0.10.12  && <0.12
     , criterion            ^>=1.6.0.0
+    , directory
+    , effectful
+    , effectful-callstack
+    , effectful-fs
     , env-guard            ^>=0.2
     , filepath
-    , monad-callstack
-    , monad-fs
     , nonempty-containers
     , path-size
     , unliftio

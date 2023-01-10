@@ -34,8 +34,8 @@ source-repository-package
 
 source-repository-package
     type: git
-    location: https://github.com/tbidne/monad-effects.git
-    tag: 82d1b943ce285bef14c8598d4401f80079baffb3
+    location: https://github.com/tbidne/effectful-effects.git
+    tag: fbaf174c46b6fe6e10ef97ec9fcc2b82c2cddaa7
     subdir:
-      monad-callstack
-      monad-fs
+      effectful-callstack
+      effectful-fs

@@ -3,8 +3,14 @@
 
 -- | @since 0.1
 module PathSize
-  ( -- * Class
-    MonadPathSize (..),
+  ( -- * Effect
+    PathSizeEffect (..),
+
+    -- ** Functions
+    findLargestPathsIO,
+
+    -- ** Handlers
+    runPathSizeIO,
 
     -- * Types
     PathData (..),
@@ -25,18 +31,33 @@ module PathSize
   )
 where
 
-import Control.Monad.Trans.Class (MonadTrans (lift))
-import Control.Monad.Trans.Reader (ReaderT)
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
-import Data.Sequence (Seq (Empty, (:<|)), (<|))
+import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
-import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
-import Effects.FileSystem.Types (Path)
-import Effects.MonadCallStack (HasCallStack, displayCallStack)
+import Effectful
+  ( Dispatch (Dynamic),
+    DispatchOf,
+    Eff,
+    Effect,
+    IOE,
+    type (:>),
+  )
+import Effectful.CallStack (HasCallStack, displayCallStack)
+import Effectful.Concurrent.Async (Concurrent)
+import Effectful.Concurrent.Async qualified as Async
+import Effectful.Dispatch.Dynamic (interpret, send)
+import Effectful.FileSystem.Path (Path)
+import Effectful.FileSystem.PathReader
+  ( PathReaderEffect,
+    doesDirectoryExist,
+    getFileSize,
+    listDirectory,
+    pathIsSymbolicLink,
+  )
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
 import PathSize.Data.Config (Config (..), Strategy (..))
@@ -53,33 +74,49 @@ import System.OsPath qualified as FP
 import System.FilePath ((</>))
 import System.FilePath qualified as FP
 #endif
+-- import UnliftIO.Async qualified as Async
+
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import System.Posix.Files qualified as Posix
-import UnliftIO.Async qualified as Async
 import UnliftIO.Exception (catchAny)
 
--- | Typeclass for finding a path's recursive size.
+-- | Path size effect.
 --
 -- @since 0.1
-class Monad m => MonadPathSize m where
-  -- | Given a path, finds the size of all subpaths, recursively.
-  --
-  -- @since 0.1
-  findLargestPaths ::
+data PathSizeEffect :: Effect where
+  FindLargestPaths ::
     HasCallStack =>
-    -- | Configuration.
     Config ->
-    -- | Path to search.
     Path ->
-    -- | The results.
-    m (PathSizeResult SubPathData)
+    PathSizeEffect m (PathSizeResult SubPathData)
 
 -- | @since 0.1
-instance MonadPathSize IO where
-  findLargestPaths = findLargestPathsIO
+type instance DispatchOf PathSizeEffect = Dynamic
 
--- | @since 0.1
-instance MonadPathSize m => MonadPathSize (ReaderT env m) where
-  findLargestPaths cfg = lift . findLargestPaths cfg
+-- | Runs 'PathSizeEffect' in 'IO'.
+--
+-- @since 0.1
+runPathSizeIO ::
+  ( Concurrent :> es,
+    IOE :> es,
+    PathReaderEffect :> es
+  ) =>
+  Eff (PathSizeEffect : es) a ->
+  Eff es a
+runPathSizeIO = interpret $ \_ -> \case
+  FindLargestPaths cfg p -> findLargestPathsIO cfg p
+
+-- | Finds the largest paths.
+--
+-- @since 0.1
+findLargestPaths ::
+  ( HasCallStack,
+    PathSizeEffect :> es
+  ) =>
+  Config ->
+  Path ->
+  Eff es (PathSizeResult SubPathData)
+findLargestPaths cfg = send . FindLargestPaths cfg
 
 -- | Returns the total path size in bytes. Calls 'pathSizeRecursiveConfig' with
 -- the following config:
@@ -96,7 +133,12 @@ instance MonadPathSize m => MonadPathSize (ReaderT env m) where
 -- @
 --
 -- @since 0.1
-pathSizeRecursive :: MonadPathSize m => Path -> m (PathSizeResult Natural)
+pathSizeRecursive ::
+  ( HasCallStack,
+    PathSizeEffect :> es
+  ) =>
+  Path ->
+  Eff es (PathSizeResult Natural)
 pathSizeRecursive = pathSizeRecursiveConfig cfg
   where
     cfg =
@@ -113,10 +155,10 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
 --
 -- @since 0.1
 pathSizeRecursiveConfig ::
-  MonadPathSize m =>
+  (HasCallStack, PathSizeEffect :> es) =>
   Config ->
   Path ->
-  m (PathSizeResult Natural)
+  Eff es (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg path =
   findLargestPaths cfg path <&> \case
     PathSizeSuccess (MkSubPathData (pd :<|| _)) -> PathSizeSuccess $ pd ^. #size
@@ -127,14 +169,18 @@ pathSizeRecursiveConfig cfg path =
 --
 -- @since 0.1
 findLargestPathsIO ::
-  HasCallStack =>
+  ( Concurrent :> es,
+    HasCallStack,
+    IOE :> es,
+    PathReaderEffect :> es
+  ) =>
   -- | Configuration.
   Config ->
   -- | Path to search.
   Path ->
   -- | The results. The left element are any errors encountered, while the
   -- right element is the path size data.
-  IO (PathSizeResult SubPathData)
+  Eff es (PathSizeResult SubPathData)
 findLargestPathsIO cfg path = do
   f cfg path <&> \case
     -- 1. Success, received data and no errors
@@ -176,10 +222,13 @@ findLargestPathsIO cfg path = do
 --
 -- @since 0.1
 pathDataRecursiveSync ::
-  HasCallStack =>
+  ( HasCallStack,
+    IOE :> es,
+    PathReaderEffect :> es
+  ) =>
   Config ->
   Path ->
-  IO (Seq PathE, PathTree)
+  Eff es (Seq PathE, PathTree)
 pathDataRecursiveSync = pathDataRecursive traverse
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
@@ -187,20 +236,20 @@ pathDataRecursiveSync = pathDataRecursive traverse
 --
 -- @since 0.1
 pathDataRecursiveAsync ::
-  HasCallStack =>
+  (Concurrent :> es, HasCallStack, IOE :> es, PathReaderEffect :> es) =>
   Config ->
   Path ->
-  IO (Seq PathE, PathTree)
+  Eff es (Seq PathE, PathTree)
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
 --
 -- @since 0.1
 pathDataRecursiveAsyncPooled ::
-  HasCallStack =>
+  (Concurrent :> es, HasCallStack, IOE :> es, PathReaderEffect :> es) =>
   Config ->
   Path ->
-  IO (Seq PathE, PathTree)
+  Eff es (Seq PathE, PathTree)
 pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -208,14 +257,18 @@ pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 --
 -- @since 0.1
 pathDataRecursive ::
-  HasCallStack =>
+  forall es.
+  ( HasCallStack,
+    IOE :> es,
+    PathReaderEffect :> es
+  ) =>
   -- | Traversal function.
-  (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
+  (forall a b t. Traversable t => (a -> Eff es b) -> t a -> Eff es (t b)) ->
   -- | The config.
   Config ->
   -- | Start path.
   Path ->
-  IO (Seq PathE, PathTree)
+  Eff es (Seq PathE, PathTree)
 pathDataRecursive traverseFn cfg =
   if cfg ^. #searchAll
     then goHidden
@@ -237,10 +290,16 @@ pathDataRecursive traverseFn cfg =
       Nothing -> const False
       Just d -> (>= d)
 
-    goSkipHidden :: HasCallStack => Path -> IO (Seq PathE, PathTree)
+    goSkipHidden ::
+      HasCallStack =>
+      Path ->
+      Eff es (Seq PathE, PathTree)
     goSkipHidden = go hidden 0
 
-    goHidden :: HasCallStack => Path -> IO (Seq PathE, PathTree)
+    goHidden ::
+      HasCallStack =>
+      Path ->
+      Eff es (Seq PathE, PathTree)
     goHidden = go (const False) 0
 
     -- Base recursive function. If the path is determined to be a symlink or
@@ -251,7 +310,7 @@ pathDataRecursive traverseFn cfg =
       (Path -> Bool) ->
       Natural ->
       Path ->
-      IO (Seq PathE, PathTree)
+      Eff es (Seq PathE, PathTree)
     go skipHidden !depth path =
       -- Determine if we should skip.
       if ((\p -> skipHidden p || skipExcluded p) . FP.takeFileName) path
@@ -262,7 +321,7 @@ pathDataRecursive traverseFn cfg =
             pure ([MkPathE path (displayCallStack e)], Nil)
       where
         -- Perform actual calculation.
-        calcTree :: HasCallStack => IO (Seq PathE, PathTree)
+        calcTree :: HasCallStack => Eff es (Seq PathE, PathTree)
         calcTree = do
           -- 1. Symlinks
           --
@@ -288,7 +347,8 @@ pathDataRecursive traverseFn cfg =
                   dirSize <- getFileSize path
                   let (!subSize, !numFiles, !subDirs) = sumTrees subTrees
                       !numDirectories = subDirs + 1
-                      !size = dirSizeFn dirSize subSize
+                      -- FIXME: Should not be doing these conversions.
+                      !size = fromIntegral $ dirSizeFn dirSize (fromIntegral subSize)
                       -- Do not report subpaths if the depth is exceeded.
                       subTrees'
                         | depthExceeded depth = []
@@ -323,20 +383,20 @@ pathDataRecursive traverseFn cfg =
     hidden ('.' : _) = True
     hidden _ = False
 
-calcSymLink :: HasCallStack => Path -> IO PathTree
-calcSymLink = calcSizeFn getSymLinkSize
+calcSymLink :: (HasCallStack, IOE :> es) => Path -> Eff es PathTree
+calcSymLink = calcSizeFn (liftIO . getSymLinkSize)
   where
     getSymLinkSize =
       fmap Posix.fileSize . Posix.getSymbolicLinkStatus
 
-calcFile :: HasCallStack => Path -> IO PathTree
+calcFile :: (HasCallStack, PathReaderEffect :> es) => Path -> Eff es PathTree
 calcFile = calcSizeFn getFileSize
 
 calcSizeFn ::
   (HasCallStack, Integral a) =>
-  (HasCallStack => Path -> IO a) ->
+  (HasCallStack => Path -> Eff es a) ->
   Path ->
-  IO PathTree
+  Eff es PathTree
 calcSizeFn sizeFn path =
   sizeFn path <&> \size ->
     Node
@@ -350,6 +410,6 @@ calcSizeFn sizeFn path =
 
 flattenSeq :: Seq (Seq a, b) -> (Seq a, Seq b)
 flattenSeq Empty = (Empty, Empty)
-flattenSeq ((xs, y) :<| zs) = (xs <> xs', y <| ys)
+flattenSeq ((xs, y) :<| zs) = (xs <> xs', y :<| ys)
   where
     (xs', ys) = flattenSeq zs

@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Control.Monad ((>=>))
+import Control.Monad.IO.Class (MonadIO (liftIO))
 import Criterion as X
   ( Benchmark,
     bench,
@@ -13,22 +14,24 @@ import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
-import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
-import Effects.FileSystem.MonadPathWriter (MonadPathWriter (..))
-import Effects.MonadCallStack
-  ( HasCallStack,
-    MonadCallStack
-      ( addCallStack,
-        throwWithCallStack
-      ),
+import Effectful (Eff, IOE, runEff)
+import Effectful.CallStack
+  ( CallStackEffect,
+    HasCallStack,
+    addCallStack,
+    runCallStackIO,
+    throwWithCallStack,
   )
+import Effectful.Concurrent.Async (Concurrent, runConcurrent)
+import Effectful.FileSystem.PathReader (PathReaderEffect, runPathReaderIO)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import PathSize (display, findLargestPaths)
+import PathSize (PathSizeEffect, display, findLargestPathsIO, runPathSizeIO)
 import PathSize.Data.Config
   ( Config (numPaths, strategy),
     Strategy (Async, AsyncPooled, Sync),
   )
 import PathSize.Data.PathSizeResult (PathSizeResult (..))
+import System.Directory qualified as Dir
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import System.FilePath ((</>))
 import UnliftIO.Exception (Exception (displayException), bracket)
@@ -97,15 +100,18 @@ benchPathSizeRecursive testDir =
     findLargestSync desc =
       bench desc
         . nfIO
-        . findLargestPaths mempty {strategy = Sync}
+        . runPathSize
+        . findLargestPathsIO mempty {strategy = Sync}
     findLargestAsync desc =
       bench desc
         . nfIO
-        . findLargestPaths mempty {strategy = Async}
+        . runPathSize
+        . findLargestPathsIO mempty {strategy = Async}
     findLargestAsyncPooled desc =
       bench desc
         . nfIO
-        . findLargestPaths mempty {strategy = AsyncPooled}
+        . runPathSize
+        . findLargestPathsIO mempty {strategy = AsyncPooled}
 
 benchLargestN :: FilePath -> Benchmark
 benchLargestN testDir =
@@ -120,7 +126,8 @@ benchLargestN testDir =
     runLargestN desc n =
       bench desc
         . nfIO
-        . findLargestPaths (mempty {numPaths = n})
+        . runPathSize
+        . findLargestPathsIO (mempty {numPaths = n})
 
 benchDisplayPathSize :: FilePath -> Benchmark
 benchDisplayPathSize testDir =
@@ -134,15 +141,16 @@ benchDisplayPathSize testDir =
     runDisplayPathSize desc =
       bench desc
         . nfIO
-        . (findLargestPaths mempty >=> displayResult)
+        . runPathSize
+        . (findLargestPathsIO mempty >=> displayResult)
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwWithCallStack err
     displayResult (PathSizeFailure (err :<|| _)) = throwWithCallStack err
 
 setup :: HasCallStack => IO FilePath
 setup = do
-  rootDir <- (</> "bench") <$> getTemporaryDirectory
-  createDirectoryIfMissing False rootDir
+  rootDir <- (</> "bench") <$> Dir.getTemporaryDirectory
+  Dir.createDirectoryIfMissing False rootDir
 
   -- flat directories
   createFlatDir (rootDir </> "flat-100") files100
@@ -166,10 +174,13 @@ setup = do
 
 teardown :: HasCallStack => FilePath -> IO ()
 teardown rootDir =
-  addCallStack $
-    guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
+  runEff $
+    runCallStackIO $
+      addCallStack $
+        liftIO $
+          guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
-    cleanup = removePathForcibly rootDir
+    cleanup = Dir.removePathForcibly rootDir
     doNothing =
       putStrLn $ "*** Not cleaning up tmp dir: " <> rootDir
 
@@ -196,7 +207,7 @@ createSpareDirs w root paths = do
 -- | Creates a single directory with the parameter files.
 createFlatDir :: HasCallStack => FilePath -> [FilePath] -> IO ()
 createFlatDir root paths = do
-  createDirectoryIfMissing False root
+  Dir.createDirectoryIfMissing False root
   createFiles ((root </>) <$> paths)
 
 -- | Creates empty files at the specified paths.
@@ -209,4 +220,21 @@ createFileContents ::
   [(FilePath, ByteString)] ->
   IO ()
 createFileContents paths = for_ paths $
-  \(p, c) -> addCallStack $ BS.writeFile p c
+  \(p, c) -> runEff $ runCallStackIO $ addCallStack $ liftIO $ BS.writeFile p c
+
+runPathSize ::
+  Eff
+    '[ PathSizeEffect,
+       PathReaderEffect,
+       CallStackEffect,
+       Concurrent,
+       IOE
+     ]
+    a ->
+  IO a
+runPathSize =
+  runEff
+    . runConcurrent
+    . runCallStackIO
+    . runPathReaderIO
+    . runPathSizeIO

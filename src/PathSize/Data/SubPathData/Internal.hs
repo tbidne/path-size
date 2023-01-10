@@ -24,14 +24,14 @@ import Data.Bytes
 import Data.Bytes qualified as Bytes
 import Data.Foldable (Foldable (foldl'))
 import Data.Ord (Down (Down))
-import Data.Sequence (Seq ((:<|)), (<|))
+import Data.Sequence (Seq ((:<|)))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
-import Effects.FileSystem.Types (Path)
+import Effectful.FileSystem.Path (Path)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
@@ -106,7 +106,7 @@ mkSubPathData node@(Node _ _) = case sortSeq (pathTreeToSeq node) of
 --
 -- @since 0.1
 subPathDataToSeq :: SubPathData -> Seq PathData
-subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
+subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd :<| xs
 
 -- NOTE: Annoyingly, this sort seems to cost quite a bit of performance over
 -- the previous (Down . view #size). It is now applying an additional sort

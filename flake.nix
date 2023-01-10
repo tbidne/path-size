@@ -32,8 +32,8 @@
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
     };
-    monad-effects = {
-      url = "github:tbidne/monad-effects";
+    effectful-effects = {
+      url = "github:tbidne/effectful-effects";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -46,9 +46,9 @@
     { algebra-simple
     , bounds
     , byte-types
+    , effectful-effects
     , flake-compat
     , flake-parts
-    , monad-effects
     , nixpkgs
     , self
     }:
@@ -88,13 +88,13 @@
                   final.callCabal2nix "algebra-simple" algebra-simple { };
                 bounds = final.callCabal2nix "bounds" bounds { };
                 byte-types = final.callCabal2nix "byte-types" byte-types { };
-                monad-callstack =
-                  final.callCabal2nix "monad-callstack"
-                    "${monad-effects}/monad-callstack"
+                effectful-callstack =
+                  final.callCabal2nix "effectful-callstack"
+                    "${effectful-effects}/effectful-callstack"
                     { };
-                monad-fs =
-                  final.callCabal2nix "monad-fs"
-                    "${monad-effects}/monad-fs"
+                effectful-fs =
+                  final.callCabal2nix "effectful-fs"
+                    "${effectful-effects}/effectful-fs"
                     { };
               };
             };
