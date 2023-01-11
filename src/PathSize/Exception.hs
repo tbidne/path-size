@@ -7,7 +7,7 @@ module PathSize.Exception
 where
 
 import Control.DeepSeq (NFData)
-import Effects.FileSystem.Types (Path)
+import Effects.FileSystem.Path (Path)
 import GHC.Generics (Generic)
 import UnliftIO.Exception (Exception (displayException))
 

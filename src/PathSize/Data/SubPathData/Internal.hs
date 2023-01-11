@@ -31,7 +31,7 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
-import Effects.FileSystem.Types (Path)
+import Effects.FileSystem.Path (Path)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to)

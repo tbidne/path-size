@@ -35,7 +35,7 @@ import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
-import Effects.FileSystem.Types (Path)
+import Effects.FileSystem.Path (Path)
 import Effects.MonadCallStack (HasCallStack, displayCallStack)
 import GHC.Natural (Natural)
 import Optics.Core ((^.))

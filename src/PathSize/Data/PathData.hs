@@ -10,7 +10,7 @@ module PathSize.Data.PathData
 where
 
 import Control.DeepSeq (NFData)
-import Effects.FileSystem.Types (Path)
+import Effects.FileSystem.Path (Path)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import Optics.TH (makeFieldLabelsNoPrefix)
