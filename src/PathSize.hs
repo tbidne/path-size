@@ -76,10 +76,12 @@ class Monad m => MonadPathSize m where
 -- | @since 0.1
 instance MonadPathSize IO where
   findLargestPaths = findLargestPathsIO
+  {-# INLINEABLE findLargestPaths #-}
 
 -- | @since 0.1
 instance MonadPathSize m => MonadPathSize (ReaderT env m) where
   findLargestPaths cfg = lift . findLargestPaths cfg
+  {-# INLINEABLE findLargestPaths #-}
 
 -- | Returns the total path size in bytes. Calls 'pathSizeRecursiveConfig' with
 -- the following config:
@@ -108,6 +110,7 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
           numPaths = Just 1,
           strategy = mempty
         }
+{-# INLINEABLE pathSizeRecursive #-}
 
 -- | Returns the total path size in bytes.
 --
@@ -122,6 +125,7 @@ pathSizeRecursiveConfig cfg path =
     PathSizeSuccess (MkSubPathData (pd :<|| _)) -> PathSizeSuccess $ pd ^. #size
     PathSizePartial errs (MkSubPathData (pd :<|| _)) -> PathSizePartial errs (pd ^. #size)
     PathSizeFailure errs -> PathSizeFailure errs
+{-# INLINEABLE pathSizeRecursiveConfig #-}
 
 -- | Given a path, finds the size of all subpaths, recursively.
 --
@@ -257,7 +261,7 @@ pathDataRecursive traverseFn cfg =
       if ((\p -> skipHidden p || skipExcluded p) . FP.takeFileName) path
         then pure ([], Nil)
         else
-          calcTree `catchAny` \e -> do
+          calcTree `catchAny` \e ->
             -- Save exceptions
             pure ([MkPathE path (displayCallStack e)], Nil)
       where
@@ -307,10 +311,10 @@ pathDataRecursive traverseFn cfg =
                 else -- 3. Files
                   ([],) <$> calcFile path
 
-    sumTrees :: Seq PathTree -> (Natural, Natural, Natural)
+    sumTrees :: Seq PathTree -> (Integer, Integer, Integer)
     sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
 
-    getSum :: PathTree -> (Natural, Natural, Natural)
+    getSum :: PathTree -> (Integer, Integer, Integer)
     getSum (Node (MkPathData {size, numFiles, numDirectories}) _) =
       (size, numFiles, numDirectories)
     getSum Nil = (0, 0, 0)
@@ -324,7 +328,7 @@ pathDataRecursive traverseFn cfg =
     hidden _ = False
 
 calcSymLink :: HasCallStack => Path -> IO PathTree
-calcSymLink = calcSizeFn getSymLinkSize
+calcSymLink = calcSizeFn (fmap fromIntegral . getSymLinkSize)
   where
     getSymLinkSize =
       fmap Posix.fileSize . Posix.getSymbolicLinkStatus
@@ -333,8 +337,8 @@ calcFile :: HasCallStack => Path -> IO PathTree
 calcFile = calcSizeFn getFileSize
 
 calcSizeFn ::
-  (HasCallStack, Integral a) =>
-  (HasCallStack => Path -> IO a) ->
+  HasCallStack =>
+  (HasCallStack => Path -> IO Integer) ->
   Path ->
   IO PathTree
 calcSizeFn sizeFn path =
@@ -342,7 +346,7 @@ calcSizeFn sizeFn path =
     Node
       MkPathData
         { path = path,
-          size = fromIntegral size,
+          size,
           numFiles = 1,
           numDirectories = 0
         }
@@ -353,3 +357,4 @@ flattenSeq Empty = (Empty, Empty)
 flattenSeq ((xs, y) :<| zs) = (xs <> xs', y <| ys)
   where
     (xs', ys) = flattenSeq zs
+{-# INLINEABLE flattenSeq #-}

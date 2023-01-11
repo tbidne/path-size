@@ -22,3 +22,9 @@ where
 
 import Data.Sequence.NonEmpty (NESeq)
 import PathSize.Data.SubPathData.Internal
+  ( SubPathData (MkSubPathData),
+    display,
+    mkSubPathData,
+    takeLargestN,
+    unSubPathData,
+  )

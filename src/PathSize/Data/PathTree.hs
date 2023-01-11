@@ -25,7 +25,7 @@ import PathSize.Data.PathData (PathData)
 -- @since 0.1
 data PathTree
   = Nil
-  | Node !PathData !(Seq PathTree)
+  | Node !(PathData Integer) !(Seq PathTree)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -42,7 +42,7 @@ data PathTree
 -- | Flattens a 'PathTree' into a 'Seq'.
 --
 -- @since 0.1
-pathTreeToSeq :: PathTree -> Seq PathData
+pathTreeToSeq :: PathTree -> Seq (PathData Integer)
 pathTreeToSeq (Node x subTrees) = x <| (subTrees >>= pathTreeToSeq)
 pathTreeToSeq Nil = []
 
