@@ -25,6 +25,7 @@ module PathSize
   )
 where
 
+import Control.Exception.Safe (catchAny)
 import Control.Monad.Trans.Class (MonadTrans (lift))
 import Control.Monad.Trans.Reader (ReaderT)
 import Data.Foldable (Foldable (foldl'))
@@ -36,6 +37,7 @@ import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
 import Effects.FileSystem.Path (Path)
+import Effects.MonadAsync qualified as Async
 import Effects.MonadCallStack (HasCallStack, displayCallStack)
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
@@ -54,8 +56,6 @@ import System.FilePath ((</>))
 import System.FilePath qualified as FP
 #endif
 import System.Posix.Files qualified as Posix
-import UnliftIO.Async qualified as Async
-import UnliftIO.Exception (catchAny)
 
 -- | Typeclass for finding a path's recursive size.
 --

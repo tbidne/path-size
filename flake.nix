@@ -41,6 +41,15 @@
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
     };
+    smart-math = {
+      url = "github:tbidne/smart-math";
+      inputs.flake-compat.follows = "flake-compat";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.nixpkgs.follows = "nixpkgs";
+
+      inputs.algebra-simple.follows = "algebra-simple";
+      inputs.bounds.follows = "bounds";
+    };
   };
   outputs =
     { algebra-simple
@@ -51,6 +60,7 @@
     , monad-effects
     , nixpkgs
     , self
+    , smart-math
     }:
     flake-parts.lib.mkFlake { inherit self; } {
       perSystem = { pkgs, ... }:
@@ -88,6 +98,10 @@
                   final.callCabal2nix "algebra-simple" algebra-simple { };
                 bounds = final.callCabal2nix "bounds" bounds { };
                 byte-types = final.callCabal2nix "byte-types" byte-types { };
+                monad-async =
+                  final.callCabal2nix "monad-async"
+                    "${monad-effects}/monad-async"
+                    { };
                 monad-callstack =
                   final.callCabal2nix "monad-callstack"
                     "${monad-effects}/monad-callstack"
@@ -96,6 +110,19 @@
                   final.callCabal2nix "monad-fs"
                     "${monad-effects}/monad-fs"
                     { };
+                monad-ioref =
+                  final.callCabal2nix "monad-ioref"
+                    "${monad-effects}/monad-ioref"
+                    { };
+                monad-stm =
+                  final.callCabal2nix "monad-stm"
+                    "${monad-effects}/monad-stm"
+                    { };
+                monad-thread =
+                  final.callCabal2nix "monad-thread"
+                    "${monad-effects}/monad-thread"
+                    { };
+                smart-math = final.callCabal2nix "smart-math" smart-math { };
               };
             };
         in

@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Control.Exception.Safe (Exception (displayException), bracket)
 import Control.Monad ((>=>))
 import Criterion as X
   ( Benchmark,
@@ -31,7 +32,6 @@ import PathSize.Data.Config
 import PathSize.Data.PathSizeResult (PathSizeResult (..))
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import System.FilePath ((</>))
-import UnliftIO.Exception (Exception (displayException), bracket)
 
 main :: IO ()
 main = do

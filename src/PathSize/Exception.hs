@@ -7,9 +7,9 @@ module PathSize.Exception
 where
 
 import Control.DeepSeq (NFData)
+import Control.Exception (Exception (displayException))
 import Effects.FileSystem.Path (Path)
 import GHC.Generics (Generic)
-import UnliftIO.Exception (Exception (displayException))
 
 -- | Exception for a path. The second param is the reason i.e. the exceptions'
 -- displayException. The reason we convert to a string rather than leave it

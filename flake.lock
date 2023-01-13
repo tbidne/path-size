@@ -134,14 +134,15 @@
         ],
         "nixpkgs": [
           "nixpkgs"
-        ]
+        ],
+        "smart-math": "smart-math"
       },
       "locked": {
-        "lastModified": 1673428830,
-        "narHash": "sha256-0TjC0LgDUXF2guhI58YbyIVxbo9ndT/c8dgP/Ivhvmo=",
+        "lastModified": 1673575733,
+        "narHash": "sha256-UzpJfYeQC299Ol7pq5sj+znfxGXhwG1i8mJLFZsp8xg=",
         "owner": "tbidne",
         "repo": "monad-effects",
-        "rev": "7ea64b2efe80b36ef97d83e4ea79b3f10068f7c6",
+        "rev": "dd9598e5f8508e02cf68c193b881417600bcc700",
         "type": "github"
       },
       "original": {
@@ -192,7 +193,77 @@
         "flake-compat": "flake-compat",
         "flake-parts": "flake-parts",
         "monad-effects": "monad-effects",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "smart-math": "smart-math_2"
+      }
+    },
+    "smart-math": {
+      "inputs": {
+        "algebra-simple": [
+          "monad-effects",
+          "algebra-simple"
+        ],
+        "bounds": [
+          "monad-effects",
+          "bounds"
+        ],
+        "flake-compat": [
+          "monad-effects",
+          "flake-compat"
+        ],
+        "flake-parts": [
+          "monad-effects",
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "monad-effects",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1673569540,
+        "narHash": "sha256-jEftzNeJHm/Mix44tacP7cuZ3gpiyjD5OqSe5bbGZn0=",
+        "owner": "tbidne",
+        "repo": "smart-math",
+        "rev": "0a8a6a741c999be1183b810ea8b1cd9438cb0d8e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "smart-math",
+        "type": "github"
+      }
+    },
+    "smart-math_2": {
+      "inputs": {
+        "algebra-simple": [
+          "algebra-simple"
+        ],
+        "bounds": [
+          "bounds"
+        ],
+        "flake-compat": [
+          "flake-compat"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1673569540,
+        "narHash": "sha256-jEftzNeJHm/Mix44tacP7cuZ3gpiyjD5OqSe5bbGZn0=",
+        "owner": "tbidne",
+        "repo": "smart-math",
+        "rev": "0a8a6a741c999be1183b810ea8b1cd9438cb0d8e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "smart-math",
+        "type": "github"
       }
     }
   },
