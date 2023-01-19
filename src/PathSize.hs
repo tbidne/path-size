@@ -35,9 +35,9 @@ import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
+import Effects.Concurrent.MonadAsync qualified as Async
 import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
 import Effects.FileSystem.Path (Path)
-import Effects.MonadAsync qualified as Async
 import Effects.MonadCallStack (HasCallStack, displayCallStack)
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
