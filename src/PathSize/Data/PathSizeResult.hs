@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -9,7 +8,6 @@ module PathSize.Data.PathSizeResult
   ( PathSizeResult (..),
     _PathSizeSuccess,
     _PathSizePartial,
-    _PathSizeFailure,
   )
 where
 
@@ -32,10 +30,6 @@ data PathSizeResult a
     --
     -- @since 0.1
     PathSizePartial !(NESeq PathE) !a
-  | -- | Failed computing @a@.
-    --
-    -- @since 0.1
-    PathSizeFailure !(NESeq PathE)
   deriving stock
     ( -- | @since 0.1
       Eq,

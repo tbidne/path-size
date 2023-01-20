@@ -25,15 +25,16 @@ import Data.Bytes qualified as Bytes
 import Data.Foldable (Foldable (foldl'))
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq ((:<|)), (<|))
-import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import Effects.FileSystem.Path (Path)
+import Effects.MonadCallStack (HasCallStack)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
+import Numeric.Data.Positive (Positive (..))
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
 import PathSize.Data.PathData (PathData (..), natify)
 import PathSize.Data.PathTree (PathTree (..), pathTreeToSeq)
@@ -95,12 +96,10 @@ unSubPathData (UnsafeSubPathData sbd) = sbd
 -- | Creates a 'SubPathData' from a 'PathTree'.
 --
 -- @since 0.1
-mkSubPathData :: PathTree -> Maybe SubPathData
-mkSubPathData Nil = Nothing
-mkSubPathData node@(Node _ _) = case sortSeq (pathTreeToSeq node) of
-  (first :<| rest) -> Just $ UnsafeSubPathData (natify first :<|| fmap natify rest)
-  -- HACK: This should be impossible as sorting preserves size...
-  _ -> Nothing
+mkSubPathData :: PathTree -> SubPathData
+mkSubPathData tree = UnsafeSubPathData (natify first :<|| fmap natify rest)
+  where
+    first :<|| rest = sortSeq (pathTreeToSeq tree)
 
 -- | Returns a 'Seq' representation of 'SubPathData'.
 --
@@ -117,8 +116,8 @@ subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortSeq :: Ord a => Seq (PathData a) -> Seq (PathData a)
-sortSeq = Seq.sortOn pathDataOrd
+sortSeq :: Ord a => NESeq (PathData a) -> NESeq (PathData a)
+sortSeq = NESeq.sortOn pathDataOrd
 {-# INLINEABLE sortSeq #-}
 
 sortNESeq :: Ord a => NESeq (PathData a) -> NESeq (PathData a)
@@ -132,12 +131,21 @@ pathDataOrd = Down . \(MkPathData p s _ _) -> (s, p)
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: Natural -> PathTree -> Maybe SubPathData
-takeLargestN _ Nil = Nothing
-takeLargestN n node@(Node _ _) = case Seq.take (fromIntegral n) (sortSeq (pathTreeToSeq node)) of
-  (first :<| rest) -> Just $ UnsafeSubPathData (natify first :<|| fmap natify rest)
+takeLargestN :: HasCallStack => Positive Int -> PathTree -> SubPathData
+takeLargestN (MkPositive n) tree = case NESeq.take n sorted of
+  (first :<| rest) -> UnsafeSubPathData (natify first :<|| fmap natify rest)
   -- NOTE: Should only happen if n == 0
-  _ -> Nothing
+  _ ->
+    error $
+      mconcat
+        [ "[PathSize.Data.SubPathData.Internal.takeLargestN]: ",
+          "impossible, returned empty Seq for i = ",
+          show n,
+          ", tree = ",
+          show tree
+        ]
+  where
+    sorted = sortSeq (pathTreeToSeq tree)
 
 -- | Displays the data.
 --

@@ -11,6 +11,7 @@ module Args
   )
 where
 
+import Control.Monad ((>=>))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import Data.List qualified as L
@@ -18,6 +19,7 @@ import Data.String (IsString (fromString))
 import Data.Version.Package qualified as PV
 import Development.GitRev qualified as GitRev
 import GHC.Natural (Natural)
+import Numeric.Data.Positive (Positive, mkPositive)
 import Optics.Core ((^.))
 import Optics.TH (makeFieldLabelsNoPrefix)
 import Options.Applicative
@@ -41,6 +43,7 @@ import PathSize.Data.Config
   ( Config (..),
     Strategy (..),
   )
+import PathSize.Data.Config.TH (defaultNumPaths)
 import Text.Read qualified as TR
 
 -- | CLI args.
@@ -51,7 +54,7 @@ data Args = MkArgs
     maxDepth :: !(Maybe Natural),
     exclude :: !(HashSet FilePath),
     filesOnly :: !Bool,
-    numPaths :: !(Maybe Natural),
+    numPaths :: !(Maybe (Positive Int)),
     reverseSort :: !Bool,
     strategy :: !Strategy,
     path :: FilePath
@@ -136,12 +139,12 @@ version = OA.infoOption txt (OA.long "version")
 versNum :: String
 versNum = "Version: " <> $$(PV.packageVersionStringTH "path-size.cabal")
 
-numPathsParser :: Parser (Maybe Natural)
+numPathsParser :: Parser (Maybe (Positive Int))
 numPathsParser =
   OA.option
     readNat
     $ mconcat
-      [ OA.value (Just 10),
+      [ OA.value (Just defaultNumPaths),
         OA.long "num-paths",
         OA.short 'n',
         OA.metavar "(NAT | all)",
@@ -151,9 +154,9 @@ numPathsParser =
     readNat =
       OA.str >>= \case
         "all" -> pure Nothing
-        s -> case TR.readMaybe s of
+        s -> case (TR.readMaybe >=> mkPositive) s of
           Just n -> pure $ Just n
-          Nothing -> fail $ "Expected 'all' or a natural, received: " <> s
+          Nothing -> fail $ "Expected 'all' or a positive, received: " <> s
     helpTxt =
       mconcat
         [ "The number of paths to display. If unspecified, defaults to 10. ",

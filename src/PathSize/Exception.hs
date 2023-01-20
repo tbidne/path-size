@@ -34,9 +34,8 @@ data PathE = MkPathE !Path !String
 instance Exception PathE where
   displayException (MkPathE p e) =
     mconcat
-      [ "Exception for path '",
+      [ "Path: ",
         show p,
-        "':\n",
-        e,
-        "\n"
+        ". Error: ",
+        e
       ]

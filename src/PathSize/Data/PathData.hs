@@ -6,6 +6,7 @@
 -- @since 0.1
 module PathSize.Data.PathData
   ( PathData (..),
+    emptyPathData,
     natify,
   )
 where
@@ -55,6 +56,11 @@ data PathData a = MkPathData
 
 -- | @since 0.1
 makeFieldLabelsNoPrefix ''PathData
+
+-- | @since 0.1
+emptyPathData :: Num a => Path -> PathData a
+emptyPathData p = MkPathData p 0 0 0
+{-# INLINEABLE emptyPathData #-}
 
 -- | @since 0.1
 natify :: PathData Integer -> PathData Natural

@@ -24,6 +24,7 @@ import Effects.MonadCallStack
       ),
   )
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
+import Numeric.Data.Positive (mkPositive)
 import PathSize (display, findLargestPaths)
 import PathSize.Data.Config
   ( Config (numPaths, strategy),
@@ -111,10 +112,10 @@ benchLargestN :: FilePath -> Benchmark
 benchLargestN testDir =
   bgroup
     "takeLargestN"
-    [ runLargestN "1" (Just 1) (testDir </> "dense-10"),
-      runLargestN "10" (Just 10) (testDir </> "dense-10"),
-      runLargestN "100" (Just 100) (testDir </> "dense-10"),
-      runLargestN "1,000" (Just 1_000) (testDir </> "dense-10")
+    [ runLargestN "1" (mkPositive 1) (testDir </> "dense-10"),
+      runLargestN "10" (mkPositive 10) (testDir </> "dense-10"),
+      runLargestN "100" (mkPositive 100) (testDir </> "dense-10"),
+      runLargestN "1,000" (mkPositive 1_000) (testDir </> "dense-10")
     ]
   where
     runLargestN desc n =
@@ -137,7 +138,6 @@ benchDisplayPathSize testDir =
         . (findLargestPaths mempty >=> displayResult)
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwWithCallStack err
-    displayResult (PathSizeFailure (err :<|| _)) = throwWithCallStack err
 
 setup :: HasCallStack => IO FilePath
 setup = do

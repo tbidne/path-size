@@ -18,6 +18,7 @@ import Control.Applicative (Alternative (empty, (<|>)))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import GHC.Natural (Natural)
+import Numeric.Data.Positive (Positive)
 import Optics.Core (Lens', (^.))
 import Optics.TH (makeFieldLabelsNoPrefix, makePrisms)
 
@@ -75,7 +76,7 @@ data Config = MkConfig
     -- | The number of paths to return.
     --
     -- @since 0.1
-    numPaths :: !(Maybe Natural),
+    numPaths :: !(Maybe (Positive Int)),
     -- | The search strategy.
     --
     -- @since 0.1
