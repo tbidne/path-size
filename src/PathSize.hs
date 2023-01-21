@@ -3,10 +3,7 @@
 
 -- | @since 0.1
 module PathSize
-  ( -- * Class
-    MonadPathSize (..),
-
-    -- * Types
+  ( -- * Types
     PathData (..),
     SubPathData (MkSubPathData),
     PathSizeResult (..),
@@ -16,6 +13,7 @@ module PathSize
     Strategy (..),
 
     -- * High level functions
+    findLargestPaths,
     pathSizeRecursive,
     pathSizeRecursiveConfig,
     SPD.display,
@@ -25,19 +23,16 @@ module PathSize
   )
 where
 
-import Control.Exception.Safe (catchAny)
-import Control.Monad.Trans.Class (MonadTrans (lift))
-import Control.Monad.Trans.Reader (ReaderT)
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
-import Effects.Concurrent.MonadAsync qualified as Async
-import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
+import Effects.Concurrent.Async qualified as Async
+import Effects.Exception (catchAny, displayNoCallStack)
 import Effects.FileSystem.Path (Path, (</>))
-import Effects.MonadCallStack (displayNoCallStack)
+import Effects.FileSystem.PathReader (MonadPathReader (..))
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
 import PathSize.Data.Config (Config (..), Strategy (..))
@@ -55,30 +50,32 @@ import System.FilePath qualified as FP
 #endif
 import System.Posix.Files qualified as Posix
 
--- | Typeclass for finding a path's recursive size.
+-- | Given a path, finds the size of all subpaths, recursively.
 --
 -- @since 0.1
-class Monad m => MonadPathSize m where
-  -- | Given a path, finds the size of all subpaths, recursively.
-  --
-  -- @since 0.1
-  findLargestPaths ::
-    -- | Configuration.
-    Config ->
-    -- | Path to search.
-    Path ->
-    -- | The results.
-    m (PathSizeResult SubPathData)
-
--- | @since 0.1
-instance MonadPathSize IO where
-  findLargestPaths = findLargestPathsIO
-  {-# INLINEABLE findLargestPaths #-}
-
--- | @since 0.1
-instance MonadPathSize m => MonadPathSize (ReaderT env m) where
-  findLargestPaths cfg = lift . findLargestPaths cfg
-  {-# INLINEABLE findLargestPaths #-}
+findLargestPaths ::
+  -- | Configuration.
+  Config ->
+  -- | Path to search.
+  Path ->
+  -- | The results.
+  IO (PathSizeResult SubPathData)
+findLargestPaths cfg path = do
+  f cfg path <&> \case
+    -- 1. Success, received data and no errors
+    (Empty, tree) -> PathSizeSuccess (takeLargestN tree)
+    -- 2. Partial success, received data and some errs
+    (e :<| es, tree) -> PathSizePartial (e :<|| es) (takeLargestN tree)
+  where
+    f = case cfg ^. #strategy of
+      Sync -> pathDataRecursiveSync
+      Async -> pathDataRecursiveAsync
+      AsyncPooled -> pathDataRecursiveAsyncPooled
+    takeLargestN =
+      maybe
+        SPD.mkSubPathData
+        SPD.takeLargestN
+        (cfg ^. #numPaths)
 
 -- | Returns the total path size in bytes. Calls 'pathSizeRecursiveConfig' with
 -- the following config:
@@ -95,7 +92,7 @@ instance MonadPathSize m => MonadPathSize (ReaderT env m) where
 -- @
 --
 -- @since 0.1
-pathSizeRecursive :: MonadPathSize m => Path -> m (PathSizeResult Natural)
+pathSizeRecursive :: Path -> IO (PathSizeResult Natural)
 pathSizeRecursive = pathSizeRecursiveConfig cfg
   where
     cfg =
@@ -107,49 +104,18 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
           numPaths = Just defaultNumPathsSize,
           strategy = mempty
         }
-{-# INLINEABLE pathSizeRecursive #-}
 
 -- | Returns the total path size in bytes.
 --
 -- @since 0.1
 pathSizeRecursiveConfig ::
-  MonadPathSize m =>
   Config ->
   Path ->
-  m (PathSizeResult Natural)
+  IO (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg path =
   findLargestPaths cfg path <&> \case
     PathSizeSuccess (MkSubPathData (pd :<|| _)) -> PathSizeSuccess $ pd ^. #size
     PathSizePartial errs (MkSubPathData (pd :<|| _)) -> PathSizePartial errs (pd ^. #size)
-{-# INLINEABLE pathSizeRecursiveConfig #-}
-
--- | Given a path, finds the size of all subpaths, recursively.
---
--- @since 0.1
-findLargestPathsIO ::
-  -- | Configuration.
-  Config ->
-  -- | Path to search.
-  Path ->
-  -- | The results. The left element are any errors encountered, while the
-  -- right element is the path size data.
-  IO (PathSizeResult SubPathData)
-findLargestPathsIO cfg path = do
-  f cfg path <&> \case
-    -- 1. Success, received data and no errors
-    (Empty, tree) -> PathSizeSuccess (takeLargestN tree)
-    -- 2. Partial success, received data and some errs
-    (e :<| es, tree) -> PathSizePartial (e :<|| es) (takeLargestN tree)
-  where
-    f = case cfg ^. #strategy of
-      Sync -> pathDataRecursiveSync
-      Async -> pathDataRecursiveAsync
-      AsyncPooled -> pathDataRecursiveAsyncPooled
-    takeLargestN =
-      maybe
-        SPD.mkSubPathData
-        SPD.takeLargestN
-        (cfg ^. #numPaths)
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed sequentially.
@@ -272,20 +238,25 @@ pathDataRecursive traverseFn cfg = go 0
                 else -- 3. Files
                   ([],) <$> calcFile path
 
-    sumTrees :: Seq PathTree -> (Integer, Integer, Integer)
-    sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
+sumTrees :: Seq PathTree -> (Integer, Integer, Integer)
+sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
 
-    getSum :: PathTree -> (Integer, Integer, Integer)
-    getSum (MkPathData {size, numFiles, numDirectories} :^| _) =
-      (size, numFiles, numDirectories)
+getSum :: PathTree -> (Integer, Integer, Integer)
+getSum (MkPathData {size, numFiles, numDirectories} :^| _) =
+  (size, numFiles, numDirectories)
 
-    addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
+addTuple ::
+  (Integer, Integer, Integer) -> (Integer, Integer, Integer) -> (Integer, Integer, Integer)
+addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
 
-    -- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
-    -- exception for the current directory ./.
-    hidden ('.' : '/' : _) = False
-    hidden ('.' : _) = True
-    hidden _ = False
+-- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
+-- exception for the current directory ./.
+--
+-- TODO: Update for OsPath compat
+hidden :: Path -> Bool
+hidden ('.' : '/' : _) = False
+hidden ('.' : _) = True
+hidden _ = False
 
 calcSymLink :: Path -> IO PathTree
 calcSymLink = calcSizeFn (fmap fromIntegral . getSymLinkSize)

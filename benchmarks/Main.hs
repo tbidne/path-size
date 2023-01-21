@@ -14,15 +14,13 @@ import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
-import Effects.FileSystem.MonadPathReader (MonadPathReader (..))
-import Effects.FileSystem.MonadPathWriter (MonadPathWriter (..))
-import Effects.MonadCallStack
+import Effects.Exception
   ( HasCallStack,
-    MonadCallStack
-      ( addCallStack,
-        throwWithCallStack
-      ),
+    addCallStack,
+    throwWithCallStack,
   )
+import Effects.FileSystem.PathReader (MonadPathReader (..))
+import Effects.FileSystem.PathWriter (MonadPathWriter (..))
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Numeric.Data.Positive (mkPositive)
 import PathSize (display, findLargestPaths)

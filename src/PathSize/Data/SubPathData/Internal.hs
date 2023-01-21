@@ -31,9 +31,9 @@ import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import Effects.FileSystem.Path (Path)
-import Effects.MonadCallStack (HasCallStack)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
+import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (Positive (..))
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
 import PathSize.Data.PathData (PathData (..), natify)

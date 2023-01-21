@@ -38,6 +38,7 @@ common common-exts
 library
   import:           common-exts
   exposed-modules:
+    Effects.FileSystem.PathSize
     PathSize
     PathSize.Data.Config
     PathSize.Data.Config.TH
@@ -55,12 +56,11 @@ library
     , deepseq               ^>=1.4.4.0
     , filepath              ^>=1.4.2.1
     , monad-async           ^>=0.1
-    , monad-callstack       ^>=0.1
+    , monad-exceptions      ^>=0.1
     , monad-fs              ^>=0.1
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
-    , safe-exceptions       ^>=0.1.7.0
     , smart-math            ^>=0.1
     , text                  >=1.2.3.2   && <2.1
     , transformers          >=0.5.6.2   && <0.7
@@ -77,7 +77,7 @@ executable path-size
   build-depends:
     , base
     , gitrev                >=1.2.0    && <1.4
-    , monad-callstack
+    , monad-exceptions
     , optics-core
     , optics-th
     , optparse-applicative  >=0.16.1.0 && <0.18
@@ -120,7 +120,7 @@ benchmark benchmarks
     , criterion            ^>=1.6.0.0
     , env-guard            ^>=0.2
     , filepath
-    , monad-callstack
+    , monad-exceptions
     , monad-fs
     , nonempty-containers
     , path-size

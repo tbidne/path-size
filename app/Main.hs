@@ -7,7 +7,7 @@ import Args (argsToConfig, getArgs)
 import Control.Exception (Exception (displayException))
 import Data.Foldable (for_)
 import Data.Text qualified as T
-import Effects.MonadCallStack (displayCallStack)
+import Effects.Exception (displayCallStack)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Optics.Core ((^.))
 import PathSize (PathSizeResult (..), display, findLargestPaths)
