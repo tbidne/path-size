@@ -30,7 +30,7 @@ import Data.Sequence (Seq (Empty, (:<|)), (<|))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Effects.Concurrent.Async qualified as Async
-import Effects.Exception (catchAny, displayNoCallStack)
+import Effects.Exception (catchAny, displayNoCS)
 import Effects.FileSystem.Path (Path, (</>))
 import Effects.FileSystem.PathReader (MonadPathReader (..))
 import GHC.Natural (Natural)
@@ -190,8 +190,10 @@ pathDataRecursive traverseFn cfg = go 0
       IO (Seq PathE, PathTree)
     go !depth path =
       calcTree `catchAny` \e ->
-        -- Save exceptions
-        pure ([MkPathE path (displayNoCallStack e)], emptyPathTree path)
+        -- Save exceptions. Because we are using effect classes like
+        -- MonadPathReader, we may end up with an ExceptionCS i.e. it includes
+        -- a CallStack. We don't want that here, so throw it away.
+        pure ([MkPathE path (displayNoCS e)], emptyPathTree path)
       where
         -- Perform actual calculation.
         calcTree :: IO (Seq PathE, PathTree)

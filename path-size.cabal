@@ -77,7 +77,6 @@ executable path-size
   build-depends:
     , base
     , gitrev                >=1.2.0    && <1.4
-    , monad-exceptions
     , optics-core
     , optics-th
     , optparse-applicative  >=0.16.1.0 && <0.18

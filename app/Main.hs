@@ -7,7 +7,6 @@ import Args (argsToConfig, getArgs)
 import Control.Exception (Exception (displayException))
 import Data.Foldable (for_)
 import Data.Text qualified as T
-import Effects.Exception (displayCallStack)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Optics.Core ((^.))
 import PathSize (PathSizeResult (..), display, findLargestPaths)
@@ -17,7 +16,7 @@ import PathSize (PathSizeResult (..), display, findLargestPaths)
 -- @since 0.1
 main :: IO ()
 main = do
-  setUncaughtExceptionHandler (putStrLn . displayCallStack)
+  setUncaughtExceptionHandler (putStrLn . displayException)
 
   args <- getArgs
   let config = argsToConfig args

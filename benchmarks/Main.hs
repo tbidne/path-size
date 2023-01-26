@@ -10,15 +10,15 @@ import Criterion as X
   )
 import Criterion.Main (defaultMain)
 import Data.ByteString (ByteString)
-import Data.ByteString qualified as BS
 import Data.Foldable (for_, traverse_)
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
 import Effects.Exception
   ( HasCallStack,
-    addCallStack,
-    throwWithCallStack,
+    addCS,
+    throwWithCS,
   )
+import Effects.FileSystem.FileWriter (MonadFileWriter (..))
 import Effects.FileSystem.PathReader (MonadPathReader (..))
 import Effects.FileSystem.PathWriter (MonadPathWriter (..))
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
@@ -135,7 +135,7 @@ benchDisplayPathSize testDir =
         . nfIO
         . (findLargestPaths mempty >=> displayResult)
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
-    displayResult (PathSizePartial (err :<|| _) _) = throwWithCallStack err
+    displayResult (PathSizePartial (err :<|| _) _) = throwWithCS err
 
 setup :: HasCallStack => IO FilePath
 setup = do
@@ -164,7 +164,7 @@ setup = do
 
 teardown :: HasCallStack => FilePath -> IO ()
 teardown rootDir =
-  addCallStack $
+  addCS $
     guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     cleanup = removePathForcibly rootDir
@@ -207,4 +207,4 @@ createFileContents ::
   [(FilePath, ByteString)] ->
   IO ()
 createFileContents paths = for_ paths $
-  \(p, c) -> addCallStack $ BS.writeFile p c
+  \(p, c) -> addCS $ writeBinaryFile p c
