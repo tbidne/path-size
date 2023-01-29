@@ -16,7 +16,7 @@ import Data.Word (Word8)
 import Effects.Exception
   ( HasCallStack,
     addCS,
-    throwWithCS,
+    throwCS,
   )
 import Effects.FileSystem.FileWriter (MonadFileWriter (..))
 import Effects.FileSystem.PathReader (MonadPathReader (..))
@@ -135,7 +135,7 @@ benchDisplayPathSize testDir =
         . nfIO
         . (findLargestPaths mempty >=> displayResult)
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
-    displayResult (PathSizePartial (err :<|| _) _) = throwWithCS err
+    displayResult (PathSizePartial (err :<|| _) _) = throwCS err
 
 setup :: HasCallStack => IO FilePath
 setup = do

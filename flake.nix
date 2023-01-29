@@ -33,7 +33,7 @@
       inputs.bounds.follows = "bounds";
     };
     monad-effects = {
-      url = "github:tbidne/monad-effects";
+      url = "github:tbidne/monad-effects/";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
