@@ -152,7 +152,7 @@ pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 -- @since 0.1
 pathDataRecursive ::
   -- | Traversal function.
-  (forall a b t. Traversable t => (a -> IO b) -> t a -> IO (t b)) ->
+  (forall a b t. (Traversable t) => (a -> IO b) -> t a -> IO (t b)) ->
   -- | The config.
   Config ->
   -- | Start path.

@@ -32,6 +32,8 @@ import PathSize.Data.PathSizeResult (PathSizeResult (..))
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import System.FilePath ((</>))
 
+{- HLINT ignore module "Redundant bracket" -}
+
 main :: IO ()
 main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
@@ -137,7 +139,7 @@ benchDisplayPathSize testDir =
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwCS err
 
-setup :: HasCallStack => IO FilePath
+setup :: (HasCallStack) => IO FilePath
 setup = do
   rootDir <- (</> "bench") <$> getTemporaryDirectory
   createDirectoryIfMissing False rootDir
@@ -162,7 +164,7 @@ setup = do
     files1000 = files100 <> (show @Int <$> [11 .. 1_000])
     files10000 = files1000 <> (show @Int <$> [1_001 .. 10_000])
 
-teardown :: HasCallStack => FilePath -> IO ()
+teardown :: (HasCallStack) => FilePath -> IO ()
 teardown rootDir =
   addCS $
     guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
@@ -192,18 +194,18 @@ createSpareDirs w root paths = do
     subDirs = ["d1", "d2"]
 
 -- | Creates a single directory with the parameter files.
-createFlatDir :: HasCallStack => FilePath -> [FilePath] -> IO ()
+createFlatDir :: (HasCallStack) => FilePath -> [FilePath] -> IO ()
 createFlatDir root paths = do
   createDirectoryIfMissing False root
   createFiles ((root </>) <$> paths)
 
 -- | Creates empty files at the specified paths.
-createFiles :: HasCallStack => [FilePath] -> IO ()
+createFiles :: (HasCallStack) => [FilePath] -> IO ()
 createFiles = createFileContents . fmap (,"")
 
 -- | Creates files at the specified paths.
 createFileContents ::
-  HasCallStack =>
+  (HasCallStack) =>
   [(FilePath, ByteString)] ->
   IO ()
 createFileContents paths = for_ paths $

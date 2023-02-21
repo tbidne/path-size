@@ -116,11 +116,11 @@ subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortSeq :: Ord a => NESeq (PathData a) -> NESeq (PathData a)
+sortSeq :: (Ord a) => NESeq (PathData a) -> NESeq (PathData a)
 sortSeq = NESeq.sortOn pathDataOrd
 {-# INLINEABLE sortSeq #-}
 
-sortNESeq :: Ord a => NESeq (PathData a) -> NESeq (PathData a)
+sortNESeq :: (Ord a) => NESeq (PathData a) -> NESeq (PathData a)
 sortNESeq = NESeq.sortOn pathDataOrd
 {-# INLINEABLE sortNESeq #-}
 
@@ -128,10 +128,12 @@ pathDataOrd :: PathData a -> Down (a, Path)
 pathDataOrd = Down . \(MkPathData p s _ _) -> (s, p)
 {-# INLINEABLE pathDataOrd #-}
 
+{- HLINT ignore takeLargestN "Redundant bracket" -}
+
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: HasCallStack => Positive Int -> PathTree -> SubPathData
+takeLargestN :: (HasCallStack) => Positive Int -> PathTree -> SubPathData
 takeLargestN (MkPositive n) tree = case NESeq.take n sorted of
   (first :<| rest) -> UnsafeSubPathData (natify first :<|| fmap natify rest)
   -- NOTE: Should only happen if n == 0

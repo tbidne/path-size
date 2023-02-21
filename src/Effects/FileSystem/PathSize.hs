@@ -41,15 +41,17 @@ import PathSize.Data.SubPathData (SubPathData (MkSubPathData))
 import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Exception (PathE (MkPathE))
 
+{- HLINT ignore MonadPathSize "Redundant bracket" -}
+
 -- | Typeclass for finding a path's recursive size.
 --
 -- @since 0.1
-class Monad m => MonadPathSize m where
+class (Monad m) => MonadPathSize m where
   -- | Given a path, finds the size of all subpaths, recursively.
   --
   -- @since 0.1
   findLargestPaths ::
-    HasCallStack =>
+    (HasCallStack) =>
     -- | Configuration.
     Config ->
     -- | Path to search.
@@ -63,7 +65,7 @@ instance MonadPathSize IO where
   {-# INLINEABLE findLargestPaths #-}
 
 -- | @since 0.1
-instance MonadPathSize m => MonadPathSize (ReaderT env m) where
+instance (MonadPathSize m) => MonadPathSize (ReaderT env m) where
   findLargestPaths cfg = lift . findLargestPaths cfg
   {-# INLINEABLE findLargestPaths #-}
 

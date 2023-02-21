@@ -58,7 +58,7 @@ data PathData a = MkPathData
 makeFieldLabelsNoPrefix ''PathData
 
 -- | @since 0.1
-emptyPathData :: Num a => Path -> PathData a
+emptyPathData :: (Num a) => Path -> PathData a
 emptyPathData p = MkPathData p 0 0 0
 {-# INLINEABLE emptyPathData #-}
 
