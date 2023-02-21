@@ -68,7 +68,7 @@ haddock:
 	cabal haddock --haddock-hyperlink-source --haddock-quickjump ;\
 	mkdir -p docs/ ;\
 	find docs/ -type f | xargs -I % sh -c "rm -r %" ;\
-	cp -r dist-newstyle/build/x86_64-linux/ghc-9.2.5/path-size-0.1/opt/doc/html/path-size/* docs/
+	cp -r dist-newstyle/build/x86_64-linux/ghc-9.4.4/path-size-0.1/opt/doc/html/path-size/* docs/
 
 # generate dist and docs suitable for hackage
 hackage:

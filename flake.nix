@@ -52,7 +52,7 @@
     };
   };
   outputs =
-    { algebra-simple
+    inputs@{ algebra-simple
     , bounds
     , byte-types
     , flake-compat
@@ -62,7 +62,7 @@
     , self
     , smart-math
     }:
-    flake-parts.lib.mkFlake { inherit self; } {
+    flake-parts.lib.mkFlake { inherit inputs; } {
       perSystem = { pkgs, ... }:
         let
           buildTools = c: with c; [
@@ -84,7 +84,7 @@
                 ];
             }))
           ];
-          ghc-version = "ghc925";
+          ghc-version = "ghc944";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
               # https://github.com/ddssff/listlike/issues/23
@@ -130,7 +130,9 @@
                   final.callCabal2nix "monad-thread"
                     "${monad-effects}/monad-thread"
                     { };
+                package-version = hlib.doJailbreak prev.package-version;
                 smart-math = final.callCabal2nix "smart-math" smart-math { };
+                tasty-hedgehog = prev.tasty-hedgehog_1_4_0_0;
               };
             };
         in
