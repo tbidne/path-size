@@ -3,7 +3,7 @@ name:               path-size
 version:            0.1
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==9.2.4 || ==9.4.2
+tested-with:        GHC ==9.2.5 || ==9.4.4
 copyright:          2022 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -54,10 +54,10 @@ library
     , byte-types            ^>=0.1
     , containers            ^>=0.6.3.1
     , deepseq               ^>=1.4.4.0
+    , effects-async         ^>=0.1
+    , effects-exceptions    ^>=0.1
+    , effects-fs            ^>=0.1
     , filepath              ^>=1.4.2.1
-    , monad-async           ^>=0.1
-    , monad-exceptions      ^>=0.1
-    , monad-fs              ^>=0.1
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , optics-th             ^>=0.4
@@ -117,10 +117,10 @@ benchmark benchmarks
     , base
     , bytestring           >=0.10.12  && <0.12
     , criterion            ^>=1.6.0.0
+    , effects-exceptions
+    , effects-fs
     , env-guard            ^>=0.2
     , filepath
-    , monad-exceptions
-    , monad-fs
     , nonempty-containers
     , path-size
     , safe-exceptions

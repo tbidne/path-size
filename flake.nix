@@ -106,29 +106,29 @@
                   final.callCabal2nix "algebra-simple" algebra-simple { };
                 bounds = final.callCabal2nix "bounds" bounds { };
                 byte-types = final.callCabal2nix "byte-types" byte-types { };
-                monad-async =
-                  final.callCabal2nix "monad-async"
-                    "${monad-effects}/monad-async"
+                effects-async =
+                  final.callCabal2nix "effects-async"
+                    "${monad-effects}/effects-async"
                     { };
-                monad-exceptions =
-                  final.callCabal2nix "monad-exceptions"
-                    "${monad-effects}/monad-exceptions"
+                effects-exceptions =
+                  final.callCabal2nix "effects-exceptions"
+                    "${monad-effects}/effects-exceptions"
                     { };
-                monad-fs =
-                  final.callCabal2nix "monad-fs"
-                    "${monad-effects}/monad-fs"
+                effects-fs =
+                  final.callCabal2nix "effects-fs"
+                    "${monad-effects}/effects-fs"
                     { };
-                monad-ioref =
-                  final.callCabal2nix "monad-ioref"
-                    "${monad-effects}/monad-ioref"
+                effects-ioref =
+                  final.callCabal2nix "effects-ioref"
+                    "${monad-effects}/effects-ioref"
                     { };
-                monad-stm =
-                  final.callCabal2nix "monad-stm"
-                    "${monad-effects}/monad-stm"
+                effects-stm =
+                  final.callCabal2nix "effects-stm"
+                    "${monad-effects}/effects-stm"
                     { };
-                monad-thread =
-                  final.callCabal2nix "monad-thread"
-                    "${monad-effects}/monad-thread"
+                effects-thread =
+                  final.callCabal2nix "effects-thread"
+                    "${monad-effects}/effects-thread"
                     { };
                 package-version = hlib.doJailbreak prev.package-version;
                 smart-math = final.callCabal2nix "smart-math" smart-math { };
