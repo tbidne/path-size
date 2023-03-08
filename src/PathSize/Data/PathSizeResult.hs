@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides 'PathSizeResult' type.
@@ -14,7 +13,7 @@ where
 import Control.DeepSeq (NFData)
 import Data.Sequence.NonEmpty (NESeq)
 import GHC.Generics (Generic)
-import Optics.TH (makePrisms)
+import Optics.Core
 import PathSize.Exception (PathE (..))
 
 -- | Result of running a path-size computation with multiple notions of
@@ -46,4 +45,23 @@ data PathSizeResult a
     )
 
 -- | @since 0.1
-makePrisms ''PathSizeResult
+_PathSizeSuccess :: Prism' (PathSizeResult a) a
+_PathSizeSuccess =
+  prism
+    PathSizeSuccess
+    ( \x -> case x of
+        PathSizeSuccess a -> Right a
+        _ -> Left x
+    )
+{-# INLINE _PathSizeSuccess #-}
+
+-- | @since 0.1
+_PathSizePartial :: Prism' (PathSizeResult a) (NESeq PathE, a)
+_PathSizePartial =
+  prism
+    (uncurry PathSizePartial)
+    ( \x -> case x of
+        PathSizePartial errs a -> Right (errs, a)
+        _ -> Left x
+    )
+{-# INLINE _PathSizePartial #-}

@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides 'PathData' type.
@@ -15,7 +14,7 @@ import Control.DeepSeq (NFData)
 import Effects.FileSystem.Path (Path)
 import GHC.Generics (Generic)
 import Numeric.Natural (Natural)
-import Optics.TH (makeFieldLabelsNoPrefix)
+import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)
 
 -- | Associates a path to its total (recursive) size in the file-system.
 -- Takes a parameter for the size, allowing us to use a more efficient
@@ -55,7 +54,40 @@ data PathData a = MkPathData
     )
 
 -- | @since 0.1
-makeFieldLabelsNoPrefix ''PathData
+instance
+  (k ~ A_Lens, a ~ Path, b ~ Path) =>
+  LabelOptic "path" k (PathData s) (PathData s) a b
+  where
+  labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
+    fmap (\path' -> MkPathData path' _size _numFiles _numDirectories) (f _path)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ s, b ~ s) =>
+  LabelOptic "size" k (PathData s) (PathData s) a b
+  where
+  labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
+    fmap (\size' -> MkPathData _path size' _numFiles _numDirectories) (f _size)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ s, b ~ s) =>
+  LabelOptic "numFiles" k (PathData s) (PathData s) a b
+  where
+  labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
+    fmap (\numFiles' -> MkPathData _path _size numFiles' _numDirectories) (f _numFiles)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ s, b ~ s) =>
+  LabelOptic "numDirectories" k (PathData s) (PathData s) a b
+  where
+  labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
+    fmap (MkPathData _path _size _numFiles) (f _numDirectories)
+  {-# INLINE labelOptic #-}
 
 -- | @since 0.1
 emptyPathData :: (Num a) => Path -> PathData a

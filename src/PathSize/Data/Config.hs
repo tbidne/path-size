@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Supplies PathSize 'Config'.
@@ -19,8 +17,15 @@ import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import GHC.Natural (Natural)
 import Numeric.Data.Positive (Positive)
-import Optics.Core (Lens', (^.))
-import Optics.TH (makeFieldLabelsNoPrefix, makePrisms)
+import Optics.Core
+  ( A_Lens,
+    LabelOptic (labelOptic),
+    Lens',
+    Prism',
+    lensVL,
+    prism,
+    (^.),
+  )
 
 -- | Describes the path search strategy.
 --
@@ -40,7 +45,37 @@ data Strategy
     )
 
 -- | @since 0.1
-makePrisms ''Strategy
+_Sync :: Prism' Strategy ()
+_Sync =
+  prism
+    (const Sync)
+    ( \x -> case x of
+        Sync -> Right ()
+        _ -> Left x
+    )
+{-# INLINE _Sync #-}
+
+-- | @since 0.1
+_Async :: Prism' Strategy ()
+_Async =
+  prism
+    (const Async)
+    ( \x -> case x of
+        Async -> Right ()
+        _ -> Left x
+    )
+{-# INLINE _Async #-}
+
+-- | @since 0.1
+_AsyncPooled :: Prism' Strategy ()
+_AsyncPooled =
+  prism
+    (const AsyncPooled)
+    ( \x -> case x of
+        AsyncPooled -> Right ()
+        _ -> Left x
+    )
+{-# INLINE _AsyncPooled #-}
 
 -- | @since 0.1
 instance Semigroup Strategy where
@@ -90,7 +125,58 @@ data Config = MkConfig
     )
 
 -- | @since 0.1
-makeFieldLabelsNoPrefix ''Config
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "searchAll" k Config Config a b
+  where
+  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
+    fmap (\searchAll' -> MkConfig searchAll' _maxDepth _exclude _filesOnly _numPaths _strategy) (f _searchAll)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Maybe Natural, b ~ Maybe Natural) =>
+  LabelOptic "maxDepth" k Config Config a b
+  where
+  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
+    fmap (\maxDepth' -> MkConfig _searchAll maxDepth' _exclude _filesOnly _numPaths _strategy) (f _maxDepth)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ HashSet FilePath, b ~ HashSet FilePath) =>
+  LabelOptic "exclude" k Config Config a b
+  where
+  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
+    fmap (\exclude' -> MkConfig _searchAll _maxDepth exclude' _filesOnly _numPaths _strategy) (f _exclude)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "filesOnly" k Config Config a b
+  where
+  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
+    fmap (\filesOnly' -> MkConfig _searchAll _maxDepth _exclude filesOnly' _numPaths _strategy) (f _filesOnly)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Maybe (Positive Int), b ~ Maybe (Positive Int)) =>
+  LabelOptic "numPaths" k Config Config a b
+  where
+  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
+    fmap (\numPaths' -> MkConfig _searchAll _maxDepth _exclude _filesOnly numPaths' _strategy) (f _numPaths)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Strategy, b ~ Strategy) =>
+  LabelOptic "strategy" k Config Config a b
+  where
+  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
+    fmap (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths) (f _strategy)
+  {-# INLINE labelOptic #-}
 
 -- | @since 0.1
 instance Semigroup Config where
