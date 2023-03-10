@@ -3,7 +3,7 @@ name:               path-size
 version:            0.1
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==9.2.5 || ==9.4.4
+tested-with:        GHC ==9.2.6 || ==9.4.4
 copyright:          2022 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -96,7 +96,7 @@ test-suite functional
   other-modules:    Functional.PathSize
   build-depends:
     , base
-    , bytestring
+    , bytestring            >=0.10.12  && <0.12
     , directory
     , filepath
     , path-size
@@ -108,23 +108,47 @@ test-suite functional
   hs-source-dirs:   test/functional
   default-language: GHC2021
 
-benchmark benchmarks
+library bench-common
+  import:           common-exts
+  exposed-modules:  SafeRm.Bench.Common
+  build-depends:
+    , base
+    , deepseq
+    , effects-exceptions
+    , effects-fs
+    , env-guard            ^>=0.2
+    , nonempty-containers
+    , path-size
+    , smart-math
+
+  hs-source-dirs:   bench/common
+  default-language: GHC2021
+
+benchmark bench-criterion
   import:           common-exts
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   build-depends:
     , base
-    , bytestring           >=0.10.12  && <0.12
-    , criterion            ^>=1.6.0.0
+    , bench-common
+    , criterion           ^>=1.6.0.0
     , effects-exceptions
-    , effects-fs
-    , env-guard            ^>=0.2
-    , filepath
-    , nonempty-containers
     , path-size
-    , safe-exceptions
-    , smart-math
 
-  hs-source-dirs:   benchmarks
+  hs-source-dirs:   bench/criterion
   ghc-options:      -threaded -with-rtsopts=-N
+  default-language: GHC2021
+
+benchmark bench-tasty
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , bench-common
+    , effects-exceptions
+    , path-size
+    , tasty-bench         ^>=0.3
+
+  hs-source-dirs:   bench/tasty
   default-language: GHC2021

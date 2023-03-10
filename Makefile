@@ -6,23 +6,6 @@
 
 ARGS = ""
 
-build:
-	if [ -z "$(ARGS)" ]; then \
-		cabal build; \
-	else \
-		cabal build $(ARGS); \
-	fi
-
-clean:
-	cabal clean
-
-test:
-	if [ -z "$(ARGS)" ]; then \
-		cabal test; \
-	else \
-		cabal test $(ARGS); \
-	fi
-
 repl:
 	if [ -z "$(ARGS)" ]; then \
 		cabal repl path-size; \
@@ -36,6 +19,14 @@ watch:
 	else \
 		ghcid --command "cabal repl $(ARGS)" ; \
 	fi
+
+bench-criterion:
+	cabal bench bench-criterion --benchmark-options \
+		'--csv bench/criterion/bench.csv --output bench/criterion/bench.html'
+
+bench-tasty:
+	cabal bench bench-tasty --benchmark-options \
+		'--csv bench/tasty/bench.csv --svg bench/tasty/bench.svg'
 
 # ci
 

@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         ghc:
-          - "9.2.5"
+          - "9.2.6"
           - "9.4.4"
     steps:
       - uses: actions/checkout@v3.0.2
@@ -27,8 +27,44 @@ jobs:
         with:
           ghc-version: ${{ matrix.ghc }}
 
+      - name: Configure
+        run: cabal configure --enable-tests --enable-benchmarks
+
       - name: Compile
         run: cabal build
 
       - name: Functional Tests
         run: cabal test functional
+
+      - name: Benchmark Tasty
+        id: bench-tasty
+        run: |
+          cabal bench bench-tasty --benchmark-options '
+            --csv bench/tasty/bench_${{ matrix.ghc }}_ci.csv
+            --svg bench/tasty/bench_${{ matrix.ghc }}_ci.svg
+            --baseline bench/tasty/baseline_${{ matrix.ghc }}_ci.csv
+            --fail-if-slower 20
+            --fail-if-faster 20'
+
+      # We only care about benchmark results if there is a significant
+      # change, per tasty-bench's baseline comparison. If there has been
+      # a change, we run the criterion benchmarks (to measure concurrency),
+      # and upload all results. We can then investigate the change and/or
+      # update the ci baseline files, as needed.
+
+      - name: Benchmark Criterion
+        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
+        run: |
+          cabal bench bench-criterion --benchmark-options '
+            --csv bench/criterion/bench_${{ matrix.ghc }}_ci.csv
+            --output bench/criterion/bench_${{ matrix.ghc }}_ci.html'
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
+        with:
+          name: build-artifacts
+          path: |
+            bench/criterion/bench_${{ matrix.ghc }}_ci.csv
+            bench/criterion/bench_${{ matrix.ghc }}_ci.html
+            bench/tasty/bench_${{ matrix.ghc }}_ci.csv
+            bench/tasty/bench_${{ matrix.ghc }}_ci.svg

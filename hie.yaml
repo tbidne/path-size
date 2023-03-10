@@ -12,5 +12,11 @@ cradle:
     - path: "./test/functional"
       component: "path-size:test:functional"
 
-    - path: "./benchmarks/Main.hs"
-      component: "path-size:bench:benchmarks"
+    - path: "./benchmarks/common"
+      component: "path-size:lib:bench-common"
+
+    - path: "./bench/criterion/Main.hs"
+      component: "path-size:bench:bench-criterion"
+
+    - path: "./bench/tasty/Main.hs"
+      component: "path-size:bench:bench-tasty"
