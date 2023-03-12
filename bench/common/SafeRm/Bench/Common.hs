@@ -29,10 +29,7 @@ import Effects.FileSystem.PathWriter
   )
 import Numeric.Data.Positive (mkPositive)
 import PathSize
-import System.Environment.Guard
-  ( ExpectEnv (ExpectEnvSet),
-    guardOrElse',
-  )
+import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 
 {- HLINT ignore module "Redundant bracket" -}
 

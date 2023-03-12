@@ -98,6 +98,7 @@ test-suite functional
     , base
     , bytestring            >=0.10.12  && <0.12
     , directory
+    , env-guard
     , filepath
     , path-size
     , tasty                 >=1.1.0.3  && <1.5
