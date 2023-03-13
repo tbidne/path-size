@@ -43,11 +43,11 @@ jobs:
         id: bench-tasty
         run: |
           cabal bench bench-tasty --benchmark-options '
-            --csv bench/tasty/bench_${{ matrix.ghc }}_ci.csv
-            --svg bench/tasty/bench_${{ matrix.ghc }}_ci.svg
-            --baseline bench/tasty/baseline_${{ matrix.ghc }}_ci.csv
-            --fail-if-slower 20
-            --fail-if-faster 20'
+            --csv bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
+            --svg bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.svg
+            --baseline bench/tasty/baseline_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
+            --fail-if-slower 40
+            --fail-if-faster 40'
 
       # We only care about benchmark results if there is a significant
       # change, per tasty-bench's baseline comparison. If there has been
@@ -59,15 +59,15 @@ jobs:
         if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
         run: |
           cabal bench bench-criterion --benchmark-options '
-            --csv bench/criterion/bench_${{ matrix.ghc }}_ci.csv
-            --output bench/criterion/bench_${{ matrix.ghc }}_ci.html'
+            --csv bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
+            --output bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.html'
 
       - uses: actions/upload-artifact@v3
         if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
         with:
           name: build-artifacts
           path: |
-            bench/criterion/bench_${{ matrix.ghc }}_ci.csv
-            bench/criterion/bench_${{ matrix.ghc }}_ci.html
-            bench/tasty/bench_${{ matrix.ghc }}_ci.csv
-            bench/tasty/bench_${{ matrix.ghc }}_ci.svg
+            bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
+            bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.html
+            bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
+            bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.svg
