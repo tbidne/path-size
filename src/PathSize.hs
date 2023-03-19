@@ -48,7 +48,7 @@ import System.OsPath qualified as FP
 #else
 import System.FilePath qualified as FP
 #endif
-import System.Posix.Files qualified as Posix
+import System.PosixCompat.Files qualified as Posix
 
 -- | Given a path, finds the size of all subpaths, recursively.
 --

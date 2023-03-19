@@ -19,10 +19,11 @@ jobs:
         ghc:
           - "9.2.7"
           - "9.4.4"
-        platform:
+        os:
           - "macos-latest"
           - "ubuntu-latest"
-    runs-on: ${{ matrix.platform }}
+          - "windows-latest"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3.3.0
 
@@ -39,13 +40,23 @@ jobs:
       - name: Functional Tests
         run: cabal test functional
 
+      # Benchmarks fail due to:
+      #
+      #    "Access violation in generated code when reading 0x7edd8008"
+      #
+      # for windows + GHC 9.4.4, so they are disabled.
+      #
+      # Also, criterion takes an enormous amount of time on windows, so it
+      # is totally disabled.
+
       - name: Benchmark Tasty
+        if: ${{ !(matrix.os == 'windows-latest' && matrix.ghc == '9.4.4') }}
         id: bench-tasty
         run: |
           cabal bench bench-tasty --benchmark-options '
-            --csv bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
-            --svg bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.svg
-            --baseline bench/tasty/baseline_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
+            --csv bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+            --svg bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+            --baseline bench/tasty/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             --fail-if-slower 40
             --fail-if-faster 40'
 
@@ -54,20 +65,19 @@ jobs:
       # a change, we run the criterion benchmarks (to measure concurrency),
       # and upload all results. We can then investigate the change and/or
       # update the ci baseline files, as needed.
-
       - name: Benchmark Criterion
-        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
+        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' && matrix.os != 'windows-latest' }}
         run: |
           cabal bench bench-criterion --benchmark-options '
-            --csv bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
-            --output bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.html'
+            --csv bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+            --output bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.html'
 
       - uses: actions/upload-artifact@v3
         if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
         with:
           name: build-artifacts
           path: |
-            bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
-            bench/criterion/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.html
-            bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.csv
-            bench/tasty/bench_${{ matrix.platform }}_${{ matrix.ghc }}_ci.svg
+            bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+            bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.html
+            bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+            bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg

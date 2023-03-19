@@ -23,8 +23,8 @@
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    byte-types = {
-      url = "github:tbidne/byte-types";
+    monad-effects = {
+      url = "github:tbidne/monad-effects/";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -32,8 +32,8 @@
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
     };
-    monad-effects = {
-      url = "github:tbidne/monad-effects/";
+    si-bytes = {
+      url = "github:tbidne/si-bytes";
       inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -54,35 +54,27 @@
   outputs =
     inputs@{ algebra-simple
     , bounds
-    , byte-types
     , flake-compat
     , flake-parts
     , monad-effects
     , nixpkgs
     , self
+    , si-bytes
     , smart-math
     }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       perSystem = { pkgs, ... }:
         let
-          buildTools = c: with c; [
-            cabal-install
+          buildTools = c: [
+            c.cabal-install
             pkgs.gnumake
             pkgs.zlib
           ];
           # add tools like hlint, ormolu, ghcid here if you want them
           # on the PATH
-          devTools = c: with c; [
-            (pkgs.haskell.lib.dontCheck ghcid)
-            (hlib.overrideCabal haskell-language-server (old: {
-              configureFlags = (old.configureFlags or [ ]) ++
-                [
-                  "-f -brittany"
-                  "-f -floskell"
-                  "-f -fourmolu"
-                  "-f -stylishhaskell"
-                ];
-            }))
+          devTools = c: [
+            (hlib.dontCheck c.ghcid)
+            (hlib.dontCheck c.haskell-language-server)
           ];
           ghc-version = "ghc944";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
@@ -105,7 +97,6 @@
                 algebra-simple =
                   final.callCabal2nix "algebra-simple" algebra-simple { };
                 bounds = final.callCabal2nix "bounds" bounds { };
-                byte-types = final.callCabal2nix "byte-types" byte-types { };
                 effects-async =
                   final.callCabal2nix "effects-async"
                     "${monad-effects}/effects-async"
@@ -130,6 +121,7 @@
                   final.callCabal2nix "effects-thread"
                     "${monad-effects}/effects-thread"
                     { };
+                si-bytes = final.callCabal2nix "si-bytes" si-bytes { };
                 package-version = hlib.doJailbreak prev.package-version;
                 smart-math = final.callCabal2nix "smart-math" smart-math { };
                 tasty-hedgehog = prev.tasty-hedgehog_1_4_0_0;
