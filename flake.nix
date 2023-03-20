@@ -125,6 +125,7 @@
                 package-version = hlib.doJailbreak prev.package-version;
                 smart-math = final.callCabal2nix "smart-math" smart-math { };
                 tasty-hedgehog = prev.tasty-hedgehog_1_4_0_0;
+                unix-compat = prev.unix-compat_0_6;
               };
             };
         in
