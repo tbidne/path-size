@@ -74,8 +74,8 @@ benchPathSizeRecursive MkBenchmarkSuite {bgroup, bench, nfIO} strategies testDir
         ]
     flatData =
       [ ("100", testDir </> "flat-100"),
-        ("1,000", testDir </> "flat-1_000"),
-        ("10,000", testDir </> "flat-10_000")
+        ("1_000", testDir </> "flat-1_000"),
+        ("10_000", testDir </> "flat-10_000")
       ]
 
     sparse =
@@ -126,7 +126,7 @@ benchLargestN MkBenchmarkSuite {bench, bgroup, nfIO} testDir =
     [ runLargestN "1" (mkPositive 1) (testDir </> "dense-10"),
       runLargestN "10" (mkPositive 10) (testDir </> "dense-10"),
       runLargestN "100" (mkPositive 100) (testDir </> "dense-10"),
-      runLargestN "1,000" (mkPositive 1_000) (testDir </> "dense-10")
+      runLargestN "1_000" (mkPositive 1_000) (testDir </> "dense-10")
     ]
   where
     runLargestN desc n =
