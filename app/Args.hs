@@ -38,6 +38,8 @@ import Options.Applicative
   )
 import Options.Applicative qualified as OA
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
+import Options.Applicative.Help.Chunk qualified as Chunk
+import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse))
 import PathSize.Data.Config
   ( Config (..),
@@ -91,7 +93,7 @@ parserInfoArgs =
   ParserInfo
     { infoParser = argsParser,
       infoFullDesc = True,
-      infoProgDesc = Chunk desc,
+      infoProgDesc = desc,
       infoHeader = Chunk headerTxt,
       infoFooter = Chunk footerTxt,
       infoFailureCode = 1,
@@ -103,9 +105,9 @@ parserInfoArgs =
         "path-size: A utility for reporting the recursive size of a directory."
     footerTxt = Just $ fromString versNum
     desc =
-      Just $
+      Chunk.paragraph $
         mconcat
-          [ "\npath-size allows one to find large paths on the file-system. ",
+          [ "path-size allows one to find large paths on the file-system. ",
             "In particular, the command will recursively associate a given ",
             "path and all of its subpaths to their respective sizes."
           ]
@@ -148,7 +150,7 @@ numPathsParser =
         OA.long "num-paths",
         OA.short 'n',
         OA.metavar "(NAT | all)",
-        OA.help helpTxt
+        mkHelp helpTxt
       ]
   where
     readNat =
@@ -173,7 +175,7 @@ excludeParser =
             [ OA.long "exclude",
               OA.short 'e',
               OA.metavar "PATHS...",
-              OA.help helpTxt
+              mkHelp helpTxt
             ]
       )
   where
@@ -190,7 +192,7 @@ allParser =
     mconcat
       [ OA.long "all",
         OA.short 'a',
-        OA.help helpTxt
+        mkHelp helpTxt
       ]
   where
     helpTxt = "If enabled, searches hidden files/directories."
@@ -201,7 +203,7 @@ filesOnlyParser =
     mconcat
       [ OA.long "files-only",
         OA.short 'f',
-        OA.help helpTxt
+        mkHelp helpTxt
       ]
   where
     helpTxt =
@@ -219,7 +221,7 @@ depthParser =
       [ OA.long "depth",
         OA.short 'd',
         OA.metavar "NAT",
-        OA.help helpTxt
+        mkHelp helpTxt
       ]
   where
     readNat =
@@ -240,7 +242,7 @@ reverseSortParser =
     mconcat
       [ OA.long "reverse",
         OA.short 'r',
-        OA.help helpTxt
+        mkHelp helpTxt
       ]
   where
     helpTxt = "If enabled, paths are sorted in reverse (ascending) order."
@@ -254,7 +256,7 @@ strategyParser =
         OA.long "strategy",
         OA.short 's',
         OA.metavar "(async|sync|pool)",
-        OA.help helpTxt
+        mkHelp helpTxt
       ]
   where
     readStrategy =
@@ -279,3 +281,10 @@ strategyParser =
 
 pathParser :: Parser FilePath
 pathParser = OA.argument OA.str (OA.metavar "PATH")
+
+mkHelp :: String -> OA.Mod f a
+mkHelp =
+  OA.helpDoc
+    . fmap (<> Pretty.hardline)
+    . Chunk.unChunk
+    . Chunk.paragraph
