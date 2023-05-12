@@ -91,6 +91,7 @@
               # https://github.com/ddssff/listlike/issues/23
               ListLike = hlib.dontCheck prev.ListLike;
               ormolu = prev.ormolu_0_5_3_0;
+              unix-compat = prev.unix-compat_0_6;
             } // mkLibs final [
               "algebra-simple"
               "bounds"
