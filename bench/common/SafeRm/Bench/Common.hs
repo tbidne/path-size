@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 -- | Provides common benchmarking functionality.
 --
 -- @since 0.1
@@ -57,7 +59,7 @@ benchPathSizeRecursive ::
   -- | Test directory home.
   FilePath ->
   b
-benchPathSizeRecursive MkBenchmarkSuite {bgroup, bench, nfIO} strategies testDir =
+benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
   bgroup
     "findLargestPaths All"
     [ flat,
@@ -120,7 +122,7 @@ benchPathSizeRecursive MkBenchmarkSuite {bgroup, bench, nfIO} strategies testDir
 --
 -- @since 0.1
 benchLargestN :: BenchmarkSuite f b -> FilePath -> b
-benchLargestN MkBenchmarkSuite {bench, bgroup, nfIO} testDir =
+benchLargestN MkBenchmarkSuite {..} testDir =
   bgroup
     "takeLargestN"
     [ runLargestN "1" (mkPositive 1) (testDir </> "dense-10"),
@@ -138,7 +140,7 @@ benchLargestN MkBenchmarkSuite {bench, bgroup, nfIO} testDir =
 --
 -- @since 0.1
 benchDisplayPathSize :: BenchmarkSuite f b -> FilePath -> b
-benchDisplayPathSize MkBenchmarkSuite {bench, bgroup, nfIO} testDir =
+benchDisplayPathSize MkBenchmarkSuite {..} testDir =
   bgroup
     "displayPathSize"
     [ runDisplayPathSize "d=6" (testDir </> "dense-6"),

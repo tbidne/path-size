@@ -1,4 +1,4 @@
-name: "cabal"
+name: ci
 
 on:
   push:
@@ -18,16 +18,16 @@ jobs:
       matrix:
         ghc:
           - "9.2.7"
-          - "9.4.4"
+          - "9.4.5"
         os:
-          - "macos-latest"
-          - "ubuntu-latest"
-          - "windows-latest"
+        - "macos-latest"
+        - "ubuntu-latest"
+        - "windows-latest"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v3
 
-      - uses: haskell/actions/setup@v2.3.4
+      - uses: haskell/actions/setup@v2
         with:
           ghc-version: ${{ matrix.ghc }}
 
@@ -41,7 +41,7 @@ jobs:
         run: cabal test functional
 
       # Only benchmark on ubuntu to reduce maintenance burden as other
-      # benchmarks are not really actionable,
+      # benchmarks are not really actionable.
 
       - name: Benchmark Tasty
         if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -70,3 +70,42 @@ jobs:
             bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.html
             bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+  nix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - "macos-latest"
+        - "ubuntu-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup nix
+        uses: cachix/install-nix-action@v20
+        with:
+          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/897876e4c484f1e8f92009fd11b7d988a121a4e7.tar.gz
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compile & Test
+        run: nix build
+  lint:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup nix
+        uses: cachix/install-nix-action@v20
+        with:
+          nix_path: nixpkgs=https://github.com/NixOS/nixpkgs/archive/897876e4c484f1e8f92009fd11b7d988a121a4e7.tar.gz
+          extra_nix_config: |
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Formatting
+        run: |
+          nix run .#format
+          git diff --exit-code --color=always
+
+      - name: HLint
+        run: nix run .#lint

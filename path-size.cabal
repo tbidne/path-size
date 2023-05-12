@@ -72,14 +72,16 @@ library
 executable path-size
   import:           common-exts
   main-is:          Main.hs
-  other-modules:    Args
+  other-modules:
+    Args
+    Paths_path_size
+
+  autogen-modules:  Paths_path_size
   build-depends:
     , base
-    , gitrev                >=1.2.0    && <1.4
     , optics-core
     , optics-th             ^>=0.4
     , optparse-applicative  >=0.16.1.0 && <0.18
-    , package-version       >=0.1.0.0  && <0.4
     , path-size
     , smart-math
     , text

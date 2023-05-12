@@ -16,8 +16,7 @@ import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import Data.List qualified as L
 import Data.String (IsString (fromString))
-import Data.Version.Package qualified as PV
-import Development.GitRev qualified as GitRev
+import Data.Version (Version (versionBranch))
 import GHC.Natural (Natural)
 import Numeric.Data.Positive (Positive, mkPositive)
 import Optics.Core ((^.))
@@ -46,6 +45,7 @@ import PathSize.Data.Config
     Strategy (..),
   )
 import PathSize.Data.Config.TH (defaultNumPaths)
+import Paths_path_size qualified as Paths
 import Text.Read qualified as TR
 
 -- | CLI args.
@@ -122,24 +122,15 @@ argsParser =
     <*> numPathsParser
     <*> reverseSortParser
     <*> strategyParser
-    <*> pathParser
     <**> OA.helper
     <**> version
+    <*> pathParser
 
 version :: Parser (a -> a)
-version = OA.infoOption txt (OA.long "version")
-  where
-    txt =
-      L.intercalate
-        "\n"
-        [ "FsSize",
-          versNum,
-          "Revision: " <> $(GitRev.gitHash),
-          "Date: " <> $(GitRev.gitCommitDate)
-        ]
+version = OA.infoOption versNum (OA.long "version" <> OA.short 'v')
 
 versNum :: String
-versNum = "Version: " <> $$(PV.packageVersionStringTH "path-size.cabal")
+versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
 
 numPathsParser :: Parser (Maybe (Positive Int))
 numPathsParser =
