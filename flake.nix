@@ -35,6 +35,8 @@
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
+      inputs.smart-math.follows = "smart-math";
     };
     si-bytes = {
       url = "github:tbidne/si-bytes";
@@ -71,6 +73,11 @@
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
               apply-refact = prev.apply-refact_0_11_0_0;
+              effects-fs = hlib.overrideCabal
+                (nix-hs-utils.mkRelLib monad-effects final "effects-fs")
+                (old: {
+                  configureFlags = (old.configureFlags or [ ]) ++ [ "-f -os_path" ];
+                });
               # https://github.com/ddssff/listlike/issues/23
               ListLike = hlib.dontCheck prev.ListLike;
               ormolu = prev.ormolu_0_5_3_0;
@@ -84,7 +91,6 @@
             ] // nix-hs-utils.mkRelLibs monad-effects final [
               "effects-async"
               "effects-exceptions"
-              "effects-fs"
               "effects-ioref"
               "effects-stm"
               "effects-thread"
