@@ -37,7 +37,7 @@ path-size: A utility for reporting the recursive size of a directory.
 
 Usage: path-size [-a|--all] [-d|--depth NAT] [-e|--exclude PATHS...]
                  [-f|--files-only] [-n|--num-paths (NAT | all)] [-r|--reverse]
-                 [-s|--strategy (async|sync|pool)] PATH [--version]
+                 [-s|--strategy (async|sync|pool)] [-v|--version] PATH
 
   path-size allows one to find large paths on the file-system. In particular,
   the command will recursively associate a given path and all of its subpaths to
