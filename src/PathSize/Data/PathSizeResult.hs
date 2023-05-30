@@ -7,6 +7,7 @@ module PathSize.Data.PathSizeResult
   ( PathSizeResult (..),
     _PathSizeSuccess,
     _PathSizePartial,
+    _PathSizeFailure,
   )
 where
 
@@ -29,6 +30,10 @@ data PathSizeResult a
     --
     -- @since 0.1
     PathSizePartial !(NESeq PathE) !a
+  | -- | Failed computing @a@.
+    --
+    -- @since 0.1
+    PathSizeFailure !(NESeq PathE)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -65,3 +70,14 @@ _PathSizePartial =
         _ -> Left x
     )
 {-# INLINE _PathSizePartial #-}
+
+-- | @since 0.1
+_PathSizeFailure :: Prism' (PathSizeResult a) (NESeq PathE)
+_PathSizeFailure =
+  prism
+    PathSizeFailure
+    ( \x -> case x of
+        PathSizeFailure errs -> Right errs
+        _ -> Left x
+    )
+{-# INLINE _PathSizeFailure #-}

@@ -123,6 +123,7 @@ runTest cfg testDir = do
   PathSize.findLargestPaths cfg testDir >>= \case
     PathSizeSuccess result -> pure result
     PathSizePartial errs _ -> throwIO $ MkStringE $ foldl' foldErrs "" errs
+    PathSizeFailure errs -> throwIO $ MkStringE $ foldl' foldErrs "" errs
   where
     foldErrs :: String -> PathE -> String
     foldErrs s e = s <> displayException e

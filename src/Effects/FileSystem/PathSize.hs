@@ -110,4 +110,5 @@ pathSizeRecursiveConfig cfg path =
   findLargestPaths cfg path <&> \case
     PathSizeSuccess (MkSubPathData (pd :<|| _)) -> PathSizeSuccess $ pd ^. #size
     PathSizePartial errs (MkSubPathData (pd :<|| _)) -> PathSizePartial errs (pd ^. #size)
+    PathSizeFailure errs -> PathSizeFailure errs
 {-# INLINEABLE pathSizeRecursiveConfig #-}

@@ -5,7 +5,6 @@
 -- @since 0.1
 module PathSize.Data.PathData
   ( PathData (..),
-    emptyPathData,
     natify,
   )
 where
@@ -88,11 +87,6 @@ instance
   labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
     fmap (MkPathData _path _size _numFiles) (f _numDirectories)
   {-# INLINE labelOptic #-}
-
--- | @since 0.1
-emptyPathData :: (Num a) => Path -> PathData a
-emptyPathData p = MkPathData p 0 0 0
-{-# INLINEABLE emptyPathData #-}
 
 -- | @since 0.1
 natify :: PathData Integer -> PathData Natural

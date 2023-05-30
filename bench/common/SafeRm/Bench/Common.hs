@@ -154,6 +154,7 @@ benchDisplayPathSize MkBenchmarkSuite {..} testDir =
         . (findLargestPaths mempty >=> displayResult)
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwCS err
+    displayResult (PathSizeFailure (err :<|| _)) = throwCS err
 
 -- | Setups directories for benchmarking.
 --

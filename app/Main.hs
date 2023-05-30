@@ -28,3 +28,4 @@ main = do
       for_ errs (putStrLn . displayException)
       putStrLn ""
       printResults sbd
+    PathSizeFailure errs -> for_ errs (putStrLn . displayException)
