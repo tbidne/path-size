@@ -30,7 +30,7 @@ import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Effects.Concurrent.Async qualified as Async
-import Effects.Exception (HasCallStack, catchAny, displayNoCS, tryAny)
+import Effects.Exception (Exception, HasCallStack, catchAny, displayNoCS, tryAny)
 import Effects.FileSystem.Path (Path, (</>))
 import Effects.FileSystem.PathReader (MonadPathReader (..))
 import GHC.Natural (Natural)
@@ -199,56 +199,59 @@ pathDataRecursive traverseFn cfg = tryGo 0
         -- Save exceptions. Because we are using effect classes like
         -- MonadPathReader, we may end up with an ExceptionCS i.e. it includes
         -- a CallStack. We don't want that here, so throw it away.
-        pure $ PathSizeFailure (NESeq.singleton $ MkPathE path (displayNoCS e))
+        pure $ mkPathE path e
       where
         -- Perform actual calculation.
         calcTree :: (HasCallStack) => IO (PathSizeResult PathTree)
         calcTree = do
-          -- 1. Symlinks
-          --
           -- NOTE: Need to handle symlinks separately so that we:
           --   a. Do not chase.
           --   b. Ensure we call the right size function (getFileSize
           --      errors on dangling symlinks since it operates on the target).
-          isSymLink <- pathIsSymbolicLink path
-          if isSymLink
-            then tryCalcSymLink path
-            else do
-              -- 2. Directories
-              isDir <- doesDirectoryExist path
-              if isDir
-                then
-                  tryAny (filter (not . shouldSkip) <$> listDirectory path) >>= \case
-                    Left ex ->
-                      pure $ PathSizeFailure (NESeq.singleton $ MkPathE path (displayNoCS ex))
-                    Right subPaths -> do
-                      resultSubTrees <-
-                        traverseFn
-                          (tryGo (depth + 1) . (path </>))
-                          (Seq.fromList subPaths)
-                      -- Add the cost of the directory itself.
-                      dirSize <- getFileSize path
-                      let (errs, subTrees) = flattenSeq resultSubTrees
-                          (!subSize, !numFiles, !subDirs) = sumTrees subTrees
-                          !numDirectories = subDirs + 1
-                          !size = dirSizeFn dirSize subSize
-                          -- Do not report subpaths if the depth is exceeded.
-                          subTrees'
-                            | depthExceeded depth = Empty
-                            | otherwise = subTrees
-                          tree =
-                            MkPathData
-                              { path,
-                                size,
-                                numFiles,
-                                numDirectories
-                              }
-                              :^| subTrees'
-                      pure $ case errs of
-                        Empty -> PathSizeSuccess tree
-                        (e :<| es) -> PathSizePartial (e :<|| es) tree
-                else -- 3. Files
-                  tryCalcFile path
+          tryAny (pathIsSymbolicLink path) >>= \case
+            Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
+            -- 1. Symlinks
+            Right True -> tryCalcSymLink path
+            Right False ->
+              tryAny (doesDirectoryExist path) >>= \case
+                Left isDirEx -> pure $ mkPathE path isDirEx
+                -- 2. Directories
+                Right True -> tryCalcDir path depth
+                -- 3. Files
+                Right False -> tryCalcFile path
+
+    tryCalcDir :: (HasCallStack) => Path -> Natural -> IO (PathSizeResult PathTree)
+    tryCalcDir path depth =
+      tryAny (filter (not . shouldSkip) <$> listDirectory path) >>= \case
+        Left listDirEx -> pure $ mkPathE path listDirEx
+        Right subPaths -> do
+          resultSubTrees <-
+            traverseFn
+              (tryGo (depth + 1) . (path </>))
+              (Seq.fromList subPaths)
+          -- Add the cost of the directory itself.
+          tryAny (getFileSize path) <&> \case
+            Left sizeErr -> mkPathE path sizeErr
+            Right dirSize -> do
+              let (errs, subTrees) = flattenSeq resultSubTrees
+                  (!subSize, !numFiles, !subDirs) = sumTrees subTrees
+                  !numDirectories = subDirs + 1
+                  !size = dirSizeFn dirSize subSize
+                  -- Do not report subpaths if the depth is exceeded.
+                  subTrees'
+                    | depthExceeded depth = Empty
+                    | otherwise = subTrees
+                  tree =
+                    MkPathData
+                      { path,
+                        size,
+                        numFiles,
+                        numDirectories
+                      }
+                      :^| subTrees'
+              case errs of
+                Empty -> PathSizeSuccess tree
+                (e :<| es) -> PathSizePartial (e :<|| es) tree
 
 sumTrees :: Seq PathTree -> (Integer, Integer, Integer)
 sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
@@ -286,12 +289,12 @@ tryCalcSize ::
   IO (PathSizeResult PathTree)
 tryCalcSize sizeFn path = do
   tryAny (sizeFn path) <&> \case
-    Left ex -> PathSizeFailure (NESeq.singleton $ MkPathE path (displayNoCS ex))
+    Left ex -> mkPathE path ex
     Right size ->
       PathSizeSuccess $
         PathTree.singleton $
           MkPathData
-            { path = path,
+            { path,
               size,
               numFiles = 1,
               numDirectories = 0
@@ -306,3 +309,6 @@ flattenSeq (z :<| zs) = case z of
   where
     (errs, trees) = flattenSeq zs
 {-# INLINEABLE flattenSeq #-}
+
+mkPathE :: (Exception e) => Path -> e -> PathSizeResult a
+mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayNoCS
