@@ -2,7 +2,6 @@ set -e
 
 export LANG="C.UTF-8"
 
-cabal update
 cabal haddock --haddock-hyperlink-source --haddock-quickjump
 
 mkdir -p docs/
