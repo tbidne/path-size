@@ -38,7 +38,6 @@ common common-exts
 library
   import:           common-exts
   exposed-modules:
-    Effects.FileSystem.PathSize
     PathSize
     PathSize.Data.Config
     PathSize.Data.Config.TH
@@ -56,13 +55,15 @@ library
     , effects-async         ^>=0.1
     , effects-exceptions    ^>=0.1
     , effects-fs            ^>=0.1
+    , effects-ioref         ^>=0.1
+    , effects-thread        ^>=0.1
+    , effects-unix-compat   ^>=0.1
     , filepath              ^>=1.4.2.1
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , si-bytes              ^>=0.1
     , smart-math            ^>=0.1
     , text                  >=1.2.3.2   && <2.1
-    , transformers          >=0.5.6.2   && <0.7
     , unix-compat           >=0.6       && <0.8
     , unordered-containers  ^>=0.2.14.0
 
@@ -98,13 +99,17 @@ test-suite functional
   other-modules:    Functional.PathSize
   build-depends:
     , base
-    , bytestring            >=0.10.12  && <0.12
-    , directory
-    , env-guard
-    , filepath
+    , containers
+    , effects-async
+    , effects-exceptions
+    , effects-fs
+    , effects-ioref
+    , effects-thread
+    , effects-unix-compat
+    , nonempty-containers
     , path-size
-    , tasty                 >=1.1.0.3  && <1.5
-    , tasty-golden          ^>=2.3.1.1
+    , tasty                 >=1.1.0.3 && <1.5
+    , tasty-hunit           >=0.9     && <0.11
     , text
     , unordered-containers
 

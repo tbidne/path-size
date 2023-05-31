@@ -94,6 +94,7 @@
               "effects-ioref"
               "effects-stm"
               "effects-thread"
+              "effects-unix-compat"
             ];
           };
           hlib = pkgs.haskell.lib;

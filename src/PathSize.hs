@@ -29,10 +29,22 @@ import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
+import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Async qualified as Async
-import Effects.Exception (Exception, HasCallStack, catchAny, displayNoCS, tryAny)
+import Effects.Concurrent.Thread (MonadThread)
+import Effects.Exception
+  ( Exception,
+    HasCallStack,
+    MonadCatch,
+    catchAny,
+    displayNoCS,
+    tryAny,
+  )
 import Effects.FileSystem.Path (Path, (</>))
 import Effects.FileSystem.PathReader (MonadPathReader (..))
+import Effects.IORef (MonadIORef)
+import Effects.System.PosixCompat (MonadPosix)
+import Effects.System.PosixCompat qualified as Posix
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
 import PathSize.Data.Config (Config (..), Strategy (..))
@@ -49,7 +61,8 @@ import System.OsPath qualified as FP
 #else
 import System.FilePath qualified as FP
 #endif
-import System.PosixCompat.Files qualified as Posix
+
+import System.PosixCompat.Files qualified as PFiles
 
 {- HLINT ignore "Redundant bracket" -}
 
@@ -57,13 +70,20 @@ import System.PosixCompat.Files qualified as Posix
 --
 -- @since 0.1
 findLargestPaths ::
-  (HasCallStack) =>
+  ( HasCallStack,
+    MonadAsync m,
+    MonadCatch m,
+    MonadIORef m,
+    MonadPathReader m,
+    MonadPosix m,
+    MonadThread m
+  ) =>
   -- | Configuration.
   Config ->
   -- | Path to search.
   Path ->
   -- | The results.
-  IO (PathSizeResult SubPathData)
+  m (PathSizeResult SubPathData)
 findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
   where
     f = case cfg ^. #strategy of
@@ -91,7 +111,17 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
 -- @
 --
 -- @since 0.1
-pathSizeRecursive :: (HasCallStack) => Path -> IO (PathSizeResult Natural)
+pathSizeRecursive ::
+  ( HasCallStack,
+    MonadAsync m,
+    MonadCatch m,
+    MonadIORef m,
+    MonadPathReader m,
+    MonadPosix m,
+    MonadThread m
+  ) =>
+  Path ->
+  m (PathSizeResult Natural)
 pathSizeRecursive = pathSizeRecursiveConfig cfg
   where
     cfg =
@@ -108,10 +138,17 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
 --
 -- @since 0.1
 pathSizeRecursiveConfig ::
-  (HasCallStack) =>
+  ( HasCallStack,
+    MonadAsync m,
+    MonadCatch m,
+    MonadIORef m,
+    MonadPathReader m,
+    MonadPosix m,
+    MonadThread m
+  ) =>
   Config ->
   Path ->
-  IO (PathSizeResult Natural)
+  m (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg path =
   findLargestPaths cfg path <&> \case
     PathSizeSuccess (MkSubPathData (pd :<|| _)) -> PathSizeSuccess $ pd ^. #size
@@ -123,10 +160,10 @@ pathSizeRecursiveConfig cfg path =
 --
 -- @since 0.1
 pathDataRecursiveSync ::
-  (HasCallStack) =>
+  (HasCallStack, MonadCatch m, MonadPathReader m, MonadPosix m) =>
   Config ->
   Path ->
-  IO (PathSizeResult PathTree)
+  m (PathSizeResult PathTree)
 pathDataRecursiveSync = pathDataRecursive traverse
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
@@ -134,20 +171,32 @@ pathDataRecursiveSync = pathDataRecursive traverse
 --
 -- @since 0.1
 pathDataRecursiveAsync ::
-  (HasCallStack) =>
+  ( HasCallStack,
+    MonadAsync m,
+    MonadCatch m,
+    MonadPathReader m,
+    MonadPosix m
+  ) =>
   Config ->
   Path ->
-  IO (PathSizeResult PathTree)
+  m (PathSizeResult PathTree)
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
 --
 -- @since 0.1
 pathDataRecursiveAsyncPooled ::
-  (HasCallStack) =>
+  ( HasCallStack,
+    MonadAsync m,
+    MonadCatch m,
+    MonadIORef m,
+    MonadPathReader m,
+    MonadPosix m,
+    MonadThread m
+  ) =>
   Config ->
   Path ->
-  IO (PathSizeResult PathTree)
+  m (PathSizeResult PathTree)
 pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -155,14 +204,19 @@ pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
 --
 -- @since 0.1
 pathDataRecursive ::
-  (HasCallStack) =>
+  forall m.
+  ( HasCallStack,
+    MonadCatch m,
+    MonadPathReader m,
+    MonadPosix m
+  ) =>
   -- | Traversal function.
-  (forall a b t. (HasCallStack, Traversable t) => (a -> IO b) -> t a -> IO (t b)) ->
+  (forall a b t. (HasCallStack, Monad m, Traversable t) => (a -> m b) -> t a -> m (t b)) ->
   -- | The config.
   Config ->
   -- | Start path.
   Path ->
-  IO (PathSizeResult PathTree)
+  m (PathSizeResult PathTree)
 pathDataRecursive traverseFn cfg = tryGo 0
   where
     excluded = cfg ^. #exclude
@@ -193,7 +247,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       (HasCallStack) =>
       Natural ->
       Path ->
-      IO (PathSizeResult PathTree)
+      m (PathSizeResult PathTree)
     tryGo !depth !path =
       calcTree `catchAny` \e ->
         -- Save exceptions. Because we are using effect classes like
@@ -202,7 +256,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
         pure $ mkPathE path e
       where
         -- Perform actual calculation.
-        calcTree :: (HasCallStack) => IO (PathSizeResult PathTree)
+        calcTree :: (HasCallStack) => m (PathSizeResult PathTree)
         calcTree = do
           -- NOTE: Need to handle symlinks separately so that we:
           --   a. Do not chase.
@@ -220,7 +274,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
                 -- 3. Files
                 Right False -> tryCalcFile path
 
-    tryCalcDir :: (HasCallStack) => Path -> Natural -> IO (PathSizeResult PathTree)
+    tryCalcDir :: (HasCallStack) => Path -> Natural -> m (PathSizeResult PathTree)
     tryCalcDir path depth =
       tryAny (filter (not . shouldSkip) <$> listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx
@@ -261,7 +315,9 @@ getSum (MkPathData {size, numFiles, numDirectories} :^| _) =
   (size, numFiles, numDirectories)
 
 addTuple ::
-  (Integer, Integer, Integer) -> (Integer, Integer, Integer) -> (Integer, Integer, Integer)
+  (Integer, Integer, Integer) ->
+  (Integer, Integer, Integer) ->
+  (Integer, Integer, Integer)
 addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
 
 -- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
@@ -273,20 +329,32 @@ hidden ('.' : '/' : _) = False
 hidden ('.' : _) = True
 hidden _ = False
 
-tryCalcSymLink :: (HasCallStack) => Path -> IO (PathSizeResult PathTree)
+tryCalcSymLink ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadPathReader m,
+    MonadPosix m
+  ) =>
+  Path ->
+  m (PathSizeResult PathTree)
 tryCalcSymLink = tryCalcSize (fmap fromIntegral . getSymLinkSize)
   where
-    getSymLinkSize =
-      fmap Posix.fileSize . Posix.getSymbolicLinkStatus
+    getSymLinkSize = fmap PFiles.fileSize . Posix.getSymbolicLinkStatus
 
-tryCalcFile :: (HasCallStack) => Path -> IO (PathSizeResult PathTree)
+tryCalcFile ::
+  ( HasCallStack,
+    MonadCatch m,
+    MonadPathReader m
+  ) =>
+  Path ->
+  m (PathSizeResult PathTree)
 tryCalcFile = tryCalcSize getFileSize
 
 tryCalcSize ::
-  (HasCallStack) =>
-  ((HasCallStack) => Path -> IO Integer) ->
+  (HasCallStack, MonadCatch m) =>
+  ((HasCallStack) => Path -> m Integer) ->
   Path ->
-  IO (PathSizeResult PathTree)
+  m (PathSizeResult PathTree)
 tryCalcSize sizeFn path = do
   tryAny (sizeFn path) <&> \case
     Left ex -> mkPathE path ex

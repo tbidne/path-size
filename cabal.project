@@ -31,7 +31,7 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: 9bc579b32f7f00ab8fd1db6d78a6a646b0c87f84
+    tag: a3963463e34783befd4a639bd31e77328e8d6f07
     subdir:
       effects-async
       effects-exceptions
@@ -39,6 +39,7 @@ source-repository-package
       effects-ioref
       effects-stm
       effects-thread
+      effects-unix-compat
 
 source-repository-package
     type: git
