@@ -369,13 +369,12 @@ tryCalcSize sizeFn path = do
             }
 
 flattenSeq :: Seq (PathSizeResult PathTree) -> (Seq PathE, Seq PathTree)
-flattenSeq Empty = (Empty, Empty)
-flattenSeq (z :<| zs) = case z of
-  PathSizeSuccess tree -> (errs, tree :<| trees)
-  PathSizePartial (e :<|| es) tree -> (e :<| es <> errs, tree :<| trees)
-  PathSizeFailure (e :<|| es) -> (e :<| es <> errs, trees)
+flattenSeq = foldl' f (Empty, Empty)
   where
-    (errs, trees) = flattenSeq zs
+    f (errs, trees) = \case
+      PathSizeSuccess tree -> (errs, tree :<| trees)
+      PathSizePartial (e :<|| es) tree -> (e :<| es <> errs, tree :<| trees)
+      PathSizeFailure (e :<|| es) -> (e :<| es <> errs, trees)
 {-# INLINEABLE flattenSeq #-}
 
 mkPathE :: (Exception e) => Path -> e -> PathSizeResult a
