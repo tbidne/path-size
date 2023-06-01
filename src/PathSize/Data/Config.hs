@@ -5,6 +5,7 @@
 -- @since 0.1
 module PathSize.Data.Config
   ( Config (..),
+    defaultConfig,
     Strategy (..),
     _Sync,
     _Async,
@@ -12,7 +13,6 @@ module PathSize.Data.Config
   )
 where
 
-import Control.Applicative (Alternative (empty, (<|>)))
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import GHC.Natural (Natural)
@@ -20,22 +20,27 @@ import Numeric.Data.Positive (Positive)
 import Optics.Core
   ( A_Lens,
     LabelOptic (labelOptic),
-    Lens',
     Prism',
     lensVL,
     prism,
-    (^.),
   )
+import PathSize.Data.Config.TH (defaultNumPaths)
 
 -- | Describes the path search strategy.
 --
 -- @since 0.1
 data Strategy
-  = -- | @since 0.1
+  = -- | No threads.
+    --
+    -- @since 0.1
     Sync
-  | -- | @since 0.1
+  | -- | Lightweight threads.
+    --
+    -- @since 0.1
     Async
-  | -- | @since 0.1
+  | -- | Uses a thread pool.
+    --
+    -- @since 0.1
     AsyncPooled
   deriving stock
     ( -- | @since 0.1
@@ -76,18 +81,6 @@ _AsyncPooled =
         _ -> Left x
     )
 {-# INLINE _AsyncPooled #-}
-
--- | @since 0.1
-instance Semigroup Strategy where
-  AsyncPooled <> _ = AsyncPooled
-  _ <> AsyncPooled = AsyncPooled
-  Async <> _ = Async
-  _ <> Async = Async
-  Sync <> Sync = Sync
-
--- | @since 0.1
-instance Monoid Strategy where
-  mempty = Sync
 
 -- | @since 0.1
 data Config = MkConfig
@@ -178,34 +171,27 @@ instance
     fmap (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths) (f _strategy)
   {-# INLINE labelOptic #-}
 
--- | @since 0.1
-instance Semigroup Config where
-  lhs <> rhs =
-    MkConfig
-      { searchAll = mergeOr #searchAll,
-        maxDepth = mergeAlt #maxDepth,
-        exclude = merge HSet.union #exclude,
-        filesOnly = mergeOr #filesOnly,
-        numPaths = mergeAlt #numPaths,
-        strategy = merge (<>) #strategy
-      }
-    where
-      mergeAlt = merge (<|>)
-      mergeOr = merge (||)
-      merge ::
-        (a -> a -> a) ->
-        Lens' Config a ->
-        a
-      merge f o = (lhs ^. o) `f` (rhs ^. o)
-
--- | @since 0.1
-instance Monoid Config where
-  mempty =
-    MkConfig
-      { searchAll = False,
-        maxDepth = empty,
-        exclude = HSet.empty,
-        filesOnly = False,
-        numPaths = empty,
-        strategy = mempty
-      }
+-- |
+--
+-- @
+-- MkConfig
+--   { searchAll = True,
+--     maxDepth = Nothing,
+--     exclude = [],
+--     filesOnly = False,
+--     numPaths = Just 10,
+--     strategy = Async
+--   }
+-- @
+--
+-- @since 0.1
+defaultConfig :: Config
+defaultConfig =
+  MkConfig
+    { searchAll = True,
+      maxDepth = Nothing,
+      exclude = HSet.empty,
+      filesOnly = False,
+      numPaths = Just defaultNumPaths,
+      strategy = Async
+    }

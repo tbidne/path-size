@@ -125,10 +125,11 @@ library bench-common
     , deepseq
     , effects-exceptions
     , effects-fs
-    , env-guard            ^>=0.2
+    , env-guard             ^>=0.2
     , nonempty-containers
     , path-size
     , smart-math
+    , unordered-containers
 
   hs-source-dirs:   bench/common
   default-language: GHC2021

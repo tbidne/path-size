@@ -19,6 +19,7 @@ where
 import Control.DeepSeq (NFData)
 import Control.Monad ((>=>))
 import Data.Foldable (for_, traverse_)
+import Data.HashSet qualified as HSet
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
 import Effects.Exception (HasCallStack, addCS, throwCS)
@@ -110,7 +111,7 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
     findLargest strategy desc =
       bench desc'
         . nfIO
-        . findLargestPaths mempty {strategy}
+        . findLargestPaths baseConfig {strategy}
       where
         desc' =
           desc <> case strategy of
@@ -134,7 +135,7 @@ benchLargestN MkBenchmarkSuite {..} testDir =
     runLargestN desc n =
       bench desc
         . nfIO
-        . findLargestPaths (mempty {numPaths = n})
+        . findLargestPaths (baseConfig {numPaths = n})
 
 -- | Benchmark for displaying results of a path search.
 --
@@ -151,7 +152,7 @@ benchDisplayPathSize MkBenchmarkSuite {..} testDir =
     runDisplayPathSize desc =
       bench desc
         . nfIO
-        . (findLargestPaths mempty >=> displayResult)
+        . (findLargestPaths baseConfig >=> displayResult)
     displayResult (PathSizeSuccess sbd) = pure $ display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwCS err
     displayResult (PathSizeFailure (err :<|| _)) = throwCS err
@@ -233,3 +234,14 @@ createFileContents ::
   IO ()
 createFileContents paths = for_ paths $
   \(p, c) -> addCS $ writeBinaryFile p c
+
+baseConfig :: Config
+baseConfig =
+  MkConfig
+    { searchAll = False,
+      maxDepth = Nothing,
+      exclude = HSet.empty,
+      filesOnly = False,
+      numPaths = Nothing,
+      strategy = Sync
+    }

@@ -23,7 +23,12 @@ import Effects.FileSystem.PathReader (MonadPathReader (..))
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosix)
 import GHC.Num.Natural (Natural)
-import PathSize (PathData (MkPathData), PathE (MkPathE), PathSizeResult (..))
+import PathSize
+  ( PathData (MkPathData),
+    PathE (MkPathE),
+    PathSizeResult (..),
+    Strategy (..),
+  )
 import PathSize qualified
 import PathSize.Data.Config (Config (..))
 import PathSize.Data.SubPathData.Internal
@@ -71,7 +76,7 @@ tests =
 
 calculatesSizes :: TestTree
 calculatesSizes = testCase "Calculates sizes correctly" $ do
-  PathSizeSuccess result <- runTest mempty successTestDir
+  PathSizeSuccess result <- runTest baseConfig successTestDir
   assertSubPathData expected result
   where
     expected =
@@ -93,7 +98,7 @@ calculatesAll = testCase "Includes hidden files" $ do
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
   where
-    cfg = mempty {searchAll = True}
+    cfg = baseConfig {searchAll = True}
     expected =
       toSubPathData
         [ MkPathData ("test" </> "functional" </> "data" </> "success") 28726 6 7,
@@ -116,7 +121,7 @@ calculatesExcluded = testCase "Excludes paths" $ do
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
   where
-    cfg = mempty {exclude = HSet.fromList ["d2", "f2"]}
+    cfg = baseConfig {exclude = HSet.fromList ["d2", "f2"]}
     expected =
       toSubPathData
         [ MkPathData ("test" </> "functional" </> "data" </> "success") 8196 1 2,
@@ -129,7 +134,7 @@ calculatesFilesOnly = testCase "Includes only files" $ do
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
   where
-    cfg = mempty {filesOnly = True}
+    cfg = baseConfig {filesOnly = True}
     expected =
       toSubPathData
         [ MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1" </> "f1") 14 1 0,
@@ -149,7 +154,7 @@ calculatesDepthN n expected = testCase ("Calculates depth = " <> show n) $ do
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
   where
-    cfg = mempty {maxDepth = Just n}
+    cfg = baseConfig {maxDepth = Just n}
 
 displayTests :: TestTree
 displayTests =
@@ -161,14 +166,14 @@ displayTests =
 
 displays :: TestTree
 displays = testCase "Displays correctly" $ do
-  PathSizeSuccess result <- runTest mempty successTestDir
+  PathSizeSuccess result <- runTest baseConfig successTestDir
   expected @=? PathSize.display False result
   where
     expected = T.unlines displayResults
 
 displaysReverse :: TestTree
 displaysReverse = testCase "Displays reverse correctly" $ do
-  PathSizeSuccess result <- runTest mempty successTestDir
+  PathSizeSuccess result <- runTest baseConfig successTestDir
   expected @=? PathSize.display True result
   where
     expected = T.unlines $ reverse displayResults
@@ -197,7 +202,7 @@ exceptionTests =
 
 testsPartial :: TestTree
 testsPartial = testCase "Partial success" $ do
-  PathSizePartial errs result <- runTest mempty partialTestDir
+  PathSizePartial errs result <- runTest baseConfig partialTestDir
   assertSubPathData expectedResults result
   assertErrs expectedErrs errs
   where
@@ -216,7 +221,7 @@ testsPartial = testCase "Partial success" $ do
 
 testsFailure :: TestTree
 testsFailure = testCase "Failure" $ do
-  PathSizeFailure errs <- runTest mempty failureTestDir
+  PathSizeFailure errs <- runTest baseConfig failureTestDir
   assertErrs expectedErrs errs
   where
     expectedErrs =
@@ -311,3 +316,14 @@ partialTestDir = "test" </> "functional" </> "data" </> "partial"
 
 failureTestDir :: FilePath
 failureTestDir = "test" </> "functional" </> "data" </> "failure"
+
+baseConfig :: Config
+baseConfig =
+  MkConfig
+    { searchAll = False,
+      maxDepth = Nothing,
+      exclude = HSet.empty,
+      filesOnly = False,
+      numPaths = Nothing,
+      strategy = Sync
+    }

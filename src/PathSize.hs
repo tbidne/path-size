@@ -103,10 +103,10 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
 -- MkConfig
 --   { searchAll = True,
 --     maxDepth = Just 0,
---     exclude = mempty,
+--     exclude = [],
 --     filesOnly = False,
 --     numPaths = Just 1,
---     strategy = mempty
+--     strategy = Async
 --   }
 -- @
 --
@@ -131,7 +131,7 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
           exclude = mempty,
           filesOnly = False,
           numPaths = Just defaultNumPathsSize,
-          strategy = mempty
+          strategy = Async
         }
 
 -- | Returns the total path size in bytes.
