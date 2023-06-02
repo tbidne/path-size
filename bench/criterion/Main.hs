@@ -5,7 +5,7 @@ import Criterion qualified as Bench
 import Criterion.Main (Benchmark, Benchmarkable, defaultMain)
 import Effects.Exception (Exception (displayException), bracket)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import PathSize.Data.Config (Strategy (Async, AsyncPooled, Sync))
+import PathSize.Data.Config (Strategy (Async, AsyncPool, Sync))
 import SafeRm.Bench.Common (BenchmarkSuite (..))
 import SafeRm.Bench.Common qualified as Common
 
@@ -19,7 +19,7 @@ main = do
   where
     runBenchmarks testDir =
       defaultMain
-        [ Common.benchPathSizeRecursive suite [Sync, Async, AsyncPooled] testDir,
+        [ Common.benchPathSizeRecursive suite [Sync, Async, AsyncPool] testDir,
           Common.benchLargestN suite testDir,
           Common.benchDisplayPathSize suite testDir
         ]

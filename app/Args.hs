@@ -254,7 +254,7 @@ strategyParser =
       OA.str >>= \case
         "sync" -> pure Sync
         "async" -> pure Async
-        "pool" -> pure AsyncPooled
+        "pool" -> pure AsyncPool
         other ->
           fail $
             mconcat

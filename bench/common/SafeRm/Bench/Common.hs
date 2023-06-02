@@ -117,7 +117,7 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
           desc <> case strategy of
             Sync -> " - Sync"
             Async -> " - Async"
-            AsyncPooled -> " - AsyncPooled"
+            AsyncPool -> " - AsyncPool"
 
 -- | Benchmark for finding the largest N files in a dense directory tree.
 --

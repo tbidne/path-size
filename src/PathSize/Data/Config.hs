@@ -9,7 +9,7 @@ module PathSize.Data.Config
     Strategy (..),
     _Sync,
     _Async,
-    _AsyncPooled,
+    _AsyncPool,
   )
 where
 
@@ -41,7 +41,7 @@ data Strategy
   | -- | Uses a thread pool.
     --
     -- @since 0.1
-    AsyncPooled
+    AsyncPool
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -72,15 +72,15 @@ _Async =
 {-# INLINE _Async #-}
 
 -- | @since 0.1
-_AsyncPooled :: Prism' Strategy ()
-_AsyncPooled =
+_AsyncPool :: Prism' Strategy ()
+_AsyncPool =
   prism
-    (const AsyncPooled)
+    (const AsyncPool)
     ( \x -> case x of
-        AsyncPooled -> Right ()
+        AsyncPool -> Right ()
         _ -> Left x
     )
-{-# INLINE _AsyncPooled #-}
+{-# INLINE _AsyncPool #-}
 
 -- | @since 0.1
 data Config = MkConfig

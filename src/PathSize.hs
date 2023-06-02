@@ -89,7 +89,7 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
     f = case cfg ^. #strategy of
       Sync -> pathDataRecursiveSync
       Async -> pathDataRecursiveAsync
-      AsyncPooled -> pathDataRecursiveAsyncPooled
+      AsyncPool -> pathDataRecursiveAsyncPool
     takeLargestN =
       maybe
         SPD.mkSubPathData
@@ -185,7 +185,7 @@ pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
 --
 -- @since 0.1
-pathDataRecursiveAsyncPooled ::
+pathDataRecursiveAsyncPool ::
   ( HasCallStack,
     MonadAsync m,
     MonadCatch m,
@@ -197,7 +197,7 @@ pathDataRecursiveAsyncPooled ::
   Config ->
   Path ->
   m (PathSizeResult PathTree)
-pathDataRecursiveAsyncPooled = pathDataRecursive Async.pooledMapConcurrently
+pathDataRecursiveAsyncPool = pathDataRecursive Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed via the parameter traversal.
@@ -211,7 +211,7 @@ pathDataRecursive ::
     MonadPosix m
   ) =>
   -- | Traversal function.
-  (forall a b t. (HasCallStack, Monad m, Traversable t) => (a -> m b) -> t a -> m (t b)) ->
+  (forall a b t. (HasCallStack, Traversable t) => (a -> m b) -> t a -> m (t b)) ->
   -- | The config.
   Config ->
   -- | Start path.
