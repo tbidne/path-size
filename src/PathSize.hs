@@ -36,7 +36,6 @@ import Effects.Exception
   ( Exception,
     HasCallStack,
     MonadCatch,
-    catchAny,
     displayNoCS,
     tryAny,
   )
@@ -242,37 +241,28 @@ pathDataRecursive traverseFn cfg = tryGo 0
 
     -- Base recursive function. If the path is determined to be a symlink or
     -- file, calculates the size. If it is a directory, we recursively call
-    -- go on all subpaths.
+    -- tryGo on all subpaths.
     tryGo ::
       (HasCallStack) =>
       Natural ->
       Path ->
       m (PathSizeResult PathTree)
     tryGo !depth !path =
-      calcTree `catchAny` \e ->
-        -- Save exceptions. Because we are using effect classes like
-        -- MonadPathReader, we may end up with an ExceptionCS i.e. it includes
-        -- a CallStack. We don't want that here, so throw it away.
-        pure $ mkPathE path e
-      where
-        -- Perform actual calculation.
-        calcTree :: (HasCallStack) => m (PathSizeResult PathTree)
-        calcTree = do
-          -- NOTE: Need to handle symlinks separately so that we:
-          --   a. Do not chase.
-          --   b. Ensure we call the right size function (getFileSize
-          --      errors on dangling symlinks since it operates on the target).
-          tryAny (pathIsSymbolicLink path) >>= \case
-            Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
-            -- 1. Symlinks
-            Right True -> tryCalcSymLink path
-            Right False ->
-              tryAny (doesDirectoryExist path) >>= \case
-                Left isDirEx -> pure $ mkPathE path isDirEx
-                -- 2. Directories
-                Right True -> tryCalcDir path depth
-                -- 3. Files
-                Right False -> tryCalcFile path
+      -- NOTE: Need to handle symlinks separately so that we:
+      --   a. Do not chase.
+      --   b. Ensure we call the right size function (getFileSize
+      --      errors on dangling symlinks since it operates on the target).
+      tryAny (pathIsSymbolicLink path) >>= \case
+        Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
+        -- 1. Symlinks
+        Right True -> tryCalcSymLink path
+        Right False ->
+          tryAny (doesDirectoryExist path) >>= \case
+            Left isDirEx -> pure $ mkPathE path isDirEx
+            -- 2. Directories
+            Right True -> tryCalcDir path depth
+            -- 3. Files
+            Right False -> tryCalcFile path
 
     tryCalcDir :: (HasCallStack) => Path -> Natural -> m (PathSizeResult PathTree)
     tryCalcDir path depth =
