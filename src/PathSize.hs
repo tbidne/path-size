@@ -148,11 +148,9 @@ pathSizeRecursiveConfig ::
   Config ->
   Path ->
   m (PathSizeResult Natural)
-pathSizeRecursiveConfig cfg path =
-  findLargestPaths cfg path <&> \case
-    PathSizeSuccess (MkSubPathData (pd :<|| _)) -> PathSizeSuccess $ pd ^. #size
-    PathSizePartial errs (MkSubPathData (pd :<|| _)) -> PathSizePartial errs (pd ^. #size)
-    PathSizeFailure errs -> PathSizeFailure errs
+pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
+  where
+    getSize (MkSubPathData (pd :<|| _)) = pd ^. #size
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed sequentially.
