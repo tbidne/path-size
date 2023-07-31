@@ -243,5 +243,6 @@ baseConfig =
       exclude = HSet.empty,
       filesOnly = False,
       numPaths = Nothing,
+      stableSort = False,
       strategy = Sync
     }

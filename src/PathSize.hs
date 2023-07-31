@@ -52,8 +52,8 @@ import PathSize.Data.PathData (PathData (..))
 import PathSize.Data.PathSizeResult (PathSizeResult (..))
 import PathSize.Data.PathTree (PathTree (..))
 import PathSize.Data.PathTree qualified as PathTree
-import PathSize.Data.SubPathData (SubPathData (MkSubPathData))
 import PathSize.Data.SubPathData qualified as SPD
+import PathSize.Data.SubPathData.Internal (SubPathData (UnsafeSubPathData))
 import PathSize.Exception (PathE (MkPathE))
 #if MIN_VERSION_filepath(1,4,100)
 import System.OsPath qualified as FP
@@ -91,8 +91,8 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
       AsyncPool -> pathDataRecursiveAsyncPool
     takeLargestN =
       maybe
-        SPD.mkSubPathData
-        SPD.takeLargestN
+        (SPD.mkSubPathData $ cfg ^. #stableSort)
+        (SPD.takeLargestN $ cfg ^. #stableSort)
         (cfg ^. #numPaths)
 
 -- | Returns the total path size in bytes. Calls 'pathSizeRecursiveConfig' with
@@ -130,6 +130,7 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
           exclude = mempty,
           filesOnly = False,
           numPaths = Just defaultNumPathsSize,
+          stableSort = False,
           strategy = Async
         }
 
@@ -150,7 +151,7 @@ pathSizeRecursiveConfig ::
   m (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
   where
-    getSize (MkSubPathData (pd :<|| _)) = pd ^. #size
+    getSize (UnsafeSubPathData (pd :<|| _)) = pd ^. #size
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed sequentially.

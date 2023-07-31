@@ -58,6 +58,7 @@ data Args = MkArgs
     filesOnly :: !Bool,
     numPaths :: !(Maybe (Positive Int)),
     reverseSort :: !Bool,
+    stableSort :: !Bool,
     strategy :: !Strategy,
     path :: FilePath
   }
@@ -79,6 +80,7 @@ argsToConfig args =
       exclude = args ^. #exclude,
       filesOnly = args ^. #filesOnly,
       numPaths = args ^. #numPaths,
+      stableSort = args ^. #stableSort,
       strategy = args ^. #strategy
     }
 
@@ -121,6 +123,7 @@ argsParser =
     <*> filesOnlyParser
     <*> numPathsParser
     <*> reverseSortParser
+    <*> stableSortParser
     <*> strategyParser
     <**> OA.helper
     <**> version
@@ -237,6 +240,21 @@ reverseSortParser =
       ]
   where
     helpTxt = "If enabled, paths are sorted in reverse (ascending) order."
+
+stableSortParser :: Parser Bool
+stableSortParser =
+  OA.switch $
+    mconcat
+      [ OA.long "stable",
+        mkHelp helpTxt
+      ]
+  where
+    helpTxt =
+      mconcat
+        [ "If enabled, an additional sorting filter is applied to sort by path ",
+          "name. This allows the sorted order to be deterministic (as paths are ",
+          "unique), at the cost of performance."
+        ]
 
 strategyParser :: Parser Strategy
 strategyParser =

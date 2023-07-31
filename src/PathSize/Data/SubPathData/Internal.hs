@@ -35,7 +35,7 @@ import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (Positive (..))
-import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
+import Optics.Core (A_Getter, LabelOptic (labelOptic), to, view)
 import PathSize.Data.PathData (PathData (..), natify)
 import PathSize.Data.PathTree (PathTree (..), pathTreeToSeq)
 
@@ -85,7 +85,7 @@ instance
 pattern MkSubPathData :: NESeq (PathData Natural) -> SubPathData
 pattern MkSubPathData sbd <- UnsafeSubPathData sbd
   where
-    MkSubPathData sbd = UnsafeSubPathData (sortNESeq sbd)
+    MkSubPathData sbd = UnsafeSubPathData (sortNESeq False sbd)
 
 {-# COMPLETE MkSubPathData #-}
 
@@ -96,10 +96,10 @@ unSubPathData (UnsafeSubPathData sbd) = sbd
 -- | Creates a 'SubPathData' from a 'PathTree'.
 --
 -- @since 0.1
-mkSubPathData :: PathTree -> SubPathData
-mkSubPathData tree = UnsafeSubPathData (natify first :<|| fmap natify rest)
+mkSubPathData :: Bool -> PathTree -> SubPathData
+mkSubPathData stableSort tree = UnsafeSubPathData (natify first :<|| fmap natify rest)
   where
-    first :<|| rest = sortSeq (pathTreeToSeq tree)
+    first :<|| rest = sortSeq stableSort (pathTreeToSeq tree)
 
 -- | Returns a 'Seq' representation of 'SubPathData'.
 --
@@ -116,25 +116,31 @@ subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortSeq :: (Ord a) => NESeq (PathData a) -> NESeq (PathData a)
-sortSeq = NESeq.sortOn pathDataOrd
+sortSeq :: (Ord a) => Bool -> NESeq (PathData a) -> NESeq (PathData a)
+sortSeq False = NESeq.sortOn pathDataSizeOrd
+sortSeq True = NESeq.sortOn pathDataSizePathOrd
 {-# INLINEABLE sortSeq #-}
 
-sortNESeq :: (Ord a) => NESeq (PathData a) -> NESeq (PathData a)
-sortNESeq = NESeq.sortOn pathDataOrd
+sortNESeq :: (Ord a) => Bool -> NESeq (PathData a) -> NESeq (PathData a)
+sortNESeq False = NESeq.sortOn pathDataSizeOrd
+sortNESeq True = NESeq.sortOn pathDataSizePathOrd
 {-# INLINEABLE sortNESeq #-}
 
-pathDataOrd :: PathData a -> Down (a, Path)
-pathDataOrd = Down . \(MkPathData p s _ _) -> (s, p)
-{-# INLINEABLE pathDataOrd #-}
+pathDataSizeOrd :: PathData a -> Down a
+pathDataSizeOrd = Down . view #size
+{-# INLINEABLE pathDataSizeOrd #-}
+
+pathDataSizePathOrd :: PathData a -> Down (a, Path)
+pathDataSizePathOrd = Down . \(MkPathData p s _ _) -> (s, p)
+{-# INLINEABLE pathDataSizePathOrd #-}
 
 {- HLINT ignore takeLargestN "Redundant bracket" -}
 
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: (HasCallStack) => Positive Int -> PathTree -> SubPathData
-takeLargestN (MkPositive n) tree = case NESeq.take n sorted of
+takeLargestN :: (HasCallStack) => Bool -> Positive Int -> PathTree -> SubPathData
+takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
   (first :<| rest) -> UnsafeSubPathData (natify first :<|| fmap natify rest)
   -- NOTE: Should only happen if n == 0
   _ ->
@@ -147,7 +153,7 @@ takeLargestN (MkPositive n) tree = case NESeq.take n sorted of
           show tree
         ]
   where
-    sorted = sortSeq (pathTreeToSeq tree)
+    sorted = sortSeq stableSort (pathTreeToSeq tree)
 
 -- | Displays the data.
 --

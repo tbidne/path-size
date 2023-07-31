@@ -105,6 +105,11 @@ data Config = MkConfig
     --
     -- @since 0.1
     numPaths :: !(Maybe (Positive Int)),
+    -- | If enabled, sorts by path name after the size. This makes the sort
+    -- stable, at the cost of performance.
+    --
+    -- @since 0.1
+    stableSort :: !Bool,
     -- | The search strategy.
     --
     -- @since 0.1
@@ -122,8 +127,30 @@ instance
   (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
   LabelOptic "searchAll" k Config Config a b
   where
-  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
-    fmap (\searchAll' -> MkConfig searchAll' _maxDepth _exclude _filesOnly _numPaths _strategy) (f _searchAll)
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( \searchAll' ->
+                MkConfig
+                  searchAll'
+                  _maxDepth
+                  _exclude
+                  _filesOnly
+                  _numPaths
+                  _stableSort
+                  _strategy
+            )
+            (f _searchAll)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -131,8 +158,30 @@ instance
   (k ~ A_Lens, a ~ Maybe Natural, b ~ Maybe Natural) =>
   LabelOptic "maxDepth" k Config Config a b
   where
-  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
-    fmap (\maxDepth' -> MkConfig _searchAll maxDepth' _exclude _filesOnly _numPaths _strategy) (f _maxDepth)
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( \maxDepth' ->
+                MkConfig
+                  _searchAll
+                  maxDepth'
+                  _exclude
+                  _filesOnly
+                  _numPaths
+                  _stableSort
+                  _strategy
+            )
+            (f _maxDepth)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -140,8 +189,30 @@ instance
   (k ~ A_Lens, a ~ HashSet FilePath, b ~ HashSet FilePath) =>
   LabelOptic "exclude" k Config Config a b
   where
-  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
-    fmap (\exclude' -> MkConfig _searchAll _maxDepth exclude' _filesOnly _numPaths _strategy) (f _exclude)
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( \exclude' ->
+                MkConfig
+                  _searchAll
+                  _maxDepth
+                  exclude'
+                  _filesOnly
+                  _numPaths
+                  _stableSort
+                  _strategy
+            )
+            (f _exclude)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -149,8 +220,30 @@ instance
   (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
   LabelOptic "filesOnly" k Config Config a b
   where
-  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
-    fmap (\filesOnly' -> MkConfig _searchAll _maxDepth _exclude filesOnly' _numPaths _strategy) (f _filesOnly)
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( \filesOnly' ->
+                MkConfig
+                  _searchAll
+                  _maxDepth
+                  _exclude
+                  filesOnly'
+                  _numPaths
+                  _stableSort
+                  _strategy
+            )
+            (f _filesOnly)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -158,8 +251,61 @@ instance
   (k ~ A_Lens, a ~ Maybe (Positive Int), b ~ Maybe (Positive Int)) =>
   LabelOptic "numPaths" k Config Config a b
   where
-  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
-    fmap (\numPaths' -> MkConfig _searchAll _maxDepth _exclude _filesOnly numPaths' _strategy) (f _numPaths)
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( \numPaths' ->
+                MkConfig
+                  _searchAll
+                  _maxDepth
+                  _exclude
+                  _filesOnly
+                  numPaths'
+                  _stableSort
+                  _strategy
+            )
+            (f _numPaths)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "stableSort" k Config Config a b
+  where
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( \stableSort' ->
+                MkConfig
+                  _searchAll
+                  _maxDepth
+                  _exclude
+                  _filesOnly
+                  _numPaths
+                  stableSort'
+                  _strategy
+            )
+            (f _stableSort)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -167,8 +313,28 @@ instance
   (k ~ A_Lens, a ~ Strategy, b ~ Strategy) =>
   LabelOptic "strategy" k Config Config a b
   where
-  labelOptic = lensVL $ \f (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths _strategy) ->
-    fmap (MkConfig _searchAll _maxDepth _exclude _filesOnly _numPaths) (f _strategy)
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( MkConfig
+                _searchAll
+                _maxDepth
+                _exclude
+                _filesOnly
+                _numPaths
+                _stableSort
+            )
+            (f _strategy)
   {-# INLINE labelOptic #-}
 
 -- |
@@ -193,5 +359,6 @@ defaultConfig =
       exclude = HSet.empty,
       filesOnly = False,
       numPaths = Just defaultNumPaths,
+      stableSort = False,
       strategy = Async
     }

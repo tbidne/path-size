@@ -325,5 +325,7 @@ baseConfig =
       exclude = HSet.empty,
       filesOnly = False,
       numPaths = Nothing,
+      -- True because we want tests to be deterministic
+      stableSort = True,
       strategy = Sync
     }
