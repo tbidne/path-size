@@ -7,7 +7,7 @@ module SafeRm.Bench.Common
   ( -- Benchmarks
     BenchmarkSuite (..),
     benchPathSizeRecursive,
-    benchLargestN,
+    benchLargest10,
     benchDisplayPathSize,
 
     -- * Before/after
@@ -20,6 +20,8 @@ import Control.DeepSeq (NFData)
 import Control.Monad ((>=>))
 import Data.Foldable (for_, traverse_)
 import Data.HashSet qualified as HSet
+import Data.List.NonEmpty (NonEmpty)
+import Data.List.NonEmpty qualified as NE
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
 import Effects.Exception (HasCallStack, addCS, throwCS)
@@ -67,137 +69,88 @@ benchPathSizeRecursive ::
   forall f b.
   -- | Benchmark functions to use.
   BenchmarkSuite f b ->
-  -- | Benchmark strategies. We run each strategy over 3 levels for each of
-  -- flat/sparse/dense directories i.e. total benchmarks is
-  -- @3 * 3 * |strategies|@.
-  [Strategy] ->
+  -- | Benchmark strategies.
+  NonEmpty Strategy ->
   -- | Test directory home.
   FilePath ->
   b
 benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
   bgroup
-    "findLargestPaths All"
-    [ flat,
-      sparse,
-      dense
-    ]
+    "findLargestPaths"
+    [findLargest s (testDir </> "dense-11") | s <- NE.toList strategies]
   where
-    flat =
-      bgroup
-        "flat"
-        [ findLargest s desc dir
-          | (desc, dir) <- flatData,
-            s <- strategies
-        ]
-    flatData =
-      [ ("100", testDir </> "flat-100"),
-        ("1_000", testDir </> "flat-1_000"),
-        ("10_000", testDir </> "flat-10_000")
-      ]
-
-    sparse =
-      bgroup
-        "sparse"
-        [ findLargest s desc dir
-          | (desc, dir) <- sparseData,
-            s <- strategies
-        ]
-    sparseData =
-      [ ("d=6", testDir </> "sparse-6"),
-        ("d=8", testDir </> "sparse-8"),
-        ("d=10", testDir </> "sparse-10")
-      ]
-
-    dense =
-      bgroup
-        "dense"
-        [ findLargest s desc dir
-          | (desc, dir) <- denseData,
-            s <- strategies
-        ]
-    denseData =
-      [ ("d=6", testDir </> "dense-6"),
-        ("d=8", testDir </> "dense-8"),
-        ("d=10", testDir </> "dense-10")
-      ]
-
-    findLargest :: Strategy -> String -> Path -> b
-    findLargest strategy desc =
+    findLargest :: Strategy -> Path -> b
+    findLargest strategy =
       bench desc'
         . nfIO
         . PathSize.findLargestPaths baseConfig {strategy}
       where
-        desc' =
-          desc <> case strategy of
-            Sync -> " - Sync"
-            Async -> " - Async"
-            AsyncPool -> " - AsyncPool"
+        desc' = strategyDesc strategy
 
 -- | Benchmark for finding the largest N files in a dense directory tree.
 --
 -- @since 0.1
-benchLargestN :: BenchmarkSuite f b -> FilePath -> b
-benchLargestN MkBenchmarkSuite {..} testDir =
+benchLargest10 ::
+  BenchmarkSuite f b ->
+  NonEmpty Strategy ->
+  FilePath ->
+  b
+benchLargest10 MkBenchmarkSuite {..} strategies testDir =
   bgroup
-    "takeLargestN"
-    [ runLargestN "1" (mkPositive 1) (testDir </> "dense-10"),
-      runLargestN "10" (mkPositive 10) (testDir </> "dense-10"),
-      runLargestN "100" (mkPositive 100) (testDir </> "dense-10"),
-      runLargestN "1_000" (mkPositive 1_000) (testDir </> "dense-10")
-    ]
+    "takeLargest10"
+    [runLargestN s (mkPositive 10) (testDir </> "dense-11") | s <- NE.toList strategies]
   where
-    runLargestN desc n =
-      bench desc
+    runLargestN strategy numPaths =
+      bench desc'
         . nfIO
-        . PathSize.findLargestPaths (baseConfig {numPaths = n})
+        . PathSize.findLargestPaths (baseConfig {numPaths, strategy})
+      where
+        desc' = strategyDesc strategy
 
 -- | Benchmark for displaying results of a path search.
 --
 -- @since 0.1
-benchDisplayPathSize :: BenchmarkSuite f b -> FilePath -> b
-benchDisplayPathSize MkBenchmarkSuite {..} testDir =
+benchDisplayPathSize ::
+  BenchmarkSuite f b ->
+  NonEmpty Strategy ->
+  FilePath ->
+  b
+benchDisplayPathSize MkBenchmarkSuite {..} strategies testDir =
   bgroup
     "displayPathSize"
-    [ runDisplayPathSize "d=6" (testDir </> "dense-6"),
-      runDisplayPathSize "d=8" (testDir </> "dense-8"),
-      runDisplayPathSize "d=10" (testDir </> "dense-10")
-    ]
+    [runDisplayPathSize s (testDir </> "dense-11") | s <- NE.toList strategies]
   where
-    runDisplayPathSize desc =
-      bench desc
+    runDisplayPathSize strategy =
+      bench desc'
         . nfIO
-        . (PathSize.findLargestPaths baseConfig >=> displayResult)
+        . (PathSize.findLargestPaths (baseConfig {strategy}) >=> displayResult)
+      where
+        desc' = strategyDesc strategy
+
     displayResult (PathSizeSuccess sbd) = pure $ PathSize.display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwCS err
     displayResult (PathSizeFailure (err :<|| _)) = throwCS err
+
+strategyDesc :: Strategy -> String
+strategyDesc Sync = "Sync"
+strategyDesc Async = "Async"
+strategyDesc AsyncPool = "AsyncPool"
 
 -- | Setups directories for benchmarking.
 --
 -- @since 0.1
 setup :: (HasCallStack) => FilePath -> IO FilePath
 setup base = do
+  putStrLn "*** Starting setup ***"
   rootDir <- (</> base) <$> getTemporaryDirectory
   createDirectoryIfMissing False rootDir
 
-  -- flat directories
-  createFlatDir (rootDir </> "flat-100") files100
-  createFlatDir (rootDir </> "flat-1_000") files1000
-  createFlatDir (rootDir </> "flat-10_000") files10000
+  createDenseDirs 11 (rootDir </> "dense-11") files100
 
-  -- spare directory hierarchy
-  createSpareDirs 6 (rootDir </> "sparse-6") files100
-  createSpareDirs 8 (rootDir </> "sparse-8") files100
-  createSpareDirs 10 (rootDir </> "sparse-10") files100
-
-  -- dense directory hierarchy
-  createDenseDirs 6 (rootDir </> "dense-6") files100
-  createDenseDirs 8 (rootDir </> "dense-8") files100
-  createDenseDirs 10 (rootDir </> "dense-10") files100
+  putStrLn "*** Setup finished ***"
   pure rootDir
   where
     files100 = show @Int <$> [1 .. 100]
-    files1000 = files100 <> (show @Int <$> [11 .. 1_000])
-    files10000 = files1000 <> (show @Int <$> [1_001 .. 10_000])
 
 -- | Deletes directories created by 'setup'.
 --
@@ -218,16 +171,6 @@ createDenseDirs 0 root paths = createFlatDir root paths
 createDenseDirs w root paths = do
   createFlatDir root paths
   traverse_ (\d -> createDenseDirs (w - 1) (root </> d) paths) subDirs
-  where
-    subDirs = ["d1", "d2"]
-
--- | Creates a directory hierarchy of depth 2^n, where the "leaf" directories
--- contain the parameter files.
-createSpareDirs :: Word8 -> FilePath -> [FilePath] -> IO ()
-createSpareDirs 0 root paths = createFlatDir root paths
-createSpareDirs w root paths = do
-  createFlatDir root []
-  traverse_ (\d -> createSpareDirs (w - 1) (root </> d) paths) subDirs
   where
     subDirs = ["d1", "d2"]
 

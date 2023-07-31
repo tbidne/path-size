@@ -1,5 +1,6 @@
 module Main (main) where
 
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Effects.Exception (Exception (displayException), bracket)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import PathSize.Data.Config (Strategy (Sync))
@@ -16,10 +17,11 @@ main = do
   where
     runBenchmarks testDir =
       defaultMain
-        [ Common.benchPathSizeRecursive suite [Sync] testDir,
-          Common.benchLargestN suite testDir,
-          Common.benchDisplayPathSize suite testDir
+        [ Common.benchPathSizeRecursive suite syncNE testDir,
+          Common.benchLargest10 suite syncNE testDir,
+          Common.benchDisplayPathSize suite syncNE testDir
         ]
+    syncNE = Sync :| []
 
 suite :: BenchmarkSuite Benchmarkable Benchmark
 suite =

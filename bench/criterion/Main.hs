@@ -3,6 +3,7 @@ module Main (main) where
 import Control.Concurrent (getNumCapabilities)
 import Criterion qualified as Bench
 import Criterion.Main (Benchmark, Benchmarkable, defaultMain)
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Effects.Exception (Exception (displayException), bracket)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import PathSize.Data.Config (Strategy (Async, AsyncPool, Sync))
@@ -19,10 +20,11 @@ main = do
   where
     runBenchmarks testDir =
       defaultMain
-        [ Common.benchPathSizeRecursive suite [Sync, Async, AsyncPool] testDir,
-          Common.benchLargestN suite testDir,
-          Common.benchDisplayPathSize suite testDir
+        [ Common.benchPathSizeRecursive suite syncNE testDir,
+          Common.benchLargest10 suite syncNE testDir,
+          Common.benchDisplayPathSize suite syncNE testDir
         ]
+    syncNE = Sync :| [Async, AsyncPool]
 
 suite :: BenchmarkSuite Benchmarkable Benchmark
 suite =
