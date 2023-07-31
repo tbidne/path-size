@@ -37,7 +37,8 @@ path-size: A utility for reporting the recursive size of a directory.
 
 Usage: path-size [-a|--all] [-d|--depth NAT] [-e|--exclude PATHS...]
                  [-f|--files-only] [-n|--num-paths (NAT | all)] [-r|--reverse]
-                 [-s|--strategy (async|sync|pool)] [-v|--version] PATH
+                 [--stable] [-s|--strategy (async|sync|pool)] [-v|--version]
+                 PATH
 
   path-size allows one to find large paths on the file-system. In particular,
   the command will recursively associate a given path and all of its subpaths to
@@ -66,6 +67,11 @@ Available options:
 
   -r,--reverse             If enabled, paths are sorted in reverse (ascending)
                            order.
+
+  --stable                 If enabled, an additional sorting filter is applied
+                           to sort by path name. This allows the sorted order to
+                           be deterministic (as paths are unique), at the cost
+                           of performance.
 
   -s,--strategy (async|sync|pool)
                            The search strategy is intended to improve
@@ -157,6 +163,18 @@ $ path-size -n all ./
 
 ```
 $ path-size -r ./
+```
+
+## Stable
+
+**Arg:** `--stable`
+
+**Description:** If enabled, an additional sorting filter is applied to sort by path name. This allows the sorted order to be deterministic (as paths are unique), at the cost of performance.
+
+**Examples:**
+
+```
+$ path-size --stable ./
 ```
 
 ## Strategy
