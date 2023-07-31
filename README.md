@@ -21,6 +21,7 @@
   - [Depth](#depth)
   - [Number of paths](#number-of-paths)
   - [Reverse](#reverse)
+  - [Stable](#stable)
   - [Strategy](#strategy)
 - [Building](#building)
   - [Cabal](#cabal)
