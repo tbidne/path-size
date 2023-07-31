@@ -34,10 +34,19 @@ import Effects.FileSystem.Path (Path)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
-import Numeric.Data.Positive (Positive (..))
+import Numeric.Data.Positive (Positive (MkPositive))
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to, view)
-import PathSize.Data.PathData (PathData (..), natify)
-import PathSize.Data.PathTree (PathTree (..), pathTreeToSeq)
+import PathSize.Data.PathData
+  ( PathData
+      ( MkPathData,
+        numDirectories,
+        numFiles,
+        path,
+        size
+      ),
+    natify,
+  )
+import PathSize.Data.PathTree (PathTree, pathTreeToSeq)
 
 -- | A flattened and sorted representation of 'PathTree'. Contains at least
 -- one element.

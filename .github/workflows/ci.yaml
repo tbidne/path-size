@@ -51,8 +51,8 @@ jobs:
             --csv bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             --svg bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
             --baseline bench/tasty/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            --fail-if-slower 100
-            --fail-if-faster 100'
+            --fail-if-slower 50
+            --fail-if-faster 50'
 
       - name: Benchmark Criterion
         if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' && matrix.os == 'ubuntu-latest' }}

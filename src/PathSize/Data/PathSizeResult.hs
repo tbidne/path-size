@@ -14,8 +14,8 @@ where
 import Control.DeepSeq (NFData)
 import Data.Sequence.NonEmpty (NESeq)
 import GHC.Generics (Generic)
-import Optics.Core
-import PathSize.Exception (PathE (..))
+import Optics.Core (Prism', prism)
+import PathSize.Exception (PathE)
 
 -- | Result of running a path-size computation with multiple notions of
 -- failure.

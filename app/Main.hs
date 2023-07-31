@@ -9,7 +9,11 @@ import Data.Foldable (for_)
 import Data.Text qualified as T
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import Optics.Core ((^.))
-import PathSize (PathSizeResult (..), display, findLargestPaths)
+import PathSize
+  ( PathSizeResult (PathSizeFailure, PathSizePartial, PathSizeSuccess),
+    display,
+    findLargestPaths,
+  )
 
 -- | Executable entry-point.
 --

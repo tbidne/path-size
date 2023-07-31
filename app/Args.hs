@@ -41,8 +41,17 @@ import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse))
 import PathSize.Data.Config
-  ( Config (..),
-    Strategy (..),
+  ( Config
+      ( MkConfig,
+        exclude,
+        filesOnly,
+        maxDepth,
+        numPaths,
+        searchAll,
+        stableSort,
+        strategy
+      ),
+    Strategy (Async, AsyncPool, Sync),
   )
 import PathSize.Data.Config.TH (defaultNumPaths)
 import Paths_path_size qualified as Paths

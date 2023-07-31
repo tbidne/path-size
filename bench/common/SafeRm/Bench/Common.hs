@@ -32,6 +32,20 @@ import Effects.FileSystem.PathWriter
   )
 import Numeric.Data.Positive (mkPositive)
 import PathSize
+  ( Config
+      ( MkConfig,
+        exclude,
+        filesOnly,
+        maxDepth,
+        numPaths,
+        searchAll,
+        stableSort,
+        strategy
+      ),
+    PathSizeResult (PathSizeFailure, PathSizePartial, PathSizeSuccess),
+    Strategy (Async, AsyncPool, Sync),
+  )
+import PathSize qualified
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 
 {- HLINT ignore module "Redundant bracket" -}
@@ -111,7 +125,7 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
     findLargest strategy desc =
       bench desc'
         . nfIO
-        . findLargestPaths baseConfig {strategy}
+        . PathSize.findLargestPaths baseConfig {strategy}
       where
         desc' =
           desc <> case strategy of
@@ -135,7 +149,7 @@ benchLargestN MkBenchmarkSuite {..} testDir =
     runLargestN desc n =
       bench desc
         . nfIO
-        . findLargestPaths (baseConfig {numPaths = n})
+        . PathSize.findLargestPaths (baseConfig {numPaths = n})
 
 -- | Benchmark for displaying results of a path search.
 --
@@ -152,8 +166,8 @@ benchDisplayPathSize MkBenchmarkSuite {..} testDir =
     runDisplayPathSize desc =
       bench desc
         . nfIO
-        . (findLargestPaths baseConfig >=> displayResult)
-    displayResult (PathSizeSuccess sbd) = pure $ display False sbd
+        . (PathSize.findLargestPaths baseConfig >=> displayResult)
+    displayResult (PathSizeSuccess sbd) = pure $ PathSize.display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwCS err
     displayResult (PathSizeFailure (err :<|| _)) = throwCS err
 

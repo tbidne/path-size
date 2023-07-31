@@ -19,18 +19,30 @@ import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Thread (MonadThread)
 import Effects.Exception (MonadCatch, MonadThrow, throwM)
 import Effects.FileSystem.Path ((</>))
-import Effects.FileSystem.PathReader (MonadPathReader (..))
+import Effects.FileSystem.PathReader (MonadPathReader)
+import Effects.FileSystem.PathReader qualified as RDir
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosix)
 import GHC.Num.Natural (Natural)
 import PathSize
   ( PathData (MkPathData),
     PathE (MkPathE),
-    PathSizeResult (..),
-    Strategy (..),
+    PathSizeResult (PathSizeFailure, PathSizePartial, PathSizeSuccess),
+    Strategy (Sync),
   )
 import PathSize qualified
-import PathSize.Data.Config (Config (..))
+import PathSize.Data.Config
+  ( Config
+      ( MkConfig,
+        exclude,
+        filesOnly,
+        maxDepth,
+        numPaths,
+        searchAll,
+        stableSort,
+        strategy
+      ),
+  )
 import PathSize.Data.SubPathData.Internal
   ( SubPathData (UnsafeSubPathData),
     unSubPathData,
@@ -249,16 +261,16 @@ instance Exception E where
   displayException (MkE s) = s
 
 instance MonadPathReader FuncIO where
-  listDirectory = liftIO . listDirectory
+  listDirectory = liftIO . RDir.listDirectory
 
   doesDirectoryExist p
     | p == "test" </> "functional" </> "data" </> "partial" </> "d1" </> "is-dir-err" = throwM $ MkE "dir err"
-  doesDirectoryExist p = liftIO $ doesDirectoryExist p
+  doesDirectoryExist p = liftIO $ RDir.doesDirectoryExist p
 
   pathIsSymbolicLink p
     | p == "test" </> "functional" </> "data" </> "failure" = throwM $ MkE "does not exist"
     | p == "test" </> "functional" </> "data" </> "partial" </> "d1" </> "is-sym-link-err" = throwM $ MkE "sym link err"
-  pathIsSymbolicLink p = liftIO $ pathIsSymbolicLink p
+  pathIsSymbolicLink p = liftIO $ RDir.pathIsSymbolicLink p
 
   getFileSize p
     | p == "test" </> "functional" </> "data" </> "partial" = pure 4096

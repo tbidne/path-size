@@ -40,17 +40,44 @@ import Effects.Exception
     tryAny,
   )
 import Effects.FileSystem.Path (Path, (</>))
-import Effects.FileSystem.PathReader (MonadPathReader (..))
+import Effects.FileSystem.PathReader (MonadPathReader)
+import Effects.FileSystem.PathReader qualified as RDir
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosix)
 import Effects.System.PosixCompat qualified as Posix
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
-import PathSize.Data.Config (Config (..), Strategy (..))
+import PathSize.Data.Config
+  ( Config
+      ( MkConfig,
+        exclude,
+        filesOnly,
+        maxDepth,
+        numPaths,
+        searchAll,
+        stableSort,
+        strategy
+      ),
+    Strategy (Async, AsyncPool, Sync),
+  )
 import PathSize.Data.Config.TH (defaultNumPathsSize)
-import PathSize.Data.PathData (PathData (..))
-import PathSize.Data.PathSizeResult (PathSizeResult (..))
-import PathSize.Data.PathTree (PathTree (..))
+import PathSize.Data.PathData
+  ( PathData
+      ( MkPathData,
+        numDirectories,
+        numFiles,
+        path,
+        size
+      ),
+  )
+import PathSize.Data.PathSizeResult
+  ( PathSizeResult
+      ( PathSizeFailure,
+        PathSizePartial,
+        PathSizeSuccess
+      ),
+  )
+import PathSize.Data.PathTree (PathTree ((:^|)))
 import PathSize.Data.PathTree qualified as PathTree
 import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Data.SubPathData.Internal (SubPathData (UnsafeSubPathData))
@@ -251,12 +278,12 @@ pathDataRecursive traverseFn cfg = tryGo 0
       --   a. Do not chase.
       --   b. Ensure we call the right size function (getFileSize
       --      errors on dangling symlinks since it operates on the target).
-      tryAny (pathIsSymbolicLink path) >>= \case
+      tryAny (RDir.pathIsSymbolicLink path) >>= \case
         Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
         -- 1. Symlinks
         Right True -> tryCalcSymLink path
         Right False ->
-          tryAny (doesDirectoryExist path) >>= \case
+          tryAny (RDir.doesDirectoryExist path) >>= \case
             Left isDirEx -> pure $ mkPathE path isDirEx
             -- 2. Directories
             Right True -> tryCalcDir path depth
@@ -265,7 +292,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
 
     tryCalcDir :: (HasCallStack) => Path -> Natural -> m (PathSizeResult PathTree)
     tryCalcDir path depth =
-      tryAny (filter (not . shouldSkip) <$> listDirectory path) >>= \case
+      tryAny (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx
         Right subPaths -> do
           resultSubTrees <-
@@ -273,7 +300,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
               (tryGo (depth + 1) . (path </>))
               (Seq.fromList subPaths)
           -- Add the cost of the directory itself.
-          tryAny (getFileSize path) <&> \case
+          tryAny (RDir.getFileSize path) <&> \case
             Left sizeErr -> mkPathE path sizeErr
             Right dirSize -> do
               let (errs, subTrees) = flattenSeq resultSubTrees
@@ -337,7 +364,7 @@ tryCalcFile ::
   ) =>
   Path ->
   m (PathSizeResult PathTree)
-tryCalcFile = tryCalcSize getFileSize
+tryCalcFile = tryCalcSize RDir.getFileSize
 
 tryCalcSize ::
   (HasCallStack, MonadCatch m) =>
