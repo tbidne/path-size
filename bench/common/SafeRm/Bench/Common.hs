@@ -17,6 +17,7 @@ module SafeRm.Bench.Common
 where
 
 import Control.DeepSeq (NFData)
+import Control.Exception (displayException)
 import Control.Monad ((>=>))
 import Data.Foldable (for_, traverse_)
 import Data.HashSet qualified as HSet
@@ -26,12 +27,12 @@ import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
 import Effects.Exception (HasCallStack, addCS, throwCS)
 import Effects.FileSystem.FileWriter (ByteString, writeBinaryFile)
-import Effects.FileSystem.Path (Path, (</>))
 import Effects.FileSystem.PathReader (getTemporaryDirectory)
 import Effects.FileSystem.PathWriter
   ( createDirectoryIfMissing,
     removePathForcibly,
   )
+import Effects.FileSystem.Utils (OsPath, toOsPath, (</>))
 import Numeric.Data.Positive (mkPositive)
 import PathSize
   ( Config
@@ -72,14 +73,14 @@ benchPathSizeRecursive ::
   -- | Benchmark strategies.
   NonEmpty Strategy ->
   -- | Test directory home.
-  FilePath ->
+  OsPath ->
   b
 benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
   bgroup
     "findLargestPaths"
-    [findLargest s (testDir </> "dense-11") | s <- NE.toList strategies]
+    [findLargest s (testDir </> unsafeToOsPath "dense-11") | s <- NE.toList strategies]
   where
-    findLargest :: Strategy -> Path -> b
+    findLargest :: Strategy -> OsPath -> b
     findLargest strategy =
       bench desc'
         . nfIO
@@ -87,18 +88,28 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
       where
         desc' = strategyDesc strategy
 
+unsafeToOsPath :: String -> OsPath
+unsafeToOsPath s = case toOsPath s of
+  Left ex -> error $ displayException ex
+  Right p -> p
+
 -- | Benchmark for finding the largest N files in a dense directory tree.
 --
 -- @since 0.1
 benchLargest10 ::
   BenchmarkSuite f b ->
   NonEmpty Strategy ->
-  FilePath ->
+  OsPath ->
   b
 benchLargest10 MkBenchmarkSuite {..} strategies testDir =
   bgroup
     "takeLargest10"
-    [runLargestN s (mkPositive 10) (testDir </> "dense-11") | s <- NE.toList strategies]
+    [ runLargestN
+        s
+        (mkPositive 10)
+        (testDir </> unsafeToOsPath "dense-11")
+      | s <- NE.toList strategies
+    ]
   where
     runLargestN strategy numPaths =
       bench desc'
@@ -113,12 +124,12 @@ benchLargest10 MkBenchmarkSuite {..} strategies testDir =
 benchDisplayPathSize ::
   BenchmarkSuite f b ->
   NonEmpty Strategy ->
-  FilePath ->
+  OsPath ->
   b
 benchDisplayPathSize MkBenchmarkSuite {..} strategies testDir =
   bgroup
     "displayPathSize"
-    [runDisplayPathSize s (testDir </> "dense-11") | s <- NE.toList strategies]
+    [runDisplayPathSize s (testDir </> unsafeToOsPath "dense-11") | s <- NE.toList strategies]
   where
     runDisplayPathSize strategy =
       bench desc'
@@ -139,55 +150,55 @@ strategyDesc AsyncPool = "AsyncPool"
 -- | Setups directories for benchmarking.
 --
 -- @since 0.1
-setup :: (HasCallStack) => FilePath -> IO FilePath
+setup :: (HasCallStack) => FilePath -> IO OsPath
 setup base = do
   putStrLn "*** Starting setup ***"
-  rootDir <- (</> base) <$> getTemporaryDirectory
+  rootDir <- (</> (unsafeToOsPath base)) <$> getTemporaryDirectory
   createDirectoryIfMissing False rootDir
 
-  createDenseDirs 11 (rootDir </> "dense-11") files100
+  createDenseDirs 11 (rootDir </> unsafeToOsPath "dense-11") files100
 
   putStrLn "*** Setup finished ***"
   pure rootDir
   where
-    files100 = show @Int <$> [1 .. 100]
+    files100 = unsafeToOsPath . show @Int <$> [1 .. 100]
 
 -- | Deletes directories created by 'setup'.
 --
 -- @since 0.1
-teardown :: (HasCallStack) => FilePath -> IO ()
+teardown :: (HasCallStack) => OsPath -> IO ()
 teardown rootDir =
   addCS $
     guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     cleanup = removePathForcibly rootDir
     doNothing =
-      putStrLn $ "*** Not cleaning up tmp dir: " <> rootDir
+      putStrLn $ "*** Not cleaning up tmp dir: " <> show rootDir
 
 -- | Creates a directory hierarchy of depth 2^n, where each directory contains
 -- the parameter files.
-createDenseDirs :: Word8 -> FilePath -> [FilePath] -> IO ()
+createDenseDirs :: Word8 -> OsPath -> [OsPath] -> IO ()
 createDenseDirs 0 root paths = createFlatDir root paths
 createDenseDirs w root paths = do
   createFlatDir root paths
   traverse_ (\d -> createDenseDirs (w - 1) (root </> d) paths) subDirs
   where
-    subDirs = ["d1", "d2"]
+    subDirs = [unsafeToOsPath "d1", unsafeToOsPath "d2"]
 
 -- | Creates a single directory with the parameter files.
-createFlatDir :: (HasCallStack) => FilePath -> [FilePath] -> IO ()
+createFlatDir :: (HasCallStack) => OsPath -> [OsPath] -> IO ()
 createFlatDir root paths = do
   createDirectoryIfMissing False root
   createFiles ((root </>) <$> paths)
 
 -- | Creates empty files at the specified paths.
-createFiles :: (HasCallStack) => [FilePath] -> IO ()
+createFiles :: (HasCallStack) => [OsPath] -> IO ()
 createFiles = createFileContents . fmap (,"")
 
 -- | Creates files at the specified paths.
 createFileContents ::
   (HasCallStack) =>
-  [(FilePath, ByteString)] ->
+  [(OsPath, ByteString)] ->
   IO ()
 createFileContents paths = for_ paths $
   \(p, c) -> addCS $ writeBinaryFile p c

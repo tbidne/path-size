@@ -1,0 +1,4 @@
+- ignore:
+    within:
+      - "PathSize.Data.Config.TH"
+    name: "Unused LANGUAGE pragma"

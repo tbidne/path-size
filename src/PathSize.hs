@@ -39,11 +39,11 @@ import Effects.Exception
     displayNoCS,
     tryAny,
   )
-import Effects.FileSystem.Path (Path, (</>))
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
+import Effects.FileSystem.Utils (OsPath, fromOsPath, fromOsPathThrowM, (</>))
 import Effects.IORef (MonadIORef)
-import Effects.System.PosixCompat (MonadPosix)
+import Effects.System.PosixCompat (MonadPosixCompat)
 import Effects.System.PosixCompat qualified as Posix
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
@@ -88,6 +88,7 @@ import System.OsPath qualified as FP
 import System.FilePath qualified as FP
 #endif
 
+import Control.Monad ((<=<))
 import System.PosixCompat.Files qualified as PFiles
 
 {- HLINT ignore "Redundant bracket" -}
@@ -101,13 +102,13 @@ findLargestPaths ::
     MonadCatch m,
     MonadIORef m,
     MonadPathReader m,
-    MonadPosix m,
+    MonadPosixCompat m,
     MonadThread m
   ) =>
   -- | Configuration.
   Config ->
-  -- | Path to search.
-  Path ->
+  -- | OsPath to search.
+  OsPath ->
   -- | The results.
   m (PathSizeResult SubPathData)
 findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
@@ -143,10 +144,10 @@ pathSizeRecursive ::
     MonadCatch m,
     MonadIORef m,
     MonadPathReader m,
-    MonadPosix m,
+    MonadPosixCompat m,
     MonadThread m
   ) =>
-  Path ->
+  OsPath ->
   m (PathSizeResult Natural)
 pathSizeRecursive = pathSizeRecursiveConfig cfg
   where
@@ -170,11 +171,11 @@ pathSizeRecursiveConfig ::
     MonadCatch m,
     MonadIORef m,
     MonadPathReader m,
-    MonadPosix m,
+    MonadPosixCompat m,
     MonadThread m
   ) =>
   Config ->
-  Path ->
+  OsPath ->
   m (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
   where
@@ -185,9 +186,9 @@ pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
 --
 -- @since 0.1
 pathDataRecursiveSync ::
-  (HasCallStack, MonadCatch m, MonadPathReader m, MonadPosix m) =>
+  (HasCallStack, MonadCatch m, MonadPathReader m, MonadPosixCompat m) =>
   Config ->
-  Path ->
+  OsPath ->
   m (PathSizeResult PathTree)
 pathDataRecursiveSync = pathDataRecursive traverse
 
@@ -200,10 +201,10 @@ pathDataRecursiveAsync ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosix m
+    MonadPosixCompat m
   ) =>
   Config ->
-  Path ->
+  OsPath ->
   m (PathSizeResult PathTree)
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 
@@ -216,11 +217,11 @@ pathDataRecursiveAsyncPool ::
     MonadCatch m,
     MonadIORef m,
     MonadPathReader m,
-    MonadPosix m,
+    MonadPosixCompat m,
     MonadThread m
   ) =>
   Config ->
-  Path ->
+  OsPath ->
   m (PathSizeResult PathTree)
 pathDataRecursiveAsyncPool = pathDataRecursive Async.pooledMapConcurrently
 
@@ -233,14 +234,14 @@ pathDataRecursive ::
   ( HasCallStack,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosix m
+    MonadPosixCompat m
   ) =>
   -- | Traversal function.
   (forall a b t. (HasCallStack, Traversable t) => (a -> m b) -> t a -> m (t b)) ->
   -- | The config.
   Config ->
   -- | Start path.
-  Path ->
+  OsPath ->
   m (PathSizeResult PathTree)
 pathDataRecursive traverseFn cfg = tryGo 0
   where
@@ -271,7 +272,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
     tryGo ::
       (HasCallStack) =>
       Natural ->
-      Path ->
+      OsPath ->
       m (PathSizeResult PathTree)
     tryGo !depth !path =
       -- NOTE: Need to handle symlinks separately so that we:
@@ -290,7 +291,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
             -- 3. Files
             Right False -> tryCalcFile path
 
-    tryCalcDir :: (HasCallStack) => Path -> Natural -> m (PathSizeResult PathTree)
+    tryCalcDir :: (HasCallStack) => OsPath -> Natural -> m (PathSizeResult PathTree)
     tryCalcDir path depth =
       tryAny (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx
@@ -338,22 +339,25 @@ addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
 
 -- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
 -- exception for the current directory ./.
---
--- TODO: Update for OsPath compat
-hidden :: Path -> Bool
-hidden ('.' : '/' : _) = False
-hidden ('.' : _) = True
-hidden _ = False
+hidden :: OsPath -> Bool
+hidden p = case fromOsPath p of
+  Left _ -> False
+  Right s -> case s of
+    '.' : '/' : _ -> False
+    '.' : _ -> True
+    _ -> False
 
 tryCalcSymLink ::
   ( HasCallStack,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosix m
+    MonadPosixCompat m
   ) =>
-  Path ->
+  OsPath ->
   m (PathSizeResult PathTree)
-tryCalcSymLink = tryCalcSize (fmap fromIntegral . getSymLinkSize)
+tryCalcSymLink =
+  tryCalcSize
+    (fmap fromIntegral . getSymLinkSize <=< fromOsPathThrowM)
   where
     getSymLinkSize = fmap PFiles.fileSize . Posix.getSymbolicLinkStatus
 
@@ -362,14 +366,14 @@ tryCalcFile ::
     MonadCatch m,
     MonadPathReader m
   ) =>
-  Path ->
+  OsPath ->
   m (PathSizeResult PathTree)
 tryCalcFile = tryCalcSize RDir.getFileSize
 
 tryCalcSize ::
   (HasCallStack, MonadCatch m) =>
-  ((HasCallStack) => Path -> m Integer) ->
-  Path ->
+  ((HasCallStack) => OsPath -> m Integer) ->
+  OsPath ->
   m (PathSizeResult PathTree)
 tryCalcSize sizeFn path = do
   tryAny (sizeFn path) <&> \case
@@ -393,5 +397,5 @@ flattenSeq = foldl' f (Empty, Empty)
       PathSizeFailure (e :<|| es) -> (e :<| es <> errs, trees)
 {-# INLINEABLE flattenSeq #-}
 
-mkPathE :: (Exception e) => Path -> e -> PathSizeResult a
+mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
 mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayNoCS

@@ -9,6 +9,7 @@ where
 import Control.Exception (Exception (displayException))
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (Foldable (toList))
+import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as HSet
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
@@ -18,11 +19,11 @@ import Data.Text qualified as T
 import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Thread (MonadThread)
 import Effects.Exception (MonadCatch, MonadThrow, throwM)
-import Effects.FileSystem.Path ((</>))
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
+import Effects.FileSystem.Utils (combineFilePaths, fromOsPathThrowM, toOsPath, toOsPathThrowM)
 import Effects.IORef (MonadIORef)
-import Effects.System.PosixCompat (MonadPosix)
+import Effects.System.PosixCompat (MonadPosixCompat)
 import GHC.Num.Natural (Natural)
 import PathSize
   ( PathData (MkPathData),
@@ -67,24 +68,46 @@ tests =
   where
     expectedD0 =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "success") 24601 4 6
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6
         ]
     expectedD1 =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "success") 24601 4 6,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2") 16400 2 4,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1") 4105 2 1
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1
         ]
     expectedD2 =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "success") 24601 4 6,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2") 16400 2 4,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2") 8206 1 2,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1") 4105 2 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1") 4098 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f2") 5 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f1") 4 1 0
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 8206 1 2,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 4098 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0
         ]
+
+mkPathData :: String -> a -> a -> a -> PathData a
+mkPathData p size numFiles numDirectories =
+  case toOsPath p of
+    Left ex -> error $ "Error creating OsPath in func test: " ++ displayException ex
+    Right path ->
+      MkPathData
+        { path,
+          size,
+          numFiles,
+          numDirectories
+        }
+
+mkPathE :: String -> String -> PathE
+mkPathE p err =
+  case toOsPath p of
+    Left ex -> error $ "Error creating PathE in func test: " ++ displayException ex
+    Right path -> MkPathE path err
+
+-- For brevity
+cfp :: FilePath -> FilePath -> FilePath
+cfp = combineFilePaths
 
 calculatesSizes :: TestTree
 calculatesSizes = testCase "Calculates sizes correctly" $ do
@@ -93,16 +116,16 @@ calculatesSizes = testCase "Calculates sizes correctly" $ do
   where
     expected =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "success") 24601 4 6,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2") 16400 2 4,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2") 8206 1 2,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1") 4110 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1") 4105 2 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1") 4098 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1" </> "f1") 14 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f2") 5 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f1") 4 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1" </> "f1") 2 1 0
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 8206 1 2,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 4110 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 4098 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0
         ]
 
 calculatesAll :: TestTree
@@ -113,32 +136,33 @@ calculatesAll = testCase "Includes hidden files" $ do
     cfg = baseConfig {searchAll = True}
     expected =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "success") 28726 6 7,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2") 16400 2 4,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2") 8206 1 2,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> ".hidden") 4113 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1") 4110 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1") 4105 2 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1") 4098 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> ".hidden" </> "f1") 17 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1" </> "f1") 14 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> ".h1") 12 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f2") 5 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f1") 4 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1" </> "f1") 2 1 0
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 28726 6 7,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 8206 1 2,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden") 4113 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 4110 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 4098 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden" `cfp` "f1") 17 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".h1") 12 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0
         ]
 
 calculatesExcluded :: TestTree
 calculatesExcluded = testCase "Excludes paths" $ do
+  excluded <- traverse toOsPathThrowM ["d2", "f2"]
+  let cfg = baseConfig {exclude = HSet.fromList excluded}
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
   where
-    cfg = baseConfig {exclude = HSet.fromList ["d2", "f2"]}
     expected =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "success") 8196 1 2,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1") 4100 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f1") 4 1 0
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 8196 1 2,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4100 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0
         ]
 
 calculatesFilesOnly :: TestTree
@@ -149,16 +173,16 @@ calculatesFilesOnly = testCase "Includes only files" $ do
     cfg = baseConfig {filesOnly = True}
     expected =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1" </> "f1") 14 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f2") 5 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f1") 4 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1" </> "f1") 2 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1") 0 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2") 0 1 2,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1") 0 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d2") 0 2 4,
-          MkPathData ("test" </> "functional" </> "data" </> "success" </> "d1") 0 2 1,
-          MkPathData ("test" </> "functional" </> "data" </> "success") 0 4 6
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 0 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 0 1 2,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 0 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 0 2 4,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 0 2 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 0 4 6
         ]
 
 calculatesDepthN :: Natural -> SubPathData -> TestTree
@@ -192,16 +216,16 @@ displaysReverse = testCase "Displays reverse correctly" $ do
 
 displayResults :: [Text]
 displayResults =
-  [ T.pack ("test" </> "functional" </> "data" </> "success") <> ": 24.60K, Directories: 6, Files: 4",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d2") <> ": 16.40K, Directories: 4, Files: 2",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2") <> ": 8.21K, Directories: 2, Files: 1",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1") <> ": 4.11K, Directories: 1, Files: 1",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d1") <> ": 4.10K, Directories: 1, Files: 2",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1") <> ": 4.10K, Directories: 1, Files: 1",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1" </> "f1") <> ": 14.00B, Directories: 0, Files: 1",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f2") <> ": 5.00B, Directories: 0, Files: 1",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d1" </> "f1") <> ": 4.00B, Directories: 0, Files: 1",
-    T.pack ("test" </> "functional" </> "data" </> "success" </> "d2" </> "d1" </> "f1") <> ": 2.00B, Directories: 0, Files: 1"
+  [ T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success") <> ": 24.60K, Directories: 6, Files: 4",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") <> ": 16.40K, Directories: 4, Files: 2",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") <> ": 8.21K, Directories: 2, Files: 1",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") <> ": 4.11K, Directories: 1, Files: 1",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") <> ": 4.10K, Directories: 1, Files: 2",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") <> ": 4.10K, Directories: 1, Files: 1",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") <> ": 14.00B, Directories: 0, Files: 1",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") <> ": 5.00B, Directories: 0, Files: 1",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") <> ": 4.00B, Directories: 0, Files: 1",
+    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") <> ": 2.00B, Directories: 0, Files: 1"
   ]
 
 exceptionTests :: TestTree
@@ -220,15 +244,15 @@ testsPartial = testCase "Partial success" $ do
   where
     expectedResults =
       toSubPathData
-        [ MkPathData ("test" </> "functional" </> "data" </> "partial") 8199 2 2,
-          MkPathData ("test" </> "functional" </> "data" </> "partial" </> "d1") 4099 1 1,
-          MkPathData ("test" </> "functional" </> "data" </> "partial" </> "f1") 4 1 0,
-          MkPathData ("test" </> "functional" </> "data" </> "partial" </> "d1" </> "good") 3 1 0
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial") 8199 2 2,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1") 4099 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "f1") 4 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "good") 3 1 0
         ]
     expectedErrs =
-      [ MkPathE ("test" </> "functional" </> "data" </> "partial" </> "d1" </> "is-dir-err") "dir err",
-        MkPathE ("test" </> "functional" </> "data" </> "partial" </> "d1" </> "is-sym-link-err") "sym link err",
-        MkPathE ("test" </> "functional" </> "data" </> "partial" </> "size-err") "bad size"
+      [ mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-dir-err") "dir err",
+        mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-sym-link-err") "sym link err",
+        mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "size-err") "bad size"
       ]
 
 testsFailure :: TestTree
@@ -237,7 +261,7 @@ testsFailure = testCase "Failure" $ do
   assertErrs expectedErrs errs
   where
     expectedErrs =
-      [MkPathE ("test" </> "functional" </> "data" </> "failure") "does not exist"]
+      [mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "failure") "does not exist"]
 
 newtype FuncIO a = MkFuncIO (IO a)
   deriving
@@ -248,7 +272,7 @@ newtype FuncIO a = MkFuncIO (IO a)
       MonadCatch,
       MonadIO,
       MonadIORef,
-      MonadPosix,
+      MonadPosixCompat,
       MonadThread,
       MonadThrow
     )
@@ -263,41 +287,55 @@ instance Exception E where
 instance MonadPathReader FuncIO where
   listDirectory = liftIO . RDir.listDirectory
 
-  doesDirectoryExist p
-    | p == "test" </> "functional" </> "data" </> "partial" </> "d1" </> "is-dir-err" = throwM $ MkE "dir err"
-  doesDirectoryExist p = liftIO $ RDir.doesDirectoryExist p
+  doesDirectoryExist p = do
+    path <- fromOsPathThrowM p
+    if path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-dir-err"
+      then throwM $ MkE "dir err"
+      else liftIO $ RDir.doesDirectoryExist p
 
-  pathIsSymbolicLink p
-    | p == "test" </> "functional" </> "data" </> "failure" = throwM $ MkE "does not exist"
-    | p == "test" </> "functional" </> "data" </> "partial" </> "d1" </> "is-sym-link-err" = throwM $ MkE "sym link err"
-  pathIsSymbolicLink p = liftIO $ RDir.pathIsSymbolicLink p
+  pathIsSymbolicLink p = do
+    path <- fromOsPathThrowM p
+    if
+      | path == "test" `cfp` "functional" `cfp` "data" `cfp` "failure" -> throwM $ MkE "does not exist"
+      | path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-sym-link-err" -> throwM $ MkE "sym link err"
+      | otherwise -> liftIO $ RDir.pathIsSymbolicLink p
 
-  getFileSize p
-    | p == "test" </> "functional" </> "data" </> "partial" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "partial" </> "d1" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "partial" </> "d1" </> "good" = pure 3
-    | p == "test" </> "functional" </> "data" </> "partial" </> "f1" = pure 4
-    | p == "test" </> "functional" </> "data" </> "partial" </> "size-err" = throwM $ MkE "bad size"
-    | p == "test" </> "functional" </> "data" </> "success" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "success" </> ".hidden" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "success" </> ".hidden" </> "f1" = pure 17
-    | p == "test" </> "functional" </> "data" </> "success" </> ".h1" = pure 12
-    | p == "test" </> "functional" </> "data" </> "success" </> "d1" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "success" </> "d1" </> "f1" = pure 4
-    | p == "test" </> "functional" </> "data" </> "success" </> "d1" </> "f2" = pure 5
-    | p == "test" </> "functional" </> "data" </> "success" </> "d2" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "success" </> "d2" </> "d1" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "success" </> "d2" </> "d1" </> "f1" = pure 2
-    | p == "test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1" = pure 4096
-    | p == "test" </> "functional" </> "data" </> "success" </> "d2" </> "d2" </> "d1" </> "f1" = pure 14
-  getFileSize p = error p
+  getFileSize p = do
+    path <- fromOsPathThrowM p
+    case Map.lookup path mp of
+      Just m -> m
+      Nothing -> error "p"
+    where
+      mp =
+        Map.fromList
+          [ ("test" `cfp` "functional" `cfp` "data" `cfp` "partial", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "good", pure 3),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "f1", pure 4),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "size-err", throwM (MkE "bad size")),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden" `cfp` "f1", pure 17),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".h1", pure 12),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1", pure 4),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2", pure 5),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1", pure 2),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1", pure 4096),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1", pure 14),
+            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial", pure 4096)
+          ]
 
 runFuncIO :: FuncIO a -> IO a
 runFuncIO (MkFuncIO io) = io
 
 runTest :: Config -> FilePath -> IO (PathSizeResult SubPathData)
-runTest cfg testDir = runFuncIO (PathSize.findLargestPaths cfg testDir)
+runTest cfg testDir = do
+  testDir' <- toOsPathThrowM testDir
+  runFuncIO (PathSize.findLargestPaths cfg testDir')
 
 assertSubPathData :: SubPathData -> SubPathData -> IO ()
 assertSubPathData expected results =
@@ -321,13 +359,13 @@ toSubPathData [] = error "Functional.PathSize.toSubPathData: empty list!"
 toSubPathData (x : xs) = UnsafeSubPathData $ x :<|| Seq.fromList xs
 
 successTestDir :: FilePath
-successTestDir = "test" </> "functional" </> "data" </> "success"
+successTestDir = "test" `cfp` "functional" `cfp` "data" `cfp` "success"
 
 partialTestDir :: FilePath
-partialTestDir = "test" </> "functional" </> "data" </> "partial"
+partialTestDir = "test" `cfp` "functional" `cfp` "data" `cfp` "partial"
 
 failureTestDir :: FilePath
-failureTestDir = "test" </> "functional" </> "data" </> "failure"
+failureTestDir = "test" `cfp` "functional" `cfp` "data" `cfp` "failure"
 
 baseConfig :: Config
 baseConfig =

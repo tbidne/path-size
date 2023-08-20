@@ -3,10 +3,6 @@
   inputs = {
 
     # nix
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nix-hs-utils.url = "github:tbidne/nix-hs-utils";
@@ -14,21 +10,21 @@
     #haskell
     algebra-simple = {
       url = "github:tbidne/algebra-simple";
-      inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
     };
     bounds = {
       url = "github:tbidne/bounds";
-      inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
     };
     monad-effects = {
       url = "github:tbidne/monad-effects/";
-      inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
@@ -37,26 +33,25 @@
     };
     si-bytes = {
       url = "github:tbidne/si-bytes";
-      inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
     };
     smart-math = {
       url = "github:tbidne/smart-math";
-      inputs.flake-compat.follows = "flake-compat";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
     };
   };
   outputs =
-    inputs@{ flake-compat
-    , flake-parts
+    inputs@{ flake-parts
     , nix-hs-utils
     , nixpkgs
     , self
@@ -65,19 +60,13 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       perSystem = { pkgs, ... }:
         let
-          ghc-version = "ghc944";
+          ghc-version = "ghc962";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
-              apply-refact = prev.apply-refact_0_11_0_0;
-              effects-fs = hlib.overrideCabal
-                (nix-hs-utils.mkRelLib inputs.monad-effects final "effects-fs")
-                (old: {
-                  configureFlags = (old.configureFlags or [ ]) ++ [ "-f -os_path" ];
-                });
-              # https://github.com/ddssff/listlike/issues/23
-              ListLike = hlib.dontCheck prev.ListLike;
-              ormolu = prev.ormolu_0_5_3_0;
-              unix-compat = prev.unix-compat_0_6;
+              hedgehog = prev.hedgehog_1_3;
+              hlint = prev.hlint_3_6_1;
+              nonempty-containers = hlib.dontCheck prev.nonempty-containers;
+              ormolu = prev.ormolu_0_7_1_0;
             } // nix-hs-utils.mkLibs inputs final [
               "algebra-simple"
               "bounds"
@@ -87,7 +76,9 @@
             ] // nix-hs-utils.mkRelLibs inputs.monad-effects final [
               "effects-async"
               "effects-exceptions"
+              "effects-fs"
               "effects-ioref"
+              "effects-optparse"
               "effects-stm"
               "effects-thread"
               "effects-unix-compat"

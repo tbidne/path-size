@@ -15,6 +15,7 @@ where
 
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
+import Effects.FileSystem.Utils (OsPath)
 import GHC.Natural (Natural)
 import Numeric.Data.Positive (Positive)
 import Optics.Core
@@ -102,7 +103,7 @@ data Config = MkConfig
     -- | Paths to skip.
     --
     -- @since 0.1
-    exclude :: !(HashSet FilePath),
+    exclude :: !(HashSet OsPath),
     -- | Whether to limit our search to just files.
     --
     -- @since 0.1
@@ -192,7 +193,7 @@ instance
 
 -- | @since 0.1
 instance
-  (k ~ A_Lens, a ~ HashSet FilePath, b ~ HashSet FilePath) =>
+  (k ~ A_Lens, a ~ HashSet OsPath, b ~ HashSet OsPath) =>
   LabelOptic "exclude" k Config Config a b
   where
   labelOptic =

@@ -15,6 +15,7 @@ module PathSize.Data.SubPathData.Internal
 where
 
 import Control.DeepSeq (NFData)
+import Control.Exception (Exception (displayException))
 import Data.Bytes
   ( Bytes (MkBytes),
     FloatingFormatter (MkFloatingFormatter),
@@ -30,7 +31,7 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
-import Effects.FileSystem.Path (Path)
+import Effects.FileSystem.Utils (OsPath, fromOsPath)
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
@@ -139,7 +140,7 @@ pathDataSizeOrd :: PathData a -> Down a
 pathDataSizeOrd = Down . view #size
 {-# INLINEABLE pathDataSizeOrd #-}
 
-pathDataSizePathOrd :: PathData a -> Down (a, Path)
+pathDataSizePathOrd :: PathData a -> Down (a, OsPath)
 pathDataSizePathOrd = Down . \(MkPathData p s _ _) -> (s, p)
 {-# INLINEABLE pathDataSizePathOrd #-}
 
@@ -174,7 +175,7 @@ display revSort = showList' . subPathDataToSeq
     showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
-        [ TLB.fromString path,
+        [ TLB.fromString $ decodeOsPath path,
           ": ",
           TLB.fromLazyText $ TL.fromStrict $ formatSize size,
           ", Directories: ",
@@ -184,6 +185,12 @@ display revSort = showList' . subPathDataToSeq
           "\n",
           acc
         ]
+
+    decodeOsPath :: OsPath -> String
+    decodeOsPath p = case fromOsPath p of
+      Right path -> path
+      Left ex -> "Error display path: " <> displayException ex
+
     formatSize :: Natural -> Text
     formatSize =
       Bytes.formatSized

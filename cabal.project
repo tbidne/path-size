@@ -2,14 +2,10 @@ packages: .
 
 package path-size
   ghc-options:
-    -Weverything -Werror
-    -Wno-all-missed-specialisations
-    -Wno-implicit-prelude
-    -Wno-missing-local-signatures
-    -Wno-missing-kind-signatures
-    -Wno-missing-safe-haskell-mode
-    -Wno-monomorphism-restriction
-    -Wno-unsafe
+    -Wall -Werror -Wcompat -Widentities
+    -Wincomplete-record-updates -Wincomplete-uni-patterns
+    -Wmissing-home-modules -Wmissing-export-lists -Wpartial-fields
+    -Wredundant-constraints -Wunused-packages -Wmissing-deriving-strategies
     -Wno-unticked-promoted-constructors
 
   benchmark-options:
@@ -18,29 +14,26 @@ package path-size
 optimization: 2
 test-show-details: direct
 
--- Remove once flag is removed with GHC 9.6
-package effects-fs
-  flags: -os_path
-
 source-repository-package
     type: git
     location: https://github.com/tbidne/algebra-simple.git
-    tag: 63f86638145baa32fdd21d87344701b9c8c93c23
+    tag: 0e7b02ba5b420d7421c8f652aec5d219d0402395
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/bounds.git
-    tag: aeb822deb5593a0e774105f94e65527e63931cfa
+    tag: 1d7451a64d38d3998ce647075663fb81fdf34ad4
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: a3963463e34783befd4a639bd31e77328e8d6f07
+    tag: c5a3126e224f209d45a1fde854ffae86abce4de4
     subdir:
       effects-async
       effects-exceptions
       effects-fs
       effects-ioref
+      effects-optparse
       effects-stm
       effects-thread
       effects-unix-compat
@@ -48,9 +41,9 @@ source-repository-package
 source-repository-package
     type: git
     location: https://github.com/tbidne/si-bytes.git
-    tag: 7bf9c2d125fe80a42996715063204f87f57dc8fa
+    tag: 8f0de55f84f5324477072939181df5fc520a0e0a
 
 source-repository-package
     type: git
     location: https://github.com/tbidne/smart-math.git
-    tag: 3deb61a9862dc56b56fb6d7ce3fef93faa24d278
+    tag: 068d8a72b86df3f64fa0bc2df85d1add9f0d47a8

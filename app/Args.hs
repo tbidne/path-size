@@ -17,6 +17,8 @@ import Data.HashSet qualified as HSet
 import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Version (Version (versionBranch))
+import Effects.FileSystem.Utils (OsPath)
+import Effects.Optparse (osPath)
 import GHC.Natural (Natural)
 import Numeric.Data.Positive (Positive, mkPositive)
 import Optics.Core ((^.))
@@ -63,13 +65,13 @@ import Text.Read qualified as TR
 data Args = MkArgs
   { searchAll :: !Bool,
     maxDepth :: !(Maybe Natural),
-    exclude :: !(HashSet FilePath),
+    exclude :: !(HashSet OsPath),
     filesOnly :: !Bool,
     numPaths :: !(Maybe (Positive Int)),
     reverseSort :: !Bool,
     stableSort :: !Bool,
     strategy :: !Strategy,
-    path :: FilePath
+    path :: !OsPath
   }
   deriving stock
     ( -- | @since 0.1
@@ -134,8 +136,8 @@ argsParser =
     <*> reverseSortParser
     <*> stableSortParser
     <*> strategyParser
-    <**> OA.helper
-    <**> version
+      <**> OA.helper
+      <**> version
     <*> pathParser
 
 version :: Parser (a -> a)
@@ -168,12 +170,12 @@ numPathsParser =
           "The option 'all' returns everything."
         ]
 
-excludeParser :: Parser (HashSet FilePath)
+excludeParser :: Parser (HashSet OsPath)
 excludeParser =
   HSet.fromList
     <$> OA.many
       ( OA.option
-          OA.str
+          osPath
           $ mconcat
             [ OA.long "exclude",
               OA.short 'e',
@@ -297,8 +299,8 @@ strategyParser =
           "potentially the fastest, though experimentation is recommended."
         ]
 
-pathParser :: Parser FilePath
-pathParser = OA.argument OA.str (OA.metavar "PATH")
+pathParser :: Parser OsPath
+pathParser = OA.argument osPath (OA.metavar "PATH")
 
 mkHelp :: String -> OA.Mod f a
 mkHelp =

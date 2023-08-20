@@ -8,7 +8,7 @@ where
 
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception (displayException))
-import Effects.FileSystem.Path (Path)
+import Effects.FileSystem.Utils (OsPath)
 import GHC.Generics (Generic)
 
 -- | Exception for a path. The second param is the reason i.e. the exceptions'
@@ -16,7 +16,7 @@ import GHC.Generics (Generic)
 -- as an exception is so we can have an NFData instance for benchmarking.
 --
 -- @since 0.1
-data PathE = MkPathE !Path !String
+data PathE = MkPathE !OsPath !String
   deriving stock
     ( -- | @since 0.1
       Eq,

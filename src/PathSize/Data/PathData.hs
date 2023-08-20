@@ -10,7 +10,7 @@ module PathSize.Data.PathData
 where
 
 import Control.DeepSeq (NFData)
-import Effects.FileSystem.Path (Path)
+import Effects.FileSystem.Utils (OsPath)
 import GHC.Generics (Generic)
 import Numeric.Natural (Natural)
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)
@@ -25,7 +25,7 @@ data PathData a = MkPathData
   { -- | Path.
     --
     -- @since 0.1
-    path :: !Path,
+    path :: !OsPath,
     -- | Size in bytes.
     --
     -- @since 0.1
@@ -54,7 +54,7 @@ data PathData a = MkPathData
 
 -- | @since 0.1
 instance
-  (k ~ A_Lens, a ~ Path, b ~ Path) =>
+  (k ~ A_Lens, a ~ OsPath, b ~ OsPath) =>
   LabelOptic "path" k (PathData s) (PathData s) a b
   where
   labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
