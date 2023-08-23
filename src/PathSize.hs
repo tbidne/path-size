@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 -- | @since 0.1
 module PathSize
   ( -- * Types
@@ -22,6 +20,7 @@ module PathSize
   )
 where
 
+import Control.Monad ((<=<))
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
@@ -82,13 +81,7 @@ import PathSize.Data.PathTree qualified as PathTree
 import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Data.SubPathData.Internal (SubPathData (UnsafeSubPathData))
 import PathSize.Exception (PathE (MkPathE))
-#if MIN_VERSION_filepath(1,4,100)
 import System.OsPath qualified as FP
-#else
-import System.FilePath qualified as FP
-#endif
-
-import Control.Monad ((<=<))
 import System.PosixCompat.Files qualified as PFiles
 
 {- HLINT ignore "Redundant bracket" -}
