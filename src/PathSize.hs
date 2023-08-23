@@ -28,6 +28,7 @@ import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
+import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread)
@@ -264,7 +265,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
     -- tryGo on all subpaths.
     tryGo ::
       (HasCallStack) =>
-      Natural ->
+      Word16 ->
       OsPath ->
       m (PathSizeResult PathTree)
     tryGo !depth !path =
@@ -284,7 +285,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
             -- 3. Files
             Right False -> tryCalcFile path
 
-    tryCalcDir :: (HasCallStack) => OsPath -> Natural -> m (PathSizeResult PathTree)
+    tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult PathTree)
     tryCalcDir path depth =
       tryAny (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx

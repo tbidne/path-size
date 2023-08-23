@@ -17,9 +17,9 @@ import Data.HashSet qualified as HSet
 import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Version (Version (versionBranch))
+import Data.Word (Word16)
 import Effects.FileSystem.Utils (OsPath)
 import Effects.Optparse (osPath)
-import GHC.Natural (Natural)
 import Numeric.Data.Positive (Positive, mkPositive)
 import Optics.Core ((^.))
 import Optics.TH (makeFieldLabelsNoPrefix)
@@ -64,7 +64,7 @@ import Text.Read qualified as TR
 -- @since 0.1
 data Args = MkArgs
   { searchAll :: !Bool,
-    maxDepth :: !(Maybe Natural),
+    maxDepth :: !(Maybe Word16),
     exclude :: !(HashSet OsPath),
     filesOnly :: !Bool,
     numPaths :: !(Maybe (Positive Int)),
@@ -217,7 +217,7 @@ filesOnlyParser =
           "are given size 0."
         ]
 
-depthParser :: Parser (Maybe Natural)
+depthParser :: Parser (Maybe Word16)
 depthParser =
   OA.optional
     $ OA.option

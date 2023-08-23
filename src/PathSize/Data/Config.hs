@@ -15,8 +15,8 @@ where
 
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
+import Data.Word (Word16)
 import Effects.FileSystem.Utils (OsPath)
-import GHC.Natural (Natural)
 import Numeric.Data.Positive (Positive)
 import Optics.Core
   ( A_Lens,
@@ -99,7 +99,7 @@ data Config = MkConfig
     -- traverse the file system to get accurate data; this argument merely
     -- affects what is reported i.e. any depths > d are implicitly included
     -- in parent directories, but not directly.
-    maxDepth :: !(Maybe Natural),
+    maxDepth :: !(Maybe Word16),
     -- | Paths to skip.
     --
     -- @since 0.1
@@ -162,7 +162,7 @@ instance
 
 -- | @since 0.1
 instance
-  (k ~ A_Lens, a ~ Maybe Natural, b ~ Maybe Natural) =>
+  (k ~ A_Lens, a ~ Maybe Word16, b ~ Maybe Word16) =>
   LabelOptic "maxDepth" k Config Config a b
   where
   labelOptic =

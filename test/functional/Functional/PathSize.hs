@@ -16,6 +16,7 @@ import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Thread (MonadThread)
 import Effects.Exception (MonadCatch, MonadThrow, throwM)
@@ -185,7 +186,7 @@ calculatesFilesOnly = testCase "Includes only files" $ do
           mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 0 4 6
         ]
 
-calculatesDepthN :: Natural -> SubPathData -> TestTree
+calculatesDepthN :: Word16 -> SubPathData -> TestTree
 calculatesDepthN n expected = testCase ("Calculates depth = " <> show n) $ do
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
