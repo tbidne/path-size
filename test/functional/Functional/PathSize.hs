@@ -22,7 +22,7 @@ import Effects.Concurrent.Thread (MonadThread)
 import Effects.Exception (MonadCatch, MonadThrow, throwM)
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.Utils (combineFilePaths, fromOsPathThrowM, toOsPath, toOsPathThrowM)
+import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosixCompat)
 import GHC.Num.Natural (Natural)
@@ -90,7 +90,7 @@ tests =
 
 mkPathData :: String -> a -> a -> a -> PathData a
 mkPathData p size numFiles numDirectories =
-  case toOsPath p of
+  case FsUtils.encodeFpToOs p of
     Left ex -> error $ "Error creating OsPath in func test: " ++ displayException ex
     Right path ->
       MkPathData
@@ -102,13 +102,9 @@ mkPathData p size numFiles numDirectories =
 
 mkPathE :: String -> String -> PathE
 mkPathE p err =
-  case toOsPath p of
+  case FsUtils.encodeFpToOs p of
     Left ex -> error $ "Error creating PathE in func test: " ++ displayException ex
     Right path -> MkPathE path err
-
--- For brevity
-cfp :: FilePath -> FilePath -> FilePath
-cfp = combineFilePaths
 
 calculatesSizes :: TestTree
 calculatesSizes = testCase "Calculates sizes correctly" $ do
@@ -154,7 +150,7 @@ calculatesAll = testCase "Includes hidden files" $ do
 
 calculatesExcluded :: TestTree
 calculatesExcluded = testCase "Excludes paths" $ do
-  excluded <- traverse toOsPathThrowM ["d2", "f2"]
+  excluded <- traverse FsUtils.encodeFpToOsThrowM ["d2", "f2"]
   let cfg = baseConfig {exclude = HSet.fromList excluded}
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
@@ -289,20 +285,20 @@ instance MonadPathReader FuncIO where
   listDirectory = liftIO . RDir.listDirectory
 
   doesDirectoryExist p = do
-    path <- fromOsPathThrowM p
+    path <- FsUtils.decodeOsToFpThrowM p
     if path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-dir-err"
       then throwM $ MkE "dir err"
       else liftIO $ RDir.doesDirectoryExist p
 
   pathIsSymbolicLink p = do
-    path <- fromOsPathThrowM p
+    path <- FsUtils.decodeOsToFpThrowM p
     if
       | path == "test" `cfp` "functional" `cfp` "data" `cfp` "failure" -> throwM $ MkE "does not exist"
       | path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-sym-link-err" -> throwM $ MkE "sym link err"
       | otherwise -> liftIO $ RDir.pathIsSymbolicLink p
 
   getFileSize p = do
-    path <- fromOsPathThrowM p
+    path <- FsUtils.decodeOsToFpThrowM p
     case Map.lookup path mp of
       Just m -> m
       Nothing -> error "p"
@@ -335,7 +331,7 @@ runFuncIO (MkFuncIO io) = io
 
 runTest :: Config -> FilePath -> IO (PathSizeResult SubPathData)
 runTest cfg testDir = do
-  testDir' <- toOsPathThrowM testDir
+  testDir' <- FsUtils.encodeFpToOsThrowM testDir
   runFuncIO (PathSize.findLargestPaths cfg testDir')
 
 assertSubPathData :: SubPathData -> SubPathData -> IO ()
@@ -380,3 +376,7 @@ baseConfig =
       stableSort = True,
       strategy = Sync
     }
+
+-- For brevity
+cfp :: FilePath -> FilePath -> FilePath
+cfp = FsUtils.combineFilePaths

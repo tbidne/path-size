@@ -21,7 +21,7 @@
       inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
     };
     monad-effects = {
-      url = "github:tbidne/monad-effects/";
+      url = "github:tbidne/monad-effects";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
@@ -63,6 +63,7 @@
           ghc-version = "ghc962";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides = final: prev: {
+              file-io = final.callHackage "file-io" "0.1.0.1" { };
               hedgehog = prev.hedgehog_1_3;
               hlint = prev.hlint_3_6_1;
               nonempty-containers = hlib.dontCheck prev.nonempty-containers;

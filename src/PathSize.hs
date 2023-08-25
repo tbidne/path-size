@@ -20,7 +20,6 @@ module PathSize
   )
 where
 
-import Control.Monad ((<=<))
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
@@ -41,7 +40,8 @@ import Effects.Exception
   )
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.Utils (OsPath, fromOsPath, fromOsPathThrowM, (</>))
+import Effects.FileSystem.Utils (OsPath, (</>))
+import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosixCompat)
 import Effects.System.PosixCompat qualified as Posix
@@ -334,12 +334,10 @@ addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
 -- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
 -- exception for the current directory ./.
 hidden :: OsPath -> Bool
-hidden p = case fromOsPath p of
-  Left _ -> False
-  Right s -> case s of
-    '.' : '/' : _ -> False
-    '.' : _ -> True
-    _ -> False
+hidden p = case FsUtils.osToFp p of
+  '.' : '/' : _ -> False
+  '.' : _ -> True
+  _ -> False
 
 tryCalcSymLink ::
   ( HasCallStack,
@@ -351,9 +349,12 @@ tryCalcSymLink ::
   m (PathSizeResult PathTree)
 tryCalcSymLink =
   tryCalcSize
-    (fmap fromIntegral . getSymLinkSize <=< fromOsPathThrowM)
+    (fmap fromIntegral . getSymLinkSize)
   where
-    getSymLinkSize = fmap PFiles.fileSize . Posix.getSymbolicLinkStatus
+    getSymLinkSize =
+      fmap PFiles.fileSize
+        . Posix.getSymbolicLinkStatus
+        . FsUtils.osToFp
 
 tryCalcFile ::
   ( HasCallStack,

@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | Provides common benchmarking functionality.
@@ -17,7 +18,6 @@ module SafeRm.Bench.Common
 where
 
 import Control.DeepSeq (NFData)
-import Control.Exception (displayException)
 import Control.Monad ((>=>))
 import Data.Foldable (for_, traverse_)
 import Data.HashSet qualified as HSet
@@ -32,7 +32,8 @@ import Effects.FileSystem.PathWriter
   ( createDirectoryIfMissing,
     removePathForcibly,
   )
-import Effects.FileSystem.Utils (OsPath, toOsPath, (</>))
+import Effects.FileSystem.Utils (OsPath, osp, (</>), (</>!))
+import Effects.FileSystem.Utils qualified as FsUtils
 import Numeric.Data.Positive (mkPositive)
 import PathSize
   ( Config
@@ -78,7 +79,7 @@ benchPathSizeRecursive ::
 benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
   bgroup
     "findLargestPaths"
-    [findLargest s (testDir </> unsafeToOsPath "dense-11") | s <- NE.toList strategies]
+    [findLargest s (testDir </> [osp|dense-11|]) | s <- NE.toList strategies]
   where
     findLargest :: Strategy -> OsPath -> b
     findLargest strategy =
@@ -87,11 +88,6 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
         . PathSize.findLargestPaths baseConfig {strategy}
       where
         desc' = strategyDesc strategy
-
-unsafeToOsPath :: String -> OsPath
-unsafeToOsPath s = case toOsPath s of
-  Left ex -> error $ displayException ex
-  Right p -> p
 
 -- | Benchmark for finding the largest N files in a dense directory tree.
 --
@@ -107,7 +103,7 @@ benchLargest10 MkBenchmarkSuite {..} strategies testDir =
     [ runLargestN
         s
         (mkPositive 10)
-        (testDir </> unsafeToOsPath "dense-11")
+        (testDir </> [osp|dense-11|])
       | s <- NE.toList strategies
     ]
   where
@@ -129,7 +125,7 @@ benchDisplayPathSize ::
 benchDisplayPathSize MkBenchmarkSuite {..} strategies testDir =
   bgroup
     "displayPathSize"
-    [runDisplayPathSize s (testDir </> unsafeToOsPath "dense-11") | s <- NE.toList strategies]
+    [runDisplayPathSize s (testDir </> [osp|dense-11|]) | s <- NE.toList strategies]
   where
     runDisplayPathSize strategy =
       bench desc'
@@ -153,15 +149,15 @@ strategyDesc AsyncPool = "AsyncPool"
 setup :: (HasCallStack) => FilePath -> IO OsPath
 setup base = do
   putStrLn "*** Starting setup ***"
-  rootDir <- (</> (unsafeToOsPath base)) <$> getTemporaryDirectory
+  rootDir <- (</>! base) <$> getTemporaryDirectory
   createDirectoryIfMissing False rootDir
 
-  createDenseDirs 11 (rootDir </> unsafeToOsPath "dense-11") files100
+  createDenseDirs 11 (rootDir </> [osp|dense-11|]) files100
 
   putStrLn "*** Setup finished ***"
   pure rootDir
   where
-    files100 = unsafeToOsPath . show @Int <$> [1 .. 100]
+    files100 = FsUtils.unsafeEncodeFpToOs . show @Int <$> [1 .. 100]
 
 -- | Deletes directories created by 'setup'.
 --
@@ -183,7 +179,7 @@ createDenseDirs w root paths = do
   createFlatDir root paths
   traverse_ (\d -> createDenseDirs (w - 1) (root </> d) paths) subDirs
   where
-    subDirs = [unsafeToOsPath "d1", unsafeToOsPath "d2"]
+    subDirs = [[osp|d1|], [osp|d2|]]
 
 -- | Creates a single directory with the parameter files.
 createFlatDir :: (HasCallStack) => OsPath -> [OsPath] -> IO ()
