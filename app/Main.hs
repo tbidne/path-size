@@ -26,7 +26,7 @@ main = do
   let config = argsToConfig args
       printResults = putStrLn . T.unpack . display (args ^. #reverseSort)
 
-  findLargestPaths config (args ^. #path) >>= \case
+  findLargestPaths @_ @Integer config (args ^. #path) >>= \case
     PathSizeSuccess sbd -> printResults sbd
     PathSizePartial errs sbd -> do
       for_ errs (putStrLn . displayException)

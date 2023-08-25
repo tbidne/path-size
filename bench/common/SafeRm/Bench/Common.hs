@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | Provides common benchmarking functionality.
@@ -21,6 +22,7 @@ import Control.Exception (displayException)
 import Control.Monad ((>=>))
 import Data.Foldable (for_, traverse_)
 import Data.HashSet qualified as HSet
+import Data.Kind (Type)
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
@@ -67,7 +69,8 @@ data BenchmarkSuite f b = MkBenchmarkSuite
 --
 -- @since 0.1
 benchPathSizeRecursive ::
-  forall f b.
+  forall f b (a :: Type).
+  (NFData a, Num a, Ord a, Show a) =>
   -- | Benchmark functions to use.
   BenchmarkSuite f b ->
   -- | Benchmark strategies.
@@ -84,7 +87,7 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
     findLargest strategy =
       bench desc'
         . nfIO
-        . PathSize.findLargestPaths baseConfig {strategy}
+        . PathSize.findLargestPaths @_ @a baseConfig {strategy}
       where
         desc' = strategyDesc strategy
 
@@ -97,6 +100,8 @@ unsafeToOsPath s = case toOsPath s of
 --
 -- @since 0.1
 benchLargest10 ::
+  forall f b (a :: Type).
+  (NFData a, Num a, Ord a, Show a) =>
   BenchmarkSuite f b ->
   NonEmpty Strategy ->
   OsPath ->
@@ -114,7 +119,7 @@ benchLargest10 MkBenchmarkSuite {..} strategies testDir =
     runLargestN strategy numPaths =
       bench desc'
         . nfIO
-        . PathSize.findLargestPaths (baseConfig {numPaths, strategy})
+        . PathSize.findLargestPaths @_ @a (baseConfig {numPaths, strategy})
       where
         desc' = strategyDesc strategy
 
@@ -122,6 +127,8 @@ benchLargest10 MkBenchmarkSuite {..} strategies testDir =
 --
 -- @since 0.1
 benchDisplayPathSize ::
+  forall f b (a :: Type).
+  (Integral a, Show a) =>
   BenchmarkSuite f b ->
   NonEmpty Strategy ->
   OsPath ->
@@ -134,7 +141,7 @@ benchDisplayPathSize MkBenchmarkSuite {..} strategies testDir =
     runDisplayPathSize strategy =
       bench desc'
         . nfIO
-        . (PathSize.findLargestPaths (baseConfig {strategy}) >=> displayResult)
+        . (PathSize.findLargestPaths @_ @a (baseConfig {strategy}) >=> displayResult)
       where
         desc' = strategyDesc strategy
 

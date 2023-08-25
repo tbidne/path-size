@@ -20,10 +20,25 @@ main = do
   where
     runBenchmarks testDir =
       defaultMain
-        [ Common.benchPathSizeRecursive suite syncNE testDir,
-          Common.benchLargest10 suite syncNE testDir,
-          Common.benchDisplayPathSize suite syncNE testDir
+        [ integerBench testDir,
+          intBench testDir
         ]
+
+    integerBench testDir =
+      Bench.bgroup
+        "integer"
+        [ Common.benchPathSizeRecursive @_ @_ @Integer suite syncNE testDir,
+          Common.benchLargest10 @_ @_ @Integer suite syncNE testDir,
+          Common.benchDisplayPathSize @_ @_ @Integer suite syncNE testDir
+        ]
+    intBench testDir =
+      Bench.bgroup
+        "int"
+        [ Common.benchPathSizeRecursive @_ @_ @Int suite syncNE testDir,
+          Common.benchLargest10 @_ @_ @Int suite syncNE testDir,
+          Common.benchDisplayPathSize @_ @_ @Int suite syncNE testDir
+        ]
+
     syncNE = Sync :| [Async, AsyncPool]
 
 suite :: BenchmarkSuite Benchmarkable Benchmark

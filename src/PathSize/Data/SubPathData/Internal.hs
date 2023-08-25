@@ -33,7 +33,6 @@ import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import Effects.FileSystem.Utils (OsPath, fromOsPath)
 import GHC.Generics (Generic)
-import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (Positive (MkPositive))
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to, view)
@@ -45,7 +44,6 @@ import PathSize.Data.PathData
         path,
         size
       ),
-    natify,
   )
 import PathSize.Data.PathTree (PathTree, pathTreeToSeq)
 
@@ -53,7 +51,7 @@ import PathSize.Data.PathTree (PathTree, pathTreeToSeq)
 -- one element.
 --
 -- @since 0.1
-newtype SubPathData = UnsafeSubPathData (NESeq (PathData Natural))
+newtype SubPathData a = UnsafeSubPathData (NESeq (PathData a))
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -81,10 +79,10 @@ instance
   LabelOptic
     "unSubPathData"
     A_Getter
-    SubPathData
-    SubPathData
-    (NESeq (PathData Natural))
-    (NESeq (PathData Natural))
+    (SubPathData a)
+    (SubPathData a)
+    (NESeq (PathData a))
+    (NESeq (PathData a))
   where
   labelOptic = to (\(UnsafeSubPathData sbd) -> sbd)
 
@@ -92,7 +90,7 @@ instance
 -- underlying 'NESeq', so it is not constant.
 --
 -- @since 0.1
-pattern MkSubPathData :: NESeq (PathData Natural) -> SubPathData
+pattern MkSubPathData :: (Ord a) => NESeq (PathData a) -> SubPathData a
 pattern MkSubPathData sbd <- UnsafeSubPathData sbd
   where
     MkSubPathData sbd = UnsafeSubPathData (sortNESeq False sbd)
@@ -100,21 +98,21 @@ pattern MkSubPathData sbd <- UnsafeSubPathData sbd
 {-# COMPLETE MkSubPathData #-}
 
 -- | @since 0.1
-unSubPathData :: SubPathData -> NESeq (PathData Natural)
+unSubPathData :: SubPathData a -> NESeq (PathData a)
 unSubPathData (UnsafeSubPathData sbd) = sbd
 
 -- | Creates a 'SubPathData' from a 'PathTree'.
 --
 -- @since 0.1
-mkSubPathData :: Bool -> PathTree -> SubPathData
-mkSubPathData stableSort tree = UnsafeSubPathData (natify first :<|| fmap natify rest)
+mkSubPathData :: (Ord a) => Bool -> PathTree a -> SubPathData a
+mkSubPathData stableSort tree = UnsafeSubPathData (first :<|| rest)
   where
     first :<|| rest = sortSeq stableSort (pathTreeToSeq tree)
 
 -- | Returns a 'Seq' representation of 'SubPathData'.
 --
 -- @since 0.1
-subPathDataToSeq :: SubPathData -> Seq (PathData Natural)
+subPathDataToSeq :: SubPathData a -> Seq (PathData a)
 subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 
 -- NOTE: Annoyingly, this sort seems to cost quite a bit of performance over
@@ -149,9 +147,14 @@ pathDataSizePathOrd = Down . \(MkPathData p s _ _) -> (s, p)
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: (HasCallStack) => Bool -> Positive Int -> PathTree -> SubPathData
+takeLargestN ::
+  (HasCallStack, Ord a, Show a) =>
+  Bool ->
+  Positive Int ->
+  PathTree a ->
+  SubPathData a
 takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
-  (first :<| rest) -> UnsafeSubPathData (natify first :<|| fmap natify rest)
+  (first :<| rest) -> UnsafeSubPathData (first :<|| rest)
   -- NOTE: Should only happen if n == 0
   _ ->
     error $
@@ -168,10 +171,10 @@ takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
 -- | Displays the data.
 --
 -- @since 0.1
-display :: Bool -> SubPathData -> Text
+display :: forall a. (Integral a, Show a) => Bool -> SubPathData a -> Text
 display revSort = showList' . subPathDataToSeq
   where
-    showList' :: Seq (PathData Natural) -> Text
+    showList' :: Seq (PathData a) -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
@@ -191,7 +194,7 @@ display revSort = showList' . subPathDataToSeq
       Right path -> path
       Left ex -> "Error display path: " <> displayException ex
 
-    formatSize :: Natural -> Text
+    formatSize :: a -> Text
     formatSize =
       Bytes.formatSized
         (MkFloatingFormatter (Just 2))

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - int-types
 
   pull_request:
     branches:
@@ -48,22 +49,24 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         id: bench-tasty
         run: |
+          #cabal bench bench-tasty --benchmark-options '
+          #  --csv bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+          #  --svg bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
+          # --baseline bench/tasty/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
+          #  --fail-if-slower 30
+          #  --fail-if-faster 30'
+
           cabal bench bench-tasty --benchmark-options '
             --csv bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            --svg bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
-            --baseline bench/tasty/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            --fail-if-slower 30
-            --fail-if-faster 30'
+            --svg bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg'
 
       - name: Benchmark Criterion
-        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' && matrix.os == 'ubuntu-latest' }}
         run: |
           cabal bench bench-criterion --benchmark-options '
             --csv bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             --output bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.html'
 
       - uses: actions/upload-artifact@v3
-        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
         with:
           name: build-artifacts
           path: |

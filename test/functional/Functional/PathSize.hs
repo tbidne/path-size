@@ -25,7 +25,6 @@ import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils (combineFilePaths, fromOsPathThrowM, toOsPath, toOsPathThrowM)
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosixCompat)
-import GHC.Num.Natural (Natural)
 import PathSize
   ( PathData (MkPathData),
     PathE (MkPathE),
@@ -186,7 +185,7 @@ calculatesFilesOnly = testCase "Includes only files" $ do
           mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 0 4 6
         ]
 
-calculatesDepthN :: Word16 -> SubPathData -> TestTree
+calculatesDepthN :: Word16 -> SubPathData Int -> TestTree
 calculatesDepthN n expected = testCase ("Calculates depth = " <> show n) $ do
   PathSizeSuccess result <- runTest cfg successTestDir
   assertSubPathData expected result
@@ -333,12 +332,12 @@ instance MonadPathReader FuncIO where
 runFuncIO :: FuncIO a -> IO a
 runFuncIO (MkFuncIO io) = io
 
-runTest :: Config -> FilePath -> IO (PathSizeResult SubPathData)
+runTest :: Config -> FilePath -> IO (PathSizeResult (SubPathData Int))
 runTest cfg testDir = do
   testDir' <- toOsPathThrowM testDir
   runFuncIO (PathSize.findLargestPaths cfg testDir')
 
-assertSubPathData :: SubPathData -> SubPathData -> IO ()
+assertSubPathData :: SubPathData Int -> SubPathData Int -> IO ()
 assertSubPathData expected results =
   assertLists (sbdToList expected) (sbdToList results)
   where
@@ -355,7 +354,7 @@ assertLists [] ys@(_ : _) = assertFailure $ "Empty expected but non-empty result
 assertLists xs@(_ : _) [] = assertFailure $ "Empty results but non-empty expected: " <> show xs
 assertLists (x : xs) (y : ys) = (x @=? y) *> assertLists xs ys
 
-toSubPathData :: [PathData Natural] -> SubPathData
+toSubPathData :: [PathData Int] -> SubPathData Int
 toSubPathData [] = error "Functional.PathSize.toSubPathData: empty list!"
 toSubPathData (x : xs) = UnsafeSubPathData $ x :<|| Seq.fromList xs
 

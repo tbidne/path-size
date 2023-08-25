@@ -18,7 +18,7 @@ import PathSize.Data.PathData (PathData)
 -- associated to its size. This structure is essentially a rose tree.
 --
 -- @since 0.1
-data PathTree = !(PathData Integer) :^| !(Seq PathTree)
+data PathTree a = !(PathData a) :^| !(Seq (PathTree a))
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -35,12 +35,12 @@ data PathTree = !(PathData Integer) :^| !(Seq PathTree)
 -- | Flattens a 'PathTree' into a 'Seq'.
 --
 -- @since 0.1
-pathTreeToSeq :: PathTree -> NESeq (PathData Integer)
+pathTreeToSeq :: PathTree a -> NESeq (PathData a)
 pathTreeToSeq (x :^| subTrees) = x :<|| (subTrees >>= pathTreeToSeq')
   where
-    pathTreeToSeq' :: PathTree -> Seq (PathData Integer)
+    pathTreeToSeq' :: PathTree a -> Seq (PathData a)
     pathTreeToSeq' (x' :^| subTrees') = x' :<| (subTrees' >>= pathTreeToSeq')
 
 -- | @since 0.1
-singleton :: PathData Integer -> PathTree
+singleton :: PathData a -> PathTree a
 singleton pd = pd :^| Empty

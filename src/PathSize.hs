@@ -45,7 +45,6 @@ import Effects.FileSystem.Utils (OsPath, fromOsPath, fromOsPathThrowM, (</>))
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosixCompat)
 import Effects.System.PosixCompat qualified as Posix
-import GHC.Natural (Natural)
 import Optics.Core ((^.))
 import PathSize.Data.Config
   ( Config
@@ -91,20 +90,24 @@ import System.PosixCompat.Files qualified as PFiles
 --
 -- @since 0.1
 findLargestPaths ::
+  forall m a.
   ( HasCallStack,
     MonadAsync m,
     MonadCatch m,
     MonadIORef m,
     MonadPathReader m,
     MonadPosixCompat m,
-    MonadThread m
+    MonadThread m,
+    Num a,
+    Ord a,
+    Show a
   ) =>
   -- | Configuration.
   Config ->
   -- | OsPath to search.
   OsPath ->
   -- | The results.
-  m (PathSizeResult SubPathData)
+  m (PathSizeResult (SubPathData a))
 findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
   where
     f = case cfg ^. #strategy of
@@ -133,16 +136,20 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
 --
 -- @since 0.1
 pathSizeRecursive ::
+  forall m a.
   ( HasCallStack,
     MonadAsync m,
     MonadCatch m,
     MonadIORef m,
     MonadPathReader m,
     MonadPosixCompat m,
-    MonadThread m
+    MonadThread m,
+    Num a,
+    Ord a,
+    Show a
   ) =>
   OsPath ->
-  m (PathSizeResult Natural)
+  m (PathSizeResult a)
 pathSizeRecursive = pathSizeRecursiveConfig cfg
   where
     cfg =
@@ -166,11 +173,14 @@ pathSizeRecursiveConfig ::
     MonadIORef m,
     MonadPathReader m,
     MonadPosixCompat m,
-    MonadThread m
+    MonadThread m,
+    Num a,
+    Ord a,
+    Show a
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult Natural)
+  m (PathSizeResult a)
 pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
   where
     getSize (UnsafeSubPathData (pd :<|| _)) = pd ^. #size
@@ -180,10 +190,15 @@ pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
 --
 -- @since 0.1
 pathDataRecursiveSync ::
-  (HasCallStack, MonadCatch m, MonadPathReader m, MonadPosixCompat m) =>
+  ( HasCallStack,
+    MonadCatch m,
+    MonadPathReader m,
+    MonadPosixCompat m,
+    Num a
+  ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  m (PathSizeResult (PathTree a))
 pathDataRecursiveSync = pathDataRecursive traverse
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
@@ -195,11 +210,12 @@ pathDataRecursiveAsync ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixCompat m,
+    Num a
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  m (PathSizeResult (PathTree a))
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
@@ -212,11 +228,12 @@ pathDataRecursiveAsyncPool ::
     MonadIORef m,
     MonadPathReader m,
     MonadPosixCompat m,
-    MonadThread m
+    MonadThread m,
+    Num a
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  m (PathSizeResult (PathTree a))
 pathDataRecursiveAsyncPool = pathDataRecursive Async.pooledMapConcurrently
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -224,19 +241,20 @@ pathDataRecursiveAsyncPool = pathDataRecursive Async.pooledMapConcurrently
 --
 -- @since 0.1
 pathDataRecursive ::
-  forall m.
+  forall m a.
   ( HasCallStack,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixCompat m,
+    Num a
   ) =>
   -- | Traversal function.
-  (forall a b t. (HasCallStack, Traversable t) => (a -> m b) -> t a -> m (t b)) ->
+  (forall b c t. (HasCallStack, Traversable t) => (b -> m c) -> t b -> m (t c)) ->
   -- | The config.
   Config ->
   -- | Start path.
   OsPath ->
-  m (PathSizeResult PathTree)
+  m (PathSizeResult (PathTree a))
 pathDataRecursive traverseFn cfg = tryGo 0
   where
     excluded = cfg ^. #exclude
@@ -267,7 +285,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       (HasCallStack) =>
       Word16 ->
       OsPath ->
-      m (PathSizeResult PathTree)
+      m (PathSizeResult (PathTree a))
     tryGo !depth !path =
       -- NOTE: Need to handle symlinks separately so that we:
       --   a. Do not chase.
@@ -285,7 +303,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
             -- 3. Files
             Right False -> tryCalcFile path
 
-    tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult PathTree)
+    tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult (PathTree a))
     tryCalcDir path depth =
       tryAny (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx
@@ -295,7 +313,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
               (tryGo (depth + 1) . (path </>))
               (Seq.fromList subPaths)
           -- Add the cost of the directory itself.
-          tryAny (RDir.getFileSize path) <&> \case
+          tryAny (fromIntegral <$> RDir.getFileSize path) <&> \case
             Left sizeErr -> mkPathE path sizeErr
             Right dirSize -> do
               let (errs, subTrees) = flattenSeq resultSubTrees
@@ -318,17 +336,18 @@ pathDataRecursive traverseFn cfg = tryGo 0
                 Empty -> PathSizeSuccess tree
                 (e :<| es) -> PathSizePartial (e :<|| es) tree
 
-sumTrees :: Seq PathTree -> (Integer, Integer, Integer)
+sumTrees :: (Num a) => Seq (PathTree a) -> (a, a, a)
 sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
 
-getSum :: PathTree -> (Integer, Integer, Integer)
+getSum :: (PathTree a) -> (a, a, a)
 getSum (MkPathData {size, numFiles, numDirectories} :^| _) =
   (size, numFiles, numDirectories)
 
 addTuple ::
-  (Integer, Integer, Integer) ->
-  (Integer, Integer, Integer) ->
-  (Integer, Integer, Integer)
+  (Num a) =>
+  (a, a, a) ->
+  (a, a, a) ->
+  (a, a, a)
 addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
 
 -- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
@@ -345,10 +364,11 @@ tryCalcSymLink ::
   ( HasCallStack,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixCompat m,
+    Num a
   ) =>
   OsPath ->
-  m (PathSizeResult PathTree)
+  m (PathSizeResult (PathTree a))
 tryCalcSymLink =
   tryCalcSize
     (fmap fromIntegral . getSymLinkSize <=< fromOsPathThrowM)
@@ -358,17 +378,21 @@ tryCalcSymLink =
 tryCalcFile ::
   ( HasCallStack,
     MonadCatch m,
-    MonadPathReader m
+    MonadPathReader m,
+    Num a
   ) =>
   OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcFile = tryCalcSize RDir.getFileSize
+  m (PathSizeResult (PathTree a))
+tryCalcFile = tryCalcSize (fmap fromIntegral . RDir.getFileSize)
 
 tryCalcSize ::
-  (HasCallStack, MonadCatch m) =>
-  ((HasCallStack) => OsPath -> m Integer) ->
+  ( HasCallStack,
+    MonadCatch m,
+    Num a
+  ) =>
+  ((HasCallStack) => OsPath -> m a) ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  m (PathSizeResult (PathTree a))
 tryCalcSize sizeFn path = do
   tryAny (sizeFn path) <&> \case
     Left ex -> mkPathE path ex
@@ -382,7 +406,7 @@ tryCalcSize sizeFn path = do
               numDirectories = 0
             }
 
-flattenSeq :: Seq (PathSizeResult PathTree) -> (Seq PathE, Seq PathTree)
+flattenSeq :: Seq (PathSizeResult (PathTree a)) -> (Seq PathE, Seq (PathTree a))
 flattenSeq = foldl' f (Empty, Empty)
   where
     f (errs, trees) = \case
