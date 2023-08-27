@@ -14,13 +14,14 @@ import Data.Foldable (foldl')
 import Data.Functor ((<&>))
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
-import Effects.Exception (HasCallStack, MonadCatch, tryAny)
-import Effects.FileSystem.PathReader (MonadPathReader)
-import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.Utils (OsPath)
-import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.PosixCompat (MonadPosixCompat)
-import Effects.System.PosixCompat qualified as Posix
+import Effectful (Eff, (:>))
+import Effectful.Exception (tryAny)
+import Effectful.FileSystem.PathReader.Dynamic (PathReaderDynamic)
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.Utils (OsPath)
+import Effectful.FileSystem.Utils qualified as FsUtils
+import Effectful.PosixCompat.Static (PosixCompatStatic)
+import Effectful.PosixCompat.Static qualified as Posix
 import PathSize.Data.PathData
   ( PathData
       ( MkPathData,
@@ -65,13 +66,10 @@ hidden p = case FsUtils.decodeOsToFp p of
   _ -> False
 
 tryCalcSymLink ::
-  ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixCompat m
+  ( PosixCompatStatic :> es
   ) =>
   OsPath ->
-  m (PathSizeResult PathTree)
+  Eff es (PathSizeResult PathTree)
 tryCalcSymLink =
   tryCalcSize
     (fmap fromIntegral . getSymLinkSize)
@@ -83,20 +81,16 @@ tryCalcSymLink =
 {-# INLINEABLE tryCalcSymLink #-}
 
 tryCalcFile ::
-  ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m
+  ( PathReaderDynamic :> es
   ) =>
   OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcFile = tryCalcSize RDir.getFileSize
-{-# INLINEABLE tryCalcFile #-}
+  Eff es (PathSizeResult PathTree)
+tryCalcFile = tryCalcSize PR.getFileSize
 
 tryCalcSize ::
-  (HasCallStack, MonadCatch m) =>
-  ((HasCallStack) => OsPath -> m Integer) ->
+  (OsPath -> Eff es Integer) ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  Eff es (PathSizeResult PathTree)
 tryCalcSize sizeFn path = do
   tryAny (sizeFn path) <&> \case
     Left ex -> mkPathE path ex

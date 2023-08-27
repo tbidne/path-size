@@ -5,8 +5,8 @@ module Unit.PathSize.Utils (tests) where
 #if !MIN_VERSION_base(4,18,0)
 import Control.Applicative (liftA2)
 #endif
-import Effects.FileSystem.Utils (OsPath)
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effectful.FileSystem.Utils (OsPath)
+import Effectful.FileSystem.Utils qualified as FsUtils
 import Hedgehog (Gen, annotate, forAll, property)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen

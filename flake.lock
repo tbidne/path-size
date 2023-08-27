@@ -70,7 +70,7 @@
         "type": "github"
       }
     },
-    "monad-effects": {
+    "effectful-effects": {
       "inputs": {
         "algebra-simple": [
           "algebra-simple"
@@ -86,22 +86,38 @@
         ],
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "smart-math": [
-          "smart-math"
         ]
       },
       "locked": {
-        "lastModified": 1700600532,
-        "narHash": "sha256-iqgQDYpmypckzTP+WpAERDfBg0J+Mz/k7mNIuVz5vgw=",
+        "lastModified": 1700876334,
+        "narHash": "sha256-56fcl3IRO2sso0CLvnytRQfmiR3LY3F/+0S4w6eoFlY=",
         "owner": "tbidne",
-        "repo": "monad-effects",
-        "rev": "1799945499f3d2f967a1386ee8ef6087876c205d",
+        "repo": "effectful-effects",
+        "rev": "79c7e8bb2c5daf42347e601a490d22bada61cdbe",
         "type": "github"
       },
       "original": {
         "owner": "tbidne",
-        "repo": "monad-effects",
+        "ref": "update",
+        "repo": "effectful-effects",
+        "type": "github"
+      }
+    },
+    "flake-parts": {
+      "inputs": {
+        "nixpkgs-lib": "nixpkgs-lib"
+      },
+      "locked": {
+        "lastModified": 1690933134,
+        "narHash": "sha256-ab989mN63fQZBFrkk4Q8bYxQCktuHmBIBqUG1jl6/FQ=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "59cf3f1447cfc75087e7273b04b31e689a8599fb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
         "type": "github"
       }
     },
@@ -158,8 +174,8 @@
       "inputs": {
         "algebra-simple": "algebra-simple",
         "bounds": "bounds",
+        "effectful-effects": "effectful-effects",
         "flake-parts": "flake-parts",
-        "monad-effects": "monad-effects",
         "nix-hs-utils": "nix-hs-utils",
         "nixpkgs": "nixpkgs",
         "si-bytes": "si-bytes",

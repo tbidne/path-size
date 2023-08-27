@@ -15,8 +15,8 @@ where
 import Control.DeepSeq (NFData)
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Sequence.NonEmpty qualified as NESeq
-import Effects.Exception (Exception, displayNoCS)
-import Effects.FileSystem.Utils (OsPath)
+import Effectful.Exception (Exception, displayException)
+import Effectful.FileSystem.Utils (OsPath)
 import GHC.Generics (Generic)
 import Optics.Core (Prism', prism)
 import PathSize.Exception (PathE (MkPathE))
@@ -88,4 +88,4 @@ _PathSizeFailure =
 
 -- | @since 0.1
 mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
-mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayNoCS
+mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayException

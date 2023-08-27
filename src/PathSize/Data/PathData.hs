@@ -10,7 +10,7 @@ module PathSize.Data.PathData
 where
 
 import Control.DeepSeq (NFData)
-import Effects.FileSystem.Utils (OsPath)
+import Effectful.FileSystem.Utils (OsPath)
 import GHC.Generics (Generic)
 import Numeric.Natural (Natural)
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)

@@ -8,7 +8,7 @@ where
 
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception (displayException))
-import Effects.FileSystem.Utils (OsPath)
+import Effectful.FileSystem.Utils (OsPath, decodeOsToFpShow)
 import GHC.Generics (Generic)
 
 -- | Exception for a path. The second param is the reason i.e. the exceptions'
@@ -36,8 +36,8 @@ data PathE = MkPathE !OsPath !String
 instance Exception PathE where
   displayException (MkPathE p e) =
     mconcat
-      [ "Path: ",
-        show p,
-        ". Error: ",
+      [ "Path: '",
+        decodeOsToFpShow p,
+        "'. Error: ",
         e
       ]

@@ -51,21 +51,21 @@ library
     PathSize.Utils
 
   build-depends:
-    , base                  >=4.16.0.0  && <4.19
-    , containers            ^>=0.6.3.1
-    , deepseq               >=1.4.4.0   && <1.6
-    , effects-async         ^>=0.1
-    , effects-exceptions    ^>=0.1
-    , effects-fs            ^>=0.1
-    , effects-unix-compat   ^>=0.1
-    , filepath              ^>=1.4.2.1
-    , nonempty-containers   >=0.3.4.2   && <0.4
-    , optics-core           ^>=0.4
-    , si-bytes              ^>=0.1
-    , smart-math            ^>=0.1
-    , text                  >=1.2.3.2   && <2.1
-    , unix-compat           >=0.6       && <0.8
-    , unordered-containers  ^>=0.2.14.0
+    , base                   >=4.16.0.0  && <4.19
+    , containers             ^>=0.6.3.1
+    , deepseq                >=1.4.4.0   && <1.6
+    , effectful              ^>=2.2.0.0
+    , exceptions-effectful   ^>=0.1
+    , filepath               ^>=1.4.2.1
+    , fs-effectful           ^>=0.1
+    , nonempty-containers    >=0.3.4.2   && <0.4
+    , optics-core            ^>=0.4
+    , si-bytes               ^>=0.1
+    , smart-math             ^>=0.1
+    , text                   >=1.2.3.2   && <2.1
+    , unix-compat            >=0.6       && <0.8
+    , unix-compat-effectful  ^>=0.1
+    , unordered-containers   ^>=0.2.14.0
 
   hs-source-dirs:   src
   default-language: GHC2021
@@ -80,14 +80,16 @@ executable path-size
   autogen-modules:  Paths_path_size
   build-depends:
     , base
-    , effects-fs
-    , effects-optparse      ^>=0.1
+    , effectful
+    , fs-effectful
     , optics-core
-    , optics-th             ^>=0.4
-    , optparse-applicative  >=0.16.1.0 && <0.19
+    , optics-th              ^>=0.4
+    , optparse-applicative   >=0.16.1.0 && <0.19
+    , optparse-effectful     ^>=0.1
     , path-size
     , smart-math
     , text
+    , unix-compat-effectful
     , unordered-containers
 
   hs-source-dirs:   app
@@ -101,7 +103,7 @@ test-suite unit
   other-modules:    Unit.PathSize.Utils
   build-depends:
     , base
-    , effects-fs
+    , fs-effectful
     , hedgehog        >=1.0.2   && <1.5
     , path-size
     , tasty           >=1.1.0.3 && <1.5
@@ -119,15 +121,15 @@ test-suite functional
   build-depends:
     , base
     , containers
-    , effects-async
-    , effects-exceptions
-    , effects-fs
-    , effects-unix-compat
+    , effectful
+    , exceptions-effectful
+    , fs-effectful
     , nonempty-containers
     , path-size
     , tasty
-    , tasty-hunit           >=0.9 && <0.11
+    , tasty-hunit            >=0.9 && <0.11
     , text
+    , unix-compat-effectful
     , unordered-containers
 
   hs-source-dirs:   test/functional
@@ -139,13 +141,17 @@ library bench-common
   exposed-modules:  PathSize.Bench.Common
   build-depends:
     , base
+    , bytestring
     , deepseq
-    , effects-exceptions
-    , effects-fs
-    , env-guard             ^>=0.2
+    , effectful
+    , env-guard              ^>=0.2
+    , exceptions-effectful
+    , fs-effectful
     , nonempty-containers
     , path-size
     , smart-math
+    , terminal-effectful     ^>=0.1
+    , unix-compat-effectful
     , unordered-containers
 
   hs-source-dirs:   bench/common
@@ -158,8 +164,8 @@ benchmark bench-criterion
   build-depends:
     , base
     , bench-common
-    , criterion           ^>=1.6.0.0
-    , effects-exceptions
+    , criterion             ^>=1.6.0.0
+    , exceptions-effectful
     , path-size
 
   hs-source-dirs:   bench/criterion
@@ -173,9 +179,9 @@ benchmark bench-tasty
   build-depends:
     , base
     , bench-common
-    , effects-exceptions
+    , exceptions-effectful
     , path-size
-    , tasty-bench         ^>=0.3
+    , tasty-bench           ^>=0.3
 
   hs-source-dirs:   bench/tasty
   default-language: GHC2021
