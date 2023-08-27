@@ -16,7 +16,7 @@ where
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import Data.Word (Word16)
-import Effects.FileSystem.Utils (OsPath)
+import Effectful.FileSystem.Utils (OsPath)
 import Numeric.Data.Positive (Positive)
 import Optics.Core
   ( A_Lens,

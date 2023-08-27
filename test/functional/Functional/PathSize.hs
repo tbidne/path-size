@@ -7,7 +7,6 @@ module Functional.PathSize
 where
 
 import Control.Exception (Exception (displayException))
-import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (Foldable (toList))
 import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as HSet
@@ -17,14 +16,14 @@ import Data.Set qualified as Set
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16)
-import Effects.Concurrent.Async (MonadAsync)
-import Effects.Concurrent.Thread (MonadThread)
-import Effects.Exception (MonadCatch, MonadThrow, throwM)
-import Effects.FileSystem.PathReader (MonadPathReader)
-import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.IORef (MonadIORef)
-import Effects.System.PosixCompat (MonadPosixCompat)
+import Effectful (Eff, IOE, runEff, (:>))
+import Effectful.Concurrent qualified as CC
+import Effectful.Dispatch.Dynamic (reinterpret)
+import Effectful.Exception (throwM)
+import Effectful.FileSystem.PathReader.Dynamic (PathReaderDynamic)
+import Effectful.FileSystem.PathReader.Dynamic qualified as PR
+import Effectful.FileSystem.Utils qualified as FsUtils
+import Effectful.PosixCompat.Static qualified as Posix
 import GHC.Num.Natural (Natural)
 import PathSize
   ( PathData (MkPathData),
@@ -260,44 +259,25 @@ testsFailure = testCase "Failure" $ do
     expectedErrs =
       [mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "failure") "does not exist"]
 
-newtype FuncIO a = MkFuncIO (IO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAsync,
-      MonadCatch,
-      MonadIO,
-      MonadIORef,
-      MonadPosixCompat,
-      MonadThread,
-      MonadThrow
-    )
-    via IO
-
-newtype E = MkE String
-  deriving stock (Show)
-
-instance Exception E where
-  displayException (MkE s) = s
-
-instance MonadPathReader FuncIO where
-  listDirectory = liftIO . RDir.listDirectory
-
-  doesDirectoryExist p = do
+runPathReaderMock ::
+  ( IOE :> es
+  ) =>
+  Eff (PathReaderDynamic : es) a ->
+  Eff es a
+runPathReaderMock = reinterpret PR.runPathReaderDynamicIO $ \_ -> \case
+  PR.ListDirectory p -> PR.listDirectory p
+  PR.DoesDirectoryExist p -> do
     path <- FsUtils.decodeOsToFpThrowM p
     if path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-dir-err"
       then throwM $ MkE "dir err"
-      else liftIO $ RDir.doesDirectoryExist p
-
-  pathIsSymbolicLink p = do
+      else PR.doesDirectoryExist p
+  PR.PathIsSymbolicLink p -> do
     path <- FsUtils.decodeOsToFpThrowM p
     if
       | path == "test" `cfp` "functional" `cfp` "data" `cfp` "failure" -> throwM $ MkE "does not exist"
       | path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-sym-link-err" -> throwM $ MkE "sym link err"
-      | otherwise -> liftIO $ RDir.pathIsSymbolicLink p
-
-  getFileSize p = do
+      | otherwise -> PR.pathIsSymbolicLink p
+  PR.GetFileSize p -> do
     path <- FsUtils.decodeOsToFpThrowM p
     case Map.lookup path mp of
       Just m -> m
@@ -325,14 +305,24 @@ instance MonadPathReader FuncIO where
             ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1", pure 14),
             ("test" `cfp` "functional" `cfp` "data" `cfp` "partial", pure 4096)
           ]
+  _ -> error "unimplemented"
 
-runFuncIO :: FuncIO a -> IO a
-runFuncIO (MkFuncIO io) = io
+newtype E = MkE String
+  deriving stock (Show)
+
+instance Exception E where
+  displayException (MkE s) = s
 
 runTest :: Config -> FilePath -> IO (PathSizeResult SubPathData)
 runTest cfg testDir = do
   testDir' <- FsUtils.encodeFpToOsThrowM testDir
   runFuncIO (PathSize.findLargestPaths cfg testDir')
+  where
+    runFuncIO =
+      runEff
+        . CC.runConcurrent
+        . runPathReaderMock
+        . Posix.runPosixCompatStaticIO
 
 assertSubPathData :: SubPathData -> SubPathData -> IO ()
 assertSubPathData expected results =

@@ -30,8 +30,8 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
-import Effects.FileSystem.Utils (OsPath)
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effectful.FileSystem.Utils (OsPath)
+import Effectful.FileSystem.Utils qualified as FsUtils
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
 import GHC.Stack (HasCallStack)
