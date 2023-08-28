@@ -20,6 +20,7 @@ module PathSize
   )
 where
 
+import Control.Monad ((<=<))
 import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
@@ -354,7 +355,7 @@ tryCalcSymLink =
     getSymLinkSize =
       fmap PFiles.fileSize
         . Posix.getSymbolicLinkStatus
-        . FsUtils.osToFp
+        <=< FsUtils.decodeOsToFpThrowM
 
 tryCalcFile ::
   ( HasCallStack,

@@ -12,30 +12,29 @@
       url = "github:tbidne/algebra-simple";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
     };
     bounds = {
       url = "github:tbidne/bounds";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
     };
     monad-effects = {
       url = "github:tbidne/monad-effects";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
-      inputs.nix-hs-utils.follows = "nix-hs-utils";
       inputs.smart-math.follows = "smart-math";
     };
     si-bytes = {
       url = "github:tbidne/si-bytes";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
@@ -44,7 +43,7 @@
       url = "github:tbidne/smart-math";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nix-hs-utils.url = "github:tbidne/nix-hs-utils";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
 
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
