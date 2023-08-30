@@ -34,7 +34,6 @@ import Effectful.FileSystem.Utils (OsPath)
 import Effectful.FileSystem.Utils qualified as FsUtils
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
-import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (Positive (MkPositive))
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to, view)
 import PathSize.Data.PathData
@@ -144,12 +143,10 @@ pathDataSizePathOrd :: PathData a -> Down (a, OsPath)
 pathDataSizePathOrd = Down . \(MkPathData p s _ _) -> (s, p)
 {-# INLINEABLE pathDataSizePathOrd #-}
 
-{- HLINT ignore takeLargestN "Redundant bracket" -}
-
 -- | Retrieves the largest N paths.
 --
 -- @since 0.1
-takeLargestN :: (HasCallStack) => Bool -> Positive Int -> PathTree -> SubPathData
+takeLargestN :: Bool -> Positive Int -> PathTree -> SubPathData
 takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
   (first :<| rest) -> UnsafeSubPathData (natify first :<|| fmap natify rest)
   -- NOTE: Should only happen if n == 0
@@ -157,7 +154,7 @@ takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
     error $
       mconcat
         [ "[PathSize.Data.SubPathData.Internal.takeLargestN]: ",
-          "impossible, returned empty Seq for i = ",
+          "impossible, returned empty Seq for n = ",
           show n,
           ", tree = ",
           show tree

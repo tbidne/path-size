@@ -77,7 +77,6 @@
               "fs-effectful"
               "ioref-effectful"
               "optparse-effectful"
-              "stm-effectful"
               "terminal-effectful"
               "unix-compat-effectful"
             ];

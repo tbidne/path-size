@@ -41,7 +41,6 @@ source-repository-package
       lib/fs-effectful
       lib/ioref-effectful
       lib/optparse-effectful
-      lib/stm-effectful
       lib/terminal-effectful
       lib/unix-compat-effectful
 
