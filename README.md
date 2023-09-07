@@ -192,71 +192,52 @@ $ path-size -s pool ./
 
 # Building
 
-## Prerequisites
-
-You will need one of:
-
-* [cabal-install 2.4+](https://www.haskell.org/cabal/download.html) and one of
-  * [ghc 9.2](https://www.haskell.org/ghcup/)
-  * [ghc 9.4](https://www.haskell.org/ghcup/)
-* [stack](https://docs.haskellstack.org/en/stable/README/#how-to-install)
-* [nix](https://nixos.org/download.html)
-
-If you have never built a haskell program before, `cabal` + `ghcup` is probably the best choice.
+If you have never built a haskell program before, [Cabal](#cabal) is probably the best choice.
 
 ## Cabal
 
-You will need `ghc` and `cabal-install`. From there `path-size` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
+### Prerequisites
+
+* [`ghcup`](https://www.haskell.org/ghcup/)
+
+Using `ghcup`, install `cabal 2.4+` and one of:
+
+- `ghc 9.2`
+- `ghc 9.4`
+- `ghc 9.6`
+
+### Build path-size
+
+Once you have `cabal` and `ghc`, `path-size` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
 ## Nix
 
-### From source
+### Prerequisites
+
+* [nix](https://nixos.org/download.html)
+
+### Manually
 
 Building with `nix` uses [flakes](https://nixos.wiki/wiki/Flakes). `path-size` can be built with `nix build`, which will compile and run the tests.
 
-To launch a shell with various tools (e.g. `cabal`, `hls`), run `nix develop`. After that we can launch a repl with `cabal repl` or run the various tools on our code. At this point you could also build via `cabal`, though you may have to first run `cabal update`. This will fetch the needed dependencies from `nixpkgs`.
+### Nix expression
 
-### Via nix
-
-Because `path-size` is a flake, it be built as part of a nix expression. For instance, if you want to add `path-size` to `NixOS`, your `flake.nix` might look something like:
+Because `path-size` is a flake, it be built as part of a nix expression. For instance, if you want to add `path-size` to `NixOS`, your `flake.nix` should have:
 
 ```nix
+# flake.nix
 {
-  description = "My flake";
-
-  inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    path-size.url = "github:tbidne/path-size/main";
-  };
-
-  outputs = { self, nixpkgs, path-size, ... }:
-    let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        system = system;
-      };
-    in
-    {
-      nixosConfigurations = {
-        nixos = nixpkgs.lib.nixosSystem {
-          system = system;
-          modules = [
-            (import ./configuration.nix { inherit pkgs path-size; })
-          ];
-        };
-      };
-    };
+  inputs.path-size.url = "github:tbidne/path-size/main";
 }
 ```
 
-Then in `configuration.nix` you can simply have:
+Then include this in the `systemPackages`:
 
 ```nix
-{ pkgs, path-size, ... }:
-
+# wherever your global packages are defined
 {
   environment.systemPackages = [
-    path-size.packages.x86_64-linux.default
+    path-size.packages."${system}".default
   ];
 }
 ```
