@@ -128,6 +128,7 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
 --     exclude = [],
 --     filesOnly = False,
 --     numPaths = Just 1,
+--     stableSort = False,
 --     strategy = Async
 --   }
 -- @
