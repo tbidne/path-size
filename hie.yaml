@@ -9,10 +9,13 @@ cradle:
     - path: "./app/Args.hs"
       component: "path-size:exe:path-size"
 
+    - path: "./test/unit"
+      component: "path-size:test:unit"
+
     - path: "./test/functional"
       component: "path-size:test:functional"
 
-    - path: "./benchmarks/common"
+    - path: "./bench/common"
       component: "path-size:lib:bench-common"
 
     - path: "./bench/criterion/Main.hs"

@@ -48,6 +48,7 @@ library
     PathSize.Data.SubPathData
     PathSize.Data.SubPathData.Internal
     PathSize.Exception
+    PathSize.Utils
 
   build-depends:
     , base                  >=4.16.0.0  && <4.19
@@ -95,6 +96,23 @@ executable path-size
   ghc-options:      -threaded -with-rtsopts=-N
   default-language: GHC2021
 
+test-suite unit
+  import:           common-exts
+  type:             exitcode-stdio-1.0
+  main-is:          Main.hs
+  other-modules:    Unit.PathSize.Utils
+  build-depends:
+    , base
+    , effects-fs
+    , hedgehog        >=1.0.2   && <1.5
+    , path-size
+    , tasty           >=1.1.0.3 && <1.5
+    , tasty-hedgehog  >=1.2.0.0 && <1.5
+
+  hs-source-dirs:   test/unit
+  ghc-options:      -threaded -with-rtsopts=-N
+  default-language: GHC2021
+
 test-suite functional
   import:           common-exts
   type:             exitcode-stdio-1.0
@@ -111,8 +129,8 @@ test-suite functional
     , effects-unix-compat
     , nonempty-containers
     , path-size
-    , tasty                 >=1.1.0.3 && <1.5
-    , tasty-hunit           >=0.9     && <0.11
+    , tasty
+    , tasty-hunit           >=0.9 && <0.11
     , text
     , unordered-containers
 

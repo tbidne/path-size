@@ -5,6 +5,7 @@
 -- @since 0.1
 module PathSize.Data.PathSizeResult
   ( PathSizeResult (..),
+    mkPathE,
     _PathSizeSuccess,
     _PathSizePartial,
     _PathSizeFailure,
@@ -13,9 +14,12 @@ where
 
 import Control.DeepSeq (NFData)
 import Data.Sequence.NonEmpty (NESeq)
+import Data.Sequence.NonEmpty qualified as NESeq
+import Effects.Exception (Exception, displayNoCS)
+import Effects.FileSystem.Utils (OsPath)
 import GHC.Generics (Generic)
 import Optics.Core (Prism', prism)
-import PathSize.Exception (PathE)
+import PathSize.Exception (PathE (MkPathE))
 
 -- | Result of running a path-size computation with multiple notions of
 -- failure.
@@ -81,3 +85,7 @@ _PathSizeFailure =
         _ -> Left x
     )
 {-# INLINE _PathSizeFailure #-}
+
+-- | @since 0.1
+mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
+mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayNoCS

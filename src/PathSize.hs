@@ -20,32 +20,25 @@ module PathSize
   )
 where
 
-import Control.Monad ((<=<))
-import Data.Foldable (Foldable (foldl'))
 import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
-import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Async qualified as Async
 import Effects.Concurrent.Thread (MonadThread)
 import Effects.Exception
-  ( Exception,
-    HasCallStack,
+  ( HasCallStack,
     MonadCatch,
-    displayNoCS,
     tryAny,
   )
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils (OsPath, (</>))
-import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosixCompat)
-import Effects.System.PosixCompat qualified as Posix
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
 import PathSize.Data.Config
@@ -77,14 +70,15 @@ import PathSize.Data.PathSizeResult
         PathSizePartial,
         PathSizeSuccess
       ),
+    mkPathE,
   )
 import PathSize.Data.PathTree (PathTree ((:^|)))
 import PathSize.Data.PathTree qualified as PathTree
 import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Data.SubPathData.Internal (SubPathData (UnsafeSubPathData))
 import PathSize.Exception (PathE (MkPathE))
+import PathSize.Utils qualified as Utils
 import System.OsPath qualified as FP
-import System.PosixCompat.Files qualified as PFiles
 
 {- HLINT ignore "Redundant bracket" -}
 
@@ -260,7 +254,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
     shouldSkip =
       if cfg ^. #searchAll
         then skipExcluded . FP.takeFileName
-        else (\p -> hidden p || skipExcluded p) . FP.takeFileName
+        else (\p -> Utils.hidden p || skipExcluded p) . FP.takeFileName
 
     -- Base recursive function. If the path is determined to be a symlink or
     -- file, calculates the size. If it is a directory, we recursively call
@@ -278,14 +272,14 @@ pathDataRecursive traverseFn cfg = tryGo 0
       tryAny (RDir.pathIsSymbolicLink path) >>= \case
         Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
         -- 1. Symlinks
-        Right True -> tryCalcSymLink path
+        Right True -> Utils.tryCalcSymLink path
         Right False ->
           tryAny (RDir.doesDirectoryExist path) >>= \case
             Left isDirEx -> pure $ mkPathE path isDirEx
             -- 2. Directories
             Right True -> tryCalcDir path depth
             -- 3. Files
-            Right False -> tryCalcFile path
+            Right False -> Utils.tryCalcFile path
 
     tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult PathTree)
     tryCalcDir path depth =
@@ -300,8 +294,8 @@ pathDataRecursive traverseFn cfg = tryGo 0
           tryAny (RDir.getFileSize path) <&> \case
             Left sizeErr -> mkPathE path sizeErr
             Right dirSize -> do
-              let (errs, subTrees) = flattenSeq resultSubTrees
-                  (!subSize, !numFiles, !subDirs) = sumTrees subTrees
+              let (errs, subTrees) = Utils.unzipResultSeq resultSubTrees
+                  (!subSize, !numFiles, !subDirs) = PathTree.sumTrees subTrees
                   !numDirectories = subDirs + 1
                   !size = dirSizeFn dirSize subSize
                   -- Do not report subpaths if the depth is exceeded.
@@ -319,80 +313,3 @@ pathDataRecursive traverseFn cfg = tryGo 0
               case errs of
                 Empty -> PathSizeSuccess tree
                 (e :<| es) -> PathSizePartial (e :<|| es) tree
-
-sumTrees :: Seq PathTree -> (Integer, Integer, Integer)
-sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
-
-getSum :: PathTree -> (Integer, Integer, Integer)
-getSum (MkPathData {size, numFiles, numDirectories} :^| _) =
-  (size, numFiles, numDirectories)
-
-addTuple ::
-  (Integer, Integer, Integer) ->
-  (Integer, Integer, Integer) ->
-  (Integer, Integer, Integer)
-addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
-
--- NOTE: Detects hidden paths via a rather crude 'dot' check, with an
--- exception for the current directory ./.
-hidden :: OsPath -> Bool
-hidden p = case FsUtils.osToFp p of
-  '.' : '/' : _ -> False
-  '.' : _ -> True
-  _ -> False
-
-tryCalcSymLink ::
-  ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixCompat m
-  ) =>
-  OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcSymLink =
-  tryCalcSize
-    (fmap fromIntegral . getSymLinkSize)
-  where
-    getSymLinkSize =
-      fmap PFiles.fileSize
-        . Posix.getSymbolicLinkStatus
-        <=< FsUtils.decodeOsToFpThrowM
-
-tryCalcFile ::
-  ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m
-  ) =>
-  OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcFile = tryCalcSize RDir.getFileSize
-
-tryCalcSize ::
-  (HasCallStack, MonadCatch m) =>
-  ((HasCallStack) => OsPath -> m Integer) ->
-  OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcSize sizeFn path = do
-  tryAny (sizeFn path) <&> \case
-    Left ex -> mkPathE path ex
-    Right size ->
-      PathSizeSuccess $
-        PathTree.singleton $
-          MkPathData
-            { path,
-              size,
-              numFiles = 1,
-              numDirectories = 0
-            }
-
-flattenSeq :: Seq (PathSizeResult PathTree) -> (Seq PathE, Seq PathTree)
-flattenSeq = foldl' f (Empty, Empty)
-  where
-    f (errs, trees) = \case
-      PathSizeSuccess tree -> (errs, tree :<| trees)
-      PathSizePartial (e :<|| es) tree -> (e :<| es <> errs, tree :<| trees)
-      PathSizeFailure (e :<|| es) -> (e :<| es <> errs, trees)
-{-# INLINEABLE flattenSeq #-}
-
-mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
-mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayNoCS

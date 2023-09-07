@@ -38,6 +38,9 @@ jobs:
       - name: Compile
         run: cabal build
 
+      - name: Unit Tests
+        run: cabal test unit --test-options '--hedgehog-tests 100000'
+
       - name: Functional Tests
         run: cabal test functional
 
