@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - bench
+      - effectful
 
   pull_request:
     branches:
