@@ -18,12 +18,10 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
-import Effects.Concurrent.Thread (MonadThread)
 import Effects.Exception (MonadCatch, MonadThrow, throwM)
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosixCompat)
 import GHC.Num.Natural (Natural)
 import PathSize
@@ -268,9 +266,7 @@ newtype FuncIO a = MkFuncIO (IO a)
       MonadAsync,
       MonadCatch,
       MonadIO,
-      MonadIORef,
       MonadPosixCompat,
-      MonadThread,
       MonadThrow
     )
     via IO

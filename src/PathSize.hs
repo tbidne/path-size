@@ -28,7 +28,6 @@ import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Async qualified as Async
-import Effects.Concurrent.Thread (MonadThread)
 import Effects.Exception
   ( HasCallStack,
     MonadCatch,
@@ -37,7 +36,6 @@ import Effects.Exception
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils (OsPath, (</>))
-import Effects.IORef (MonadIORef)
 import Effects.System.PosixCompat (MonadPosixCompat)
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
@@ -89,10 +87,8 @@ findLargestPaths ::
   ( HasCallStack,
     MonadAsync m,
     MonadCatch m,
-    MonadIORef m,
     MonadPathReader m,
-    MonadPosixCompat m,
-    MonadThread m
+    MonadPosixCompat m
   ) =>
   -- | Configuration.
   Config ->
@@ -132,10 +128,8 @@ pathSizeRecursive ::
   ( HasCallStack,
     MonadAsync m,
     MonadCatch m,
-    MonadIORef m,
     MonadPathReader m,
-    MonadPosixCompat m,
-    MonadThread m
+    MonadPosixCompat m
   ) =>
   OsPath ->
   m (PathSizeResult Natural)
@@ -159,10 +153,8 @@ pathSizeRecursiveConfig ::
   ( HasCallStack,
     MonadAsync m,
     MonadCatch m,
-    MonadIORef m,
     MonadPathReader m,
-    MonadPosixCompat m,
-    MonadThread m
+    MonadPosixCompat m
   ) =>
   Config ->
   OsPath ->
@@ -205,10 +197,8 @@ pathDataRecursiveAsyncPool ::
   ( HasCallStack,
     MonadAsync m,
     MonadCatch m,
-    MonadIORef m,
     MonadPathReader m,
-    MonadPosixCompat m,
-    MonadThread m
+    MonadPosixCompat m
   ) =>
   Config ->
   OsPath ->

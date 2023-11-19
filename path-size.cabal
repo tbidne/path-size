@@ -57,8 +57,6 @@ library
     , effects-async         ^>=0.1
     , effects-exceptions    ^>=0.1
     , effects-fs            ^>=0.1
-    , effects-ioref         ^>=0.1
-    , effects-thread        ^>=0.1
     , effects-unix-compat   ^>=0.1
     , filepath              ^>=1.4.2.1
     , nonempty-containers   >=0.3.4.2   && <0.4
@@ -124,8 +122,6 @@ test-suite functional
     , effects-async
     , effects-exceptions
     , effects-fs
-    , effects-ioref
-    , effects-thread
     , effects-unix-compat
     , nonempty-containers
     , path-size

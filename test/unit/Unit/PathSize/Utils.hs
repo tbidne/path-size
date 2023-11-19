@@ -28,7 +28,7 @@ testHidden :: TestTree
 testHidden = testPropertyNamed desc "testHidden" $ do
   property $ do
     p <- forAll genDotPath
-    let p' = FsUtils.osToFp p
+    let p' = FsUtils.decodeOsToFpDisplayEx p
 
     -- For debugging
     annotate p'
@@ -41,7 +41,7 @@ testNotHidden :: TestTree
 testNotHidden = testPropertyNamed desc "testNotHidden" $ do
   property $ do
     p <- forAll genNoDotPath
-    let p' = FsUtils.osToFp p
+    let p' = FsUtils.decodeOsToFpDisplayEx p
 
     -- For debugging
     annotate p'

@@ -59,9 +59,9 @@ unzipResultSeq = foldl' f (Empty, Empty)
 --
 -- @since 0.1
 hidden :: OsPath -> Bool
-hidden p = case FsUtils.osToFp p of
-  '.' : '/' : _ -> False
-  '.' : _ -> True
+hidden p = case FsUtils.decodeOsToFp p of
+  Right ('.' : '/' : _) -> False
+  Right ('.' : _) -> True
   _ -> False
 
 tryCalcSymLink ::

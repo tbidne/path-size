@@ -73,7 +73,7 @@
               "si-bytes"
               "smart-math"
               "time-conv"
-            ] // nix-hs-utils.mkRelLibs inputs.monad-effects final [
+            ] // nix-hs-utils.mkRelLibs "${inputs.monad-effects}/lib" final [
               "effects-async"
               "effects-exceptions"
               "effects-fs"
