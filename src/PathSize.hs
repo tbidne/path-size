@@ -259,6 +259,12 @@ pathDataRecursive traverseFn cfg = tryGo 0
       --   a. Do not chase.
       --   b. Ensure we call the right size function (getFileSize
       --      errors on dangling symlinks since it operates on the target).
+      --
+      -- It is tempting to use RDir.getPathType path here instead of making the
+      -- doesXExist calls manually, but the former has worse performance
+      -- as it also performs doesFileExist, whereas we just assume that any
+      -- paths that make it through are files. At least for now this seems
+      -- to work fine, and the extra call costs performance.
       tryAny (RDir.pathIsSymbolicLink path) >>= \case
         Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
         -- 1. Symlinks
