@@ -16,9 +16,10 @@
   - [Usage](#usage)
 - [Options](#options)
   - [All](#all)
+  - [Depth](#depth)
   - [Exclude](#exclude)
   - [Files only](#files-only)
-  - [Depth](#depth)
+  - [Ignore dir size](#ignore-dir-size)
   - [Number of paths](#number-of-paths)
   - [Reverse](#reverse)
   - [Stable](#stable)
@@ -37,9 +38,9 @@
 path-size: A utility for reporting the recursive size of a directory.
 
 Usage: path-size [-a|--all] [-d|--depth NAT] [-e|--exclude PATHS...]
-                 [-f|--files-only] [-n|--num-paths (NAT | all)] [-r|--reverse]
-                 [--stable] [-s|--strategy (async|sync|pool)] [-v|--version]
-                 PATH
+                 [-f|--files-only] [--ignore-dir-size]
+                 [-n|--num-paths (NAT | all)] [-r|--reverse] [--stable]
+                 [-s|--strategy (async|sync|pool)] [-v|--version] PATH
 
   path-size allows one to find large paths on the file-system. In particular,
   the command will recursively associate a given path and all of its subpaths to
@@ -60,7 +61,14 @@ Available options:
                            _all_ subpaths that match 'dir'.
 
   -f,--files-only          If enabled, only sizes for files are calculated. All
-                           directories are given size 0.
+                           directories are given size 0. Note this effectively
+                           implies --ignore-dir-size.
+
+  --ignore-dir-size        If enabled, ignores the size of the directories
+                           themselves i.e. a directory's size is determined by
+                           the sum of all of its subfiles, only. The size of the
+                           directory itself (e.g. 4096 bytes on a typical ext4
+                           filesystem) is ignored.
 
   -n,--num-paths (NAT | all)
                            The number of paths to display. If unspecified,
@@ -130,12 +138,24 @@ $ path-size -e bar -e foo ./
 
 **Arg:** `-f,--files-only`
 
-**Description:** If enabled, only sizes for files are calculated. All directories are given size 0.
+**Description:** If enabled, only sizes for files are calculated. All directories are given size 0. Note this effectively implies `--ignore-dir-size`.
 
 **Examples:**
 
 ```
 $ path-size -f ./
+```
+
+## Ignore dir size
+
+**Arg:** `--ignore-dir-size`
+
+**Description:** If enabled, ignores the size of the directories themselves i.e. a directory's size is determined by the sum of all of its subfiles, only. The size of the directory itself (e.g. 4096 bytes on a typical ext4 filesystem) is ignored.
+
+**Examples:**
+
+```
+$ path-size --ignore-dir-size ./
 ```
 
 ## Number of paths

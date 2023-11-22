@@ -18,7 +18,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
-import Effects.Exception (MonadCatch, MonadThrow, throwM)
+import Effects.Exception (MonadCatch, MonadThrow, throwM, tryAny)
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils qualified as FsUtils
@@ -36,6 +36,7 @@ import PathSize.Data.Config
       ( MkConfig,
         exclude,
         filesOnly,
+        ignoreDirIntrinsicSize,
         maxDepth,
         numPaths,
         searchAll,
@@ -58,6 +59,7 @@ tests =
       calculatesAll,
       calculatesExcluded,
       calculatesFilesOnly,
+      calculatesIgnoreDirIntrinsicSize,
       calculatesDepthN 0 expectedD0,
       calculatesDepthN 1 expectedD1,
       calculatesDepthN 2 expectedD2,
@@ -180,6 +182,26 @@ calculatesFilesOnly = testCase "Includes only files" $ do
           mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 0 4 6
         ]
 
+calculatesIgnoreDirIntrinsicSize :: TestTree
+calculatesIgnoreDirIntrinsicSize = testCase "Ignores dir intrinsic size" $ do
+  PathSizeSuccess result <- runTest cfg successTestDir
+  assertSubPathData expected result
+  where
+    cfg = baseConfig {ignoreDirIntrinsicSize = True}
+    expected =
+      toSubPathData
+        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 25 4 6,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16 2 4,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 14 1 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 14 1 2,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 9 2 1,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0,
+          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 2 1 1
+        ]
+
 calculatesDepthN :: Word16 -> SubPathData -> TestTree
 calculatesDepthN n expected = testCase ("Calculates depth = " <> show n) $ do
   PathSizeSuccess result <- runTest cfg successTestDir
@@ -233,7 +255,7 @@ exceptionTests =
 
 testsPartial :: TestTree
 testsPartial = testCase "Partial success" $ do
-  PathSizePartial errs result <- runTest baseConfig partialTestDir
+  PathSizePartial errs result <- runTestNoCatch baseConfig partialTestDir
   assertSubPathData expectedResults result
   assertErrs expectedErrs errs
   where
@@ -252,7 +274,7 @@ testsPartial = testCase "Partial success" $ do
 
 testsFailure :: TestTree
 testsFailure = testCase "Failure" $ do
-  PathSizeFailure errs <- runTest baseConfig failureTestDir
+  PathSizeFailure errs <- runTestNoCatch baseConfig failureTestDir
   assertErrs expectedErrs errs
   where
     expectedErrs =
@@ -285,6 +307,8 @@ instance MonadPathReader FuncIO where
     if path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-dir-err"
       then throwM $ MkE "dir err"
       else liftIO $ RDir.doesDirectoryExist p
+
+  doesFileExist = liftIO . RDir.doesFileExist
 
   pathIsSymbolicLink p = do
     path <- FsUtils.decodeOsToFpThrowM p
@@ -327,6 +351,14 @@ runFuncIO (MkFuncIO io) = io
 
 runTest :: Config -> FilePath -> IO (PathSizeResult SubPathData)
 runTest cfg testDir = do
+  tryAny (runTestNoCatch cfg testDir) >>= \case
+    Right r@(PathSizeSuccess _) -> pure r
+    Right r@(PathSizePartial _ _) -> assertFailure (show r)
+    Right r@(PathSizeFailure _) -> assertFailure (show r)
+    Left ex -> assertFailure $ displayException ex
+
+runTestNoCatch :: Config -> FilePath -> IO (PathSizeResult SubPathData)
+runTestNoCatch cfg testDir = do
   testDir' <- FsUtils.encodeFpToOsThrowM testDir
   runFuncIO (PathSize.findLargestPaths cfg testDir')
 
@@ -367,6 +399,7 @@ baseConfig =
       maxDepth = Nothing,
       exclude = HSet.empty,
       filesOnly = False,
+      ignoreDirIntrinsicSize = False,
       numPaths = Nothing,
       -- True because we want tests to be deterministic
       stableSort = True,

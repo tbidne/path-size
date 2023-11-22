@@ -108,6 +108,11 @@ data Config = MkConfig
     --
     -- @since 0.1
     filesOnly :: !Bool,
+    -- | If active, this flag ignores the size of the directory itself e.g.
+    -- 4096 bytes on a typical ext4 filesystem.
+    --
+    -- @since 0.1
+    ignoreDirIntrinsicSize :: !Bool,
     -- | The number of paths to return.
     --
     -- @since 0.1
@@ -142,6 +147,7 @@ instance
            _maxDepth
            _exclude
            _filesOnly
+           _ignoreDirIntrinsicSize
            _numPaths
            _stableSort
            _strategy
@@ -153,6 +159,7 @@ instance
                   _maxDepth
                   _exclude
                   _filesOnly
+                  _ignoreDirIntrinsicSize
                   _numPaths
                   _stableSort
                   _strategy
@@ -173,6 +180,7 @@ instance
            _maxDepth
            _exclude
            _filesOnly
+           _ignoreDirIntrinsicSize
            _numPaths
            _stableSort
            _strategy
@@ -184,6 +192,7 @@ instance
                   maxDepth'
                   _exclude
                   _filesOnly
+                  _ignoreDirIntrinsicSize
                   _numPaths
                   _stableSort
                   _strategy
@@ -204,6 +213,7 @@ instance
            _maxDepth
            _exclude
            _filesOnly
+           _ignoreDirIntrinsicSize
            _numPaths
            _stableSort
            _strategy
@@ -215,6 +225,7 @@ instance
                   _maxDepth
                   exclude'
                   _filesOnly
+                  _ignoreDirIntrinsicSize
                   _numPaths
                   _stableSort
                   _strategy
@@ -235,6 +246,7 @@ instance
            _maxDepth
            _exclude
            _filesOnly
+           _ignoreDirIntrinsicSize
            _numPaths
            _stableSort
            _strategy
@@ -246,11 +258,45 @@ instance
                   _maxDepth
                   _exclude
                   filesOnly'
+                  _ignoreDirIntrinsicSize
                   _numPaths
                   _stableSort
                   _strategy
             )
             (f _filesOnly)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "ignoreDirIntrinsicSize" k Config Config a b
+  where
+  labelOptic =
+    lensVL $
+      \f
+       ( MkConfig
+           _searchAll
+           _maxDepth
+           _exclude
+           _filesOnly
+           _ignoreDirIntrinsicSize
+           _numPaths
+           _stableSort
+           _strategy
+         ) ->
+          fmap
+            ( \ignoreDirIntrinsicSize' ->
+                MkConfig
+                  _searchAll
+                  _maxDepth
+                  _exclude
+                  _filesOnly
+                  ignoreDirIntrinsicSize'
+                  _numPaths
+                  _stableSort
+                  _strategy
+            )
+            (f _ignoreDirIntrinsicSize)
   {-# INLINE labelOptic #-}
 
 -- | @since 0.1
@@ -266,6 +312,7 @@ instance
            _maxDepth
            _exclude
            _filesOnly
+           _ignoreDirIntrinsicSize
            _numPaths
            _stableSort
            _strategy
@@ -277,6 +324,7 @@ instance
                   _maxDepth
                   _exclude
                   _filesOnly
+                  _ignoreDirIntrinsicSize
                   numPaths'
                   _stableSort
                   _strategy
@@ -297,6 +345,7 @@ instance
            _maxDepth
            _exclude
            _filesOnly
+           _ignoreDirIntrinsicSize
            _numPaths
            _stableSort
            _strategy
@@ -308,6 +357,7 @@ instance
                   _maxDepth
                   _exclude
                   _filesOnly
+                  _ignoreDirIntrinsicSize
                   _numPaths
                   stableSort'
                   _strategy
@@ -328,6 +378,7 @@ instance
            _maxDepth
            _exclude
            _filesOnly
+           _ignoreDirIntrinsicSize
            _numPaths
            _stableSort
            _strategy
@@ -338,6 +389,7 @@ instance
                 _maxDepth
                 _exclude
                 _filesOnly
+                _ignoreDirIntrinsicSize
                 _numPaths
                 _stableSort
             )
@@ -352,6 +404,7 @@ instance
 --     maxDepth = Nothing,
 --     exclude = [],
 --     filesOnly = False,
+--     ignoreDirIntrinsicSize = False,
 --     numPaths = Just 10,
 --     strategy = Async
 --   }
@@ -365,6 +418,7 @@ defaultConfig =
       maxDepth = Nothing,
       exclude = HSet.empty,
       filesOnly = False,
+      ignoreDirIntrinsicSize = False,
       numPaths = Just defaultNumPaths,
       stableSort = False,
       strategy = Async

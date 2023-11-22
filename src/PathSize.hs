@@ -44,6 +44,7 @@ import PathSize.Data.Config
       ( MkConfig,
         exclude,
         filesOnly,
+        ignoreDirIntrinsicSize,
         maxDepth,
         numPaths,
         searchAll,
@@ -141,6 +142,7 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
           maxDepth = Just 0,
           exclude = mempty,
           filesOnly = False,
+          ignoreDirIntrinsicSize = False,
           numPaths = Just defaultNumPathsSize,
           stableSort = False,
           strategy = Async
@@ -228,10 +230,14 @@ pathDataRecursive traverseFn cfg = tryGo 0
     excluded = cfg ^. #exclude
     skipExcluded p = HSet.member p excluded
 
-    -- NOTE: If filesOnly is on, then we do not calculate sizes for the
-    -- directories themselves.
+    -- NOTE: [Directory sizes]
     dirSizeFn
+      -- filesOnly -> directories are set to size 0
       | cfg ^. #filesOnly = \_ _ -> 0
+      -- ignoreDirIntrinsicSize -> directories are set to subfiles size;
+      -- intrinsic size of the dir itself is ignored. This relies on the
+      -- _first_ param being the subfiles size.
+      | cfg ^. #ignoreDirIntrinsicSize = const
       | otherwise = (+)
 
     -- NOTE: If a maxDepth is given, we do not include paths that exceed
@@ -293,7 +299,10 @@ pathDataRecursive traverseFn cfg = tryGo 0
               let (errs, subTrees) = Utils.unzipResultSeq resultSubTrees
                   (!subSize, !numFiles, !subDirs) = PathTree.sumTrees subTrees
                   !numDirectories = subDirs + 1
-                  !size = dirSizeFn dirSize subSize
+                  -- NOTE: subSize needs to be the first param to corrrectly
+                  -- account for ignoreDirIntrinsicSize.
+                  -- See NOTE: [Directory sizes]
+                  !size = dirSizeFn subSize dirSize
                   -- Do not report subpaths if the depth is exceeded.
                   subTrees'
                     | depthExceeded depth = Empty

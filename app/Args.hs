@@ -47,6 +47,7 @@ import PathSize.Data.Config
       ( MkConfig,
         exclude,
         filesOnly,
+        ignoreDirIntrinsicSize,
         maxDepth,
         numPaths,
         searchAll,
@@ -67,6 +68,7 @@ data Args = MkArgs
     maxDepth :: !(Maybe Word16),
     exclude :: !(HashSet OsPath),
     filesOnly :: !Bool,
+    ignoreDirIntrinsicSize :: !Bool,
     numPaths :: !(Maybe (Positive Int)),
     reverseSort :: !Bool,
     stableSort :: !Bool,
@@ -90,6 +92,7 @@ argsToConfig args =
       maxDepth = args ^. #maxDepth,
       exclude = args ^. #exclude,
       filesOnly = args ^. #filesOnly,
+      ignoreDirIntrinsicSize = args ^. #ignoreDirIntrinsicSize,
       numPaths = args ^. #numPaths,
       stableSort = args ^. #stableSort,
       strategy = args ^. #strategy
@@ -132,6 +135,7 @@ argsParser =
     <*> depthParser
     <*> excludeParser
     <*> filesOnlyParser
+    <*> ignoreDirIntrinsicSizeParser
     <*> numPathsParser
     <*> reverseSortParser
     <*> stableSortParser
@@ -214,7 +218,23 @@ filesOnlyParser =
     helpTxt =
       mconcat
         [ "If enabled, only sizes for files are calculated. All directories ",
-          "are given size 0."
+          "are given size 0. Note this effectively implies --ignore-dir-size."
+        ]
+
+ignoreDirIntrinsicSizeParser :: Parser Bool
+ignoreDirIntrinsicSizeParser =
+  OA.switch $
+    mconcat
+      [ OA.long "ignore-dir-size",
+        mkHelp helpTxt
+      ]
+  where
+    helpTxt =
+      mconcat
+        [ "If enabled, ignores the size of the directories themselves i.e. ",
+          "a directory's size is determined by the sum of all of its subfiles, ",
+          "only. The size of the directory itself (e.g. 4096 bytes on a ",
+          " typical ext4 filesystem) is ignored."
         ]
 
 depthParser :: Parser (Maybe Word16)

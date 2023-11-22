@@ -206,6 +206,7 @@ baseConfig =
       maxDepth = Nothing,
       exclude = HSet.empty,
       filesOnly = False,
+      ignoreDirIntrinsicSize = False,
       numPaths = Nothing,
       stableSort = False,
       strategy = Sync
