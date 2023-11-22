@@ -80,6 +80,7 @@ tryCalcSymLink =
       fmap PFiles.fileSize
         . Posix.getSymbolicLinkStatus
         <=< FsUtils.decodeOsToFpThrowM
+{-# INLINEABLE tryCalcSymLink #-}
 
 tryCalcFile ::
   ( HasCallStack,
@@ -89,6 +90,7 @@ tryCalcFile ::
   OsPath ->
   m (PathSizeResult PathTree)
 tryCalcFile = tryCalcSize RDir.getFileSize
+{-# INLINEABLE tryCalcFile #-}
 
 tryCalcSize ::
   (HasCallStack, MonadCatch m) =>
@@ -107,3 +109,4 @@ tryCalcSize sizeFn path = do
               numFiles = 1,
               numDirectories = 0
             }
+{-# INLINEABLE tryCalcSize #-}

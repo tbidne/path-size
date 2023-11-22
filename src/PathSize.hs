@@ -108,6 +108,7 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
         (SPD.mkSubPathData $ cfg ^. #stableSort)
         (SPD.takeLargestN $ cfg ^. #stableSort)
         (cfg ^. #numPaths)
+{-# INLINEABLE findLargestPaths #-}
 
 -- | Returns the total path size in bytes. Calls 'pathSizeRecursiveConfig' with
 -- the following config:
@@ -118,6 +119,7 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
 --     maxDepth = Just 0,
 --     exclude = [],
 --     filesOnly = False,
+--     ignoreDirIntrinsicSize = False,
 --     numPaths = Just 1,
 --     stableSort = False,
 --     strategy = Async
@@ -147,6 +149,7 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
           stableSort = False,
           strategy = Async
         }
+{-# INLINEABLE pathSizeRecursive #-}
 
 -- | Returns the total path size in bytes.
 --
@@ -164,6 +167,7 @@ pathSizeRecursiveConfig ::
 pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
   where
     getSize (UnsafeSubPathData (pd :<|| _)) = pd ^. #size
+{-# INLINEABLE pathSizeRecursiveConfig #-}
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed sequentially.
@@ -175,6 +179,7 @@ pathDataRecursiveSync ::
   OsPath ->
   m (PathSizeResult PathTree)
 pathDataRecursiveSync = pathDataRecursive traverse
+{-# INLINEABLE pathDataRecursiveSync #-}
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
 -- thread.
@@ -191,6 +196,7 @@ pathDataRecursiveAsync ::
   OsPath ->
   m (PathSizeResult PathTree)
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
+{-# INLINEABLE pathDataRecursiveAsync #-}
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
 --
@@ -206,6 +212,7 @@ pathDataRecursiveAsyncPool ::
   OsPath ->
   m (PathSizeResult PathTree)
 pathDataRecursiveAsyncPool = pathDataRecursive Async.pooledMapConcurrently
+{-# INLINEABLE pathDataRecursiveAsyncPool #-}
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed via the parameter traversal.
@@ -318,3 +325,6 @@ pathDataRecursive traverseFn cfg = tryGo 0
               case errs of
                 Empty -> PathSizeSuccess tree
                 (e :<| es) -> PathSizePartial (e :<|| es) tree
+    {-# INLINEABLE tryGo #-}
+    {-# INLINEABLE tryCalcDir #-}
+{-# INLINEABLE pathDataRecursive #-}
