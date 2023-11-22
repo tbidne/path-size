@@ -321,7 +321,7 @@ instance MonadPathReader FuncIO where
     path <- FsUtils.decodeOsToFpThrowM p
     case Map.lookup path mp of
       Just m -> m
-      Nothing -> error "p"
+      Nothing -> error $ show p
     where
       mp =
         Map.fromList
@@ -369,8 +369,10 @@ assertSubPathData expected results =
     sbdToList = toList . unSubPathData
 
 assertErrs :: [PathE] -> NESeq PathE -> IO ()
-assertErrs expected results = assertLists expected (toList' results)
+assertErrs expected results =
+  assertLists (zeroDesc <$> expected) (zeroDesc <$> toList' results)
   where
+    zeroDesc = (\(MkPathE p _) -> MkPathE p "")
     toList' = Set.toList . Set.fromList . toList
 
 assertLists :: (Eq a, Show a) => [a] -> [a] -> IO ()

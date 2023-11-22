@@ -6,6 +6,7 @@ module PathSize.Utils
     tryCalcFile,
     unzipResultSeq,
     hidden,
+    getPathType,
   )
 where
 
@@ -14,8 +15,15 @@ import Data.Foldable (foldl')
 import Data.Functor ((<&>))
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
-import Effects.Exception (HasCallStack, MonadCatch, tryAny)
-import Effects.FileSystem.PathReader (MonadPathReader)
+import Effects.Exception (HasCallStack, MonadCatch, MonadThrow, tryAny)
+import Effects.FileSystem.PathReader
+  ( MonadPathReader,
+    PathType
+      ( PathTypeDirectory,
+        PathTypeFile,
+        PathTypeSymbolicLink
+      ),
+  )
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils (OsPath)
 import Effects.FileSystem.Utils qualified as FsUtils
@@ -110,3 +118,23 @@ tryCalcSize sizeFn path = do
               numDirectories = 0
             }
 {-# INLINEABLE tryCalcSize #-}
+
+-- | Retrieves the path type more efficiently than MonadPathReader's.
+--
+-- @since 0.1
+getPathType ::
+  ( HasCallStack,
+    MonadPosixCompat m,
+    MonadThrow m
+  ) =>
+  OsPath ->
+  m PathType
+getPathType path = do
+  fp <- FsUtils.decodeOsToFpThrowM path
+  status <- Posix.getSymbolicLinkStatus fp
+  pure $
+    if
+      | PFiles.isSymbolicLink status -> PathTypeSymbolicLink
+      | PFiles.isDirectory status -> PathTypeDirectory
+      | otherwise -> PathTypeFile
+{-# INLINEABLE getPathType #-}

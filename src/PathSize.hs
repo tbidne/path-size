@@ -33,7 +33,14 @@ import Effects.Exception
     MonadCatch,
     tryAny,
   )
-import Effects.FileSystem.PathReader (MonadPathReader)
+import Effects.FileSystem.PathReader
+  ( MonadPathReader,
+    PathType
+      ( PathTypeDirectory,
+        PathTypeFile,
+        PathTypeSymbolicLink
+      ),
+  )
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils (OsPath, (</>))
 import Effects.System.PosixCompat (MonadPosixCompat)
@@ -278,17 +285,14 @@ pathDataRecursive traverseFn cfg = tryGo 0
       -- as it also performs doesFileExist, whereas we just assume that any
       -- paths that make it through are files. At least for now this seems
       -- to work fine, and the extra call costs performance.
-      tryAny (RDir.pathIsSymbolicLink path) >>= \case
+      tryAny (Utils.getPathType path) >>= \case
         Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
         -- 1. Symlinks
-        Right True -> Utils.tryCalcSymLink path
-        Right False ->
-          tryAny (RDir.doesDirectoryExist path) >>= \case
-            Left isDirEx -> pure $ mkPathE path isDirEx
-            -- 2. Directories
-            Right True -> tryCalcDir path depth
-            -- 3. Files
-            Right False -> Utils.tryCalcFile path
+        Right PathTypeSymbolicLink -> Utils.tryCalcSymLink path
+        -- 2. Directories
+        Right PathTypeDirectory -> tryCalcDir path depth
+        -- 3. Files
+        Right PathTypeFile -> Utils.tryCalcFile path
 
     tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult PathTree)
     tryCalcDir path depth =
