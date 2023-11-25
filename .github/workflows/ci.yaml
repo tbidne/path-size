@@ -6,6 +6,7 @@ on:
       - main
       - bench
       - effectful
+      - effectful-bench
 
   pull_request:
     branches:
@@ -61,7 +62,7 @@ jobs:
             --fail-if-faster 1'
 
       - name: Benchmark Criterion
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && (failure() || success()) }}
         id: bench-criterion
         run: |
           cabal bench bench-criterion --benchmark-options '
