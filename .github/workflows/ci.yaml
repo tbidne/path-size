@@ -59,14 +59,15 @@ jobs:
             --fail-if-faster 30'
 
       - name: Benchmark Criterion
-        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' && matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && (failure() || success()) }}
+        id: bench-criterion
         run: |
           cabal bench bench-criterion --benchmark-options '
             --csv bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             --output bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.html'
 
       - uses: actions/upload-artifact@v3
-        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' }}
+        if: ${{ failure() && (steps.bench-tasty.conclusion == 'failure' || steps.bench-criterion.conclusion == 'failure' ) }}
         with:
           name: build-artifacts
           path: |
