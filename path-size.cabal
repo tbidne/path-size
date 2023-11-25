@@ -136,7 +136,7 @@ test-suite functional
 
 library bench-common
   import:           common-exts
-  exposed-modules:  SafeRm.Bench.Common
+  exposed-modules:  PathSize.Bench.Common
   build-depends:
     , base
     , deepseq

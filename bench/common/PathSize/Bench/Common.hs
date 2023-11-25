@@ -4,7 +4,7 @@
 -- | Provides common benchmarking functionality.
 --
 -- @since 0.1
-module SafeRm.Bench.Common
+module PathSize.Bench.Common
   ( -- Benchmarks
     BenchmarkSuite (..),
     benchPathSizeRecursive,

@@ -6,9 +6,9 @@ import Criterion.Main (Benchmark, Benchmarkable, defaultMain)
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Effects.Exception (Exception (displayException), bracket)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
+import PathSize.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
+import PathSize.Bench.Common qualified as Common
 import PathSize.Data.Config (Strategy (Async, AsyncPool, Sync))
-import SafeRm.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
-import SafeRm.Bench.Common qualified as Common
 
 main :: IO ()
 main = do

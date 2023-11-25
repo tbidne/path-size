@@ -3,9 +3,9 @@ module Main (main) where
 import Data.List.NonEmpty (NonEmpty ((:|)))
 import Effects.Exception (Exception (displayException), bracket)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
+import PathSize.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
+import PathSize.Bench.Common qualified as Common
 import PathSize.Data.Config (Strategy (Sync))
-import SafeRm.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
-import SafeRm.Bench.Common qualified as Common
 import Test.Tasty.Bench (Benchmark, Benchmarkable, defaultMain)
 import Test.Tasty.Bench qualified as Bench
 
