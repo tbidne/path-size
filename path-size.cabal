@@ -22,7 +22,6 @@ source-repository head
 
 common common-exts
   default-extensions:
-    NoFieldSelectors
     DataKinds
     DeriveAnyClass
     DerivingStrategies
@@ -31,6 +30,7 @@ common common-exts
     LambdaCase
     MultiWayIf
     NamedFieldPuns
+    NoFieldSelectors
     OverloadedLabels
     OverloadedStrings
     PatternSynonyms
