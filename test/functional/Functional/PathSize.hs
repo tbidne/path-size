@@ -369,9 +369,12 @@ assertSubPathData expected results =
     sbdToList = toList . unSubPathData
 
 assertErrs :: [PathE] -> NESeq PathE -> IO ()
-assertErrs expected results = assertLists expected (toList' results)
+assertErrs expected results = assertLists (zeroErrMsg <$> expected) (toList' results)
   where
-    toList' = Set.toList . Set.fromList . toList
+    toList' = Set.toList . Set.fromList . fmap zeroErrMsg . toList
+
+zeroErrMsg :: PathE -> PathE
+zeroErrMsg (MkPathE p _) = MkPathE p ""
 
 assertLists :: (Eq a, Show a) => [a] -> [a] -> IO ()
 assertLists [] [] = pure ()

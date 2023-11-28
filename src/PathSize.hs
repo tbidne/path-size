@@ -33,10 +33,12 @@ import Effects.Exception
     MonadCatch,
     tryAny,
   )
-import Effects.FileSystem.PathReader (MonadPathReader)
+import Effects.FileSystem.PathReader (MonadPathReader, PathType (PathTypeDirectory, PathTypeFile))
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils (OsPath, (</>))
-import Effects.System.PosixCompat (MonadPosixCompat)
+import Effects.FileSystem.Utils qualified as FS.Utils
+import Effects.System.PosixCompat (MonadPosixCompat, PathType (PathTypeSymbolicLink))
+import Effects.System.PosixCompat qualified as Posix
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
 import PathSize.Data.Config
@@ -267,7 +269,8 @@ pathDataRecursive traverseFn cfg = tryGo 0
       Word16 ->
       OsPath ->
       m (PathSizeResult PathTree)
-    tryGo !depth !path =
+    tryGo !depth !path = do
+      fp <- FS.Utils.decodeOsToFpThrowM path
       -- NOTE: Need to handle symlinks separately so that we:
       --   a. Do not chase.
       --   b. Ensure we call the right size function (getFileSize
@@ -278,17 +281,11 @@ pathDataRecursive traverseFn cfg = tryGo 0
       -- as it also performs doesFileExist, whereas we just assume that any
       -- paths that make it through are files. At least for now this seems
       -- to work fine, and the extra call costs performance.
-      tryAny (RDir.pathIsSymbolicLink path) >>= \case
-        Left isSymLinkEx -> pure $ mkPathE path isSymLinkEx
-        -- 1. Symlinks
-        Right True -> Utils.tryCalcSymLink path
-        Right False ->
-          tryAny (RDir.doesDirectoryExist path) >>= \case
-            Left isDirEx -> pure $ mkPathE path isDirEx
-            -- 2. Directories
-            Right True -> tryCalcDir path depth
-            -- 3. Files
-            Right False -> Utils.tryCalcFile path
+      tryAny (Posix.getPathType fp) >>= \case
+        Right PathTypeFile -> Utils.tryCalcFile path
+        Right PathTypeDirectory -> tryCalcDir path depth
+        Right PathTypeSymbolicLink -> Utils.tryCalcSymLink path
+        Left ex -> pure $ mkPathE path ex
 
     tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult PathTree)
     tryCalcDir path depth =

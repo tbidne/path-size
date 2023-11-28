@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - posix-path-type
 
   pull_request:
     branches:
