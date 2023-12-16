@@ -33,11 +33,19 @@ import Effects.Exception
     MonadCatch,
     tryAny,
   )
-import Effects.FileSystem.PathReader (MonadPathReader, PathType (PathTypeDirectory, PathTypeFile))
+import Effects.FileSystem.PathReader
+  ( MonadPathReader,
+    PathType
+      ( PathTypeDirectory,
+        PathTypeFile,
+        PathTypeOther,
+        PathTypeSymbolicLink
+      ),
+  )
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils (OsPath, (</>))
 import Effects.FileSystem.Utils qualified as FS.Utils
-import Effects.System.PosixCompat (MonadPosixCompat, PathType (PathTypeSymbolicLink))
+import Effects.System.PosixCompat (MonadPosixCompat)
 import Effects.System.PosixCompat qualified as Posix
 import GHC.Natural (Natural)
 import Optics.Core ((^.))
@@ -285,6 +293,8 @@ pathDataRecursive traverseFn cfg = tryGo 0
         Right PathTypeFile -> Utils.tryCalcFile path
         Right PathTypeDirectory -> tryCalcDir path depth
         Right PathTypeSymbolicLink -> Utils.tryCalcSymLink path
+        -- Try file for others e.g. unix named pipes
+        Right PathTypeOther -> Utils.tryCalcFile path
         Left ex -> pure $ mkPathE path ex
 
     tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult PathTree)
