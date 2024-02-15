@@ -3,7 +3,7 @@ name:               path-size
 version:            0.1
 license:            MIT
 license-file:       LICENSE
-tested-with:        GHC ==9.2.8 || ==9.4.7 || ==9.6.3
+tested-with:        GHC ==9.2.8 || ==9.4.7 || ==9.6.3 || ==9.8.1
 copyright:          2022-2023 Thomas Bidne
 author:             Thomas Bidne
 maintainer:         tbidne@protonmail.com
@@ -20,7 +20,7 @@ source-repository head
   type:     git
   location: https://github.com/tbidne/path-size
 
-common common-exts
+common common-lang
   default-extensions:
     DataKinds
     DeriveAnyClass
@@ -37,7 +37,7 @@ common common-exts
     TypeFamilies
 
 library
-  import:           common-exts
+  import:           common-lang
   exposed-modules:
     PathSize
     PathSize.Data.Config
@@ -51,19 +51,19 @@ library
     PathSize.Utils
 
   build-depends:
-    , base                  >=4.16.0.0  && <4.19
-    , containers            ^>=0.6.3.1
+    , base                  >=4.16.0.0  && <4.20
+    , containers            >=0.6.3.1   && <0.8
     , deepseq               >=1.4.4.0   && <1.6
     , effects-async         ^>=0.1
     , effects-exceptions    ^>=0.1
     , effects-fs            ^>=0.1
     , effects-unix-compat   ^>=0.1
-    , filepath              ^>=1.4.2.1
+    , filepath              >=1.4.2.1   && <1.6
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , si-bytes              ^>=0.1
     , smart-math            ^>=0.1
-    , text                  >=1.2.3.2   && <2.1
+    , text                  >=1.2.3.2   && <2.2
     , unix-compat           >=0.6       && <0.8
     , unordered-containers  ^>=0.2.14.0
 
@@ -71,7 +71,7 @@ library
   default-language: GHC2021
 
 executable path-size
-  import:           common-exts
+  import:           common-lang
   main-is:          Main.hs
   other-modules:
     Args
@@ -95,7 +95,7 @@ executable path-size
   default-language: GHC2021
 
 test-suite unit
-  import:           common-exts
+  import:           common-lang
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:    Unit.PathSize.Utils
@@ -104,7 +104,7 @@ test-suite unit
     , effects-fs
     , hedgehog        >=1.0.2   && <1.5
     , path-size
-    , tasty           >=1.1.0.3 && <1.5
+    , tasty           >=1.1.0.3 && <1.6
     , tasty-hedgehog  >=1.2.0.0 && <1.5
 
   hs-source-dirs:   test/unit
@@ -112,7 +112,7 @@ test-suite unit
   default-language: GHC2021
 
 test-suite functional
-  import:           common-exts
+  import:           common-lang
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   other-modules:    Functional.PathSize
@@ -135,7 +135,7 @@ test-suite functional
   default-language: GHC2021
 
 library bench-common
-  import:           common-exts
+  import:           common-lang
   exposed-modules:  PathSize.Bench.Common
   build-depends:
     , base
@@ -152,7 +152,7 @@ library bench-common
   default-language: GHC2021
 
 benchmark bench-criterion
-  import:           common-exts
+  import:           common-lang
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   build-depends:
@@ -167,7 +167,7 @@ benchmark bench-criterion
   default-language: GHC2021
 
 benchmark bench-tasty
-  import:           common-exts
+  import:           common-lang
   type:             exitcode-stdio-1.0
   main-is:          Main.hs
   build-depends:
