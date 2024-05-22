@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -22,7 +23,9 @@ import Data.Bytes
     Size (B),
   )
 import Data.Bytes qualified as Bytes
+#if !MIN_VERSION_base(4, 20, 0)
 import Data.Foldable (Foldable (foldl'))
+#endif
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq ((:<|)), (<|))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))

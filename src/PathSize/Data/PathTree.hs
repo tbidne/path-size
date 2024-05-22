@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Provides 'PathTree' type.
 --
 -- @since 0.1
@@ -10,7 +12,9 @@ module PathSize.Data.PathTree
 where
 
 import Control.DeepSeq (NFData)
+#if !MIN_VERSION_base(4, 20, 0)
 import Data.Foldable (Foldable (foldl'))
+#endif
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import GHC.Generics (Generic)

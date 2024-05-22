@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 -- | Provides 'PathSizeResult' type.
@@ -13,9 +14,10 @@ module PathSize.Data.PathSizeResult
 where
 
 import Control.DeepSeq (NFData)
+import Control.Exception (Exception)
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Sequence.NonEmpty qualified as NESeq
-import Effects.Exception (Exception, displayNoCS)
+import Effects.Exception qualified as Ex
 import Effects.FileSystem.Utils (OsPath)
 import GHC.Generics (Generic)
 import Optics.Core (Prism', prism)
@@ -86,6 +88,17 @@ _PathSizeFailure =
     )
 {-# INLINE _PathSizeFailure #-}
 
+{- ORMOLU_DISABLE -}
+
 -- | @since 0.1
 mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
-mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayNoCS
+mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayFn
+  where
+    displayFn =
+#if MIN_VERSION_base(4, 20, 0)
+      Ex.displayInner
+#else
+      Ex.displayNoCS
+#endif
+
+{- ORMOLU_ENABLE -}

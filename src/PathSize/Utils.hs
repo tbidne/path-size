@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | Provides utilities.
 --
 -- @since 0.1
@@ -10,7 +12,9 @@ module PathSize.Utils
 where
 
 import Control.Monad ((<=<))
+#if !MIN_VERSION_base(4, 20, 0)
 import Data.Foldable (foldl')
+#endif
 import Data.Functor ((<&>))
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
