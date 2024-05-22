@@ -38,8 +38,10 @@ common common-lang
     PatternSynonyms
     TypeFamilies
 
+  default-language:   GHC2021
+
 library
-  import:           common-lang
+  import:          common-lang
   exposed-modules:
     PathSize
     PathSize.Data.Config
@@ -69,17 +71,16 @@ library
     , unix-compat           >=0.6       && <0.8
     , unordered-containers  ^>=0.2.14.0
 
-  hs-source-dirs:   src
-  default-language: GHC2021
+  hs-source-dirs:  src
 
 executable path-size
-  import:           common-lang
-  main-is:          Main.hs
+  import:          common-lang
+  main-is:         Main.hs
   other-modules:
     Args
     Paths_path_size
 
-  autogen-modules:  Paths_path_size
+  autogen-modules: Paths_path_size
   build-depends:
     , base
     , effects-fs
@@ -92,15 +93,14 @@ executable path-size
     , text
     , unordered-containers
 
-  hs-source-dirs:   app
-  ghc-options:      -threaded -with-rtsopts=-N
-  default-language: GHC2021
+  hs-source-dirs:  app
+  ghc-options:     -threaded -with-rtsopts=-N
 
 test-suite unit
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
-  other-modules:    Unit.PathSize.Utils
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  other-modules:  Unit.PathSize.Utils
   build-depends:
     , base
     , effects-fs
@@ -109,15 +109,14 @@ test-suite unit
     , tasty           >=1.1.0.3 && <1.6
     , tasty-hedgehog  >=1.2.0.0 && <1.5
 
-  hs-source-dirs:   test/unit
-  ghc-options:      -threaded -with-rtsopts=-N
-  default-language: GHC2021
+  hs-source-dirs: test/unit
+  ghc-options:    -threaded -with-rtsopts=-N
 
 test-suite functional
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
-  other-modules:    Functional.PathSize
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  other-modules:  Functional.PathSize
   build-depends:
     , base
     , containers
@@ -132,13 +131,12 @@ test-suite functional
     , text
     , unordered-containers
 
-  hs-source-dirs:   test/functional
-  ghc-options:      -threaded -with-rtsopts=-N
-  default-language: GHC2021
+  hs-source-dirs: test/functional
+  ghc-options:    -threaded -with-rtsopts=-N
 
 library bench-common
-  import:           common-lang
-  exposed-modules:  PathSize.Bench.Common
+  import:          common-lang
+  exposed-modules: PathSize.Bench.Common
   build-depends:
     , base
     , deepseq
@@ -150,13 +148,12 @@ library bench-common
     , smart-math
     , unordered-containers
 
-  hs-source-dirs:   bench/common
-  default-language: GHC2021
+  hs-source-dirs:  bench/common
 
 benchmark bench-criterion
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
   build-depends:
     , base
     , bench-common
@@ -164,14 +161,13 @@ benchmark bench-criterion
     , effects-exceptions
     , path-size
 
-  hs-source-dirs:   bench/criterion
-  ghc-options:      -threaded -with-rtsopts=-N
-  default-language: GHC2021
+  hs-source-dirs: bench/criterion
+  ghc-options:    -threaded -with-rtsopts=-N
 
 benchmark bench-tasty
-  import:           common-lang
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
+  import:         common-lang
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
   build-depends:
     , base
     , bench-common
@@ -179,5 +175,4 @@ benchmark bench-tasty
     , path-size
     , tasty-bench         ^>=0.3
 
-  hs-source-dirs:   bench/tasty
-  default-language: GHC2021
+  hs-source-dirs: bench/tasty
