@@ -1,0 +1,4 @@
+Name,Mean (ps),2*Stdev (ps)
+All.findLargestPaths.Sync,8013570926200,33429777068
+All.takeLargest10.Sync,7881363270000,445409093114
+All.displayPathSize.Sync,14412924252600,320459080496

@@ -21,10 +21,10 @@ fi
 
 if [[ 1 == $criterion ]]; then
   cabal bench bench-criterion --benchmark-options \
-    '--csv bench/criterion/bench.csv --output bench/criterion/bench.html'
+    '--csv bench/criterion/baseline_9.8.2.csv --output bench/criterion/baseline_9.8.2.html'
 fi
 
 if [[ 1 == $tasty ]]; then
   cabal bench bench-tasty --benchmark-options \
-    '--csv bench/tasty/bench.csv --svg bench/tasty/bench.svg'
+    '--csv bench/tasty/baseline_9.8.2.csv --svg bench/tasty/baseline_9.8.2.svg --baseline bench/tasty/baseline_9.8.2.csv'
 fi
