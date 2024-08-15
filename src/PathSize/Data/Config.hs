@@ -4,12 +4,19 @@
 --
 -- @since 0.1
 module PathSize.Data.Config
-  ( Config (..),
+  ( -- * Config
+    Config (..),
     defaultConfig,
+
+    -- * Strategy
     Strategy (..),
     _Sync,
     _Async,
     _AsyncPool,
+
+    -- * Constants
+    defaultNumPaths,
+    defaultNumPathsSize,
   )
 where
 
@@ -17,7 +24,7 @@ import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import Data.Word (Word16)
 import Effects.FileSystem.Utils (OsPath)
-import Numeric.Data.Positive (Positive)
+import Numeric.Data.Positive.Internal (Positive (UnsafePositive))
 import Optics.Core
   ( A_Lens,
     LabelOptic (labelOptic),
@@ -25,7 +32,6 @@ import Optics.Core
     lensVL,
     prism,
   )
-import PathSize.Data.Config.TH (defaultNumPaths)
 
 -- | Describes the path search strategy.
 --
@@ -61,9 +67,9 @@ _Sync :: Prism' Strategy ()
 _Sync =
   prism
     (const Sync)
-    ( \x -> case x of
+    ( \case
         Sync -> Right ()
-        _ -> Left x
+        x -> Left x
     )
 {-# INLINE _Sync #-}
 
@@ -72,9 +78,9 @@ _Async :: Prism' Strategy ()
 _Async =
   prism
     (const Async)
-    ( \x -> case x of
+    ( \case
         Async -> Right ()
-        _ -> Left x
+        x -> Left x
     )
 {-# INLINE _Async #-}
 
@@ -83,11 +89,25 @@ _AsyncPool :: Prism' Strategy ()
 _AsyncPool =
   prism
     (const AsyncPool)
-    ( \x -> case x of
+    ( \case
         AsyncPool -> Right ()
-        _ -> Left x
+        x -> Left x
     )
 {-# INLINE _AsyncPool #-}
+
+
+
+-- | Default num paths for normal, full search.
+--
+-- @since 0.1
+defaultNumPaths :: Positive Int
+defaultNumPaths = UnsafePositive 10
+
+-- | Default num paths for size search.
+--
+-- @since 0.1
+defaultNumPathsSize :: Positive Int
+defaultNumPathsSize = UnsafePositive 1
 
 -- | @since 0.1
 data Config = MkConfig

@@ -62,8 +62,8 @@ import PathSize.Data.Config
         strategy
       ),
     Strategy (Async, AsyncPool, Sync),
+    defaultNumPathsSize
   )
-import PathSize.Data.Config.TH (defaultNumPathsSize)
 import PathSize.Data.PathData
   ( PathData
       ( MkPathData,

@@ -1,6 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE UndecidableInstances #-}
-
 -- | Provides CLI args functionality.
 --
 -- @since 0.1
@@ -21,8 +18,6 @@ import Data.Word (Word16)
 import Effects.FileSystem.Utils (OsPath)
 import Effects.Optparse (osPath)
 import Numeric.Data.Positive (Positive, mkPositive)
-import Optics.Core ((^.))
-import Optics.TH (makeFieldLabelsNoPrefix)
 import Options.Applicative
   ( Parser,
     ParserInfo
@@ -56,7 +51,7 @@ import PathSize.Data.Config
       ),
     Strategy (Async, AsyncPool, Sync),
   )
-import PathSize.Data.Config.TH (defaultNumPaths)
+import PathSize.Data.Config (defaultNumPaths)
 import Paths_path_size qualified as Paths
 import Text.Read qualified as TR
 
@@ -82,20 +77,17 @@ data Args = MkArgs
       Show
     )
 
--- | @since 0.1
-makeFieldLabelsNoPrefix ''Args
-
 argsToConfig :: Args -> Config
 argsToConfig args =
   MkConfig
-    { searchAll = args ^. #searchAll,
-      maxDepth = args ^. #maxDepth,
-      exclude = args ^. #exclude,
-      filesOnly = args ^. #filesOnly,
-      ignoreDirIntrinsicSize = args ^. #ignoreDirIntrinsicSize,
-      numPaths = args ^. #numPaths,
-      stableSort = args ^. #stableSort,
-      strategy = args ^. #strategy
+    { searchAll = args.searchAll,
+      maxDepth = args.maxDepth,
+      exclude = args.exclude,
+      filesOnly = args.filesOnly,
+      ignoreDirIntrinsicSize = args.ignoreDirIntrinsicSize,
+      numPaths = args.numPaths,
+      stableSort = args.stableSort,
+      strategy = args.strategy
     }
 
 -- | Retrieves CLI args.

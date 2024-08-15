@@ -3,12 +3,11 @@
 -- @since 0.1
 module Main (main) where
 
-import Args (argsToConfig, getArgs)
+import Args (Args (path, reverseSort), argsToConfig, getArgs)
 import Control.Exception (Exception (displayException))
 import Data.Foldable (for_)
 import Data.Text qualified as T
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
-import Optics.Core ((^.))
 import PathSize
   ( PathSizeResult (PathSizeFailure, PathSizePartial, PathSizeSuccess),
     display,
@@ -24,9 +23,9 @@ main = do
 
   args <- getArgs
   let config = argsToConfig args
-      printResults = putStrLn . T.unpack . display (args ^. #reverseSort)
+      printResults = putStrLn . T.unpack . display args.reverseSort
 
-  findLargestPaths config (args ^. #path) >>= \case
+  findLargestPaths config args.path >>= \case
     PathSizeSuccess sbd -> printResults sbd
     PathSizePartial errs sbd -> do
       for_ errs (putStrLn . displayException)

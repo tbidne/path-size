@@ -34,6 +34,7 @@ common common-lang
     NamedFieldPuns
     NoFieldSelectors
     OverloadedLabels
+    OverloadedRecordDot
     OverloadedStrings
     PatternSynonyms
     TypeFamilies
@@ -45,7 +46,6 @@ library
   exposed-modules:
     PathSize
     PathSize.Data.Config
-    PathSize.Data.Config.TH
     PathSize.Data.PathData
     PathSize.Data.PathSizeResult
     PathSize.Data.PathTree
@@ -85,8 +85,6 @@ executable path-size
     , base
     , effects-fs
     , effects-optparse      ^>=0.1
-    , optics-core
-    , optics-th             ^>=0.4
     , optparse-applicative  >=0.16.1.0 && <0.19
     , path-size
     , smart-math
