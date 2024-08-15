@@ -94,6 +94,18 @@ executable path-size
   hs-source-dirs:  app
   ghc-options:     -threaded -with-rtsopts=-N
 
+executable profile
+  import:         common-lang
+  main-is:        Main.hs
+  build-depends:
+    , base
+    , bench-common
+    , deepseq
+    , nonempty-containers
+    , path-size
+
+  hs-source-dirs: profile
+
 test-suite unit
   import:         common-lang
   type:           exitcode-stdio-1.0
