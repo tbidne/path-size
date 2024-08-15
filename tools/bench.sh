@@ -26,5 +26,5 @@ fi
 
 if [[ 1 == $tasty ]]; then
   cabal bench bench-tasty --benchmark-options \
-    '+RTS -T -RTS --csv bench/tasty/baseline_9.8.2.csv --svg bench/tasty/baseline_9.8.2.svg --baseline bench/tasty/baseline_9.8.2.csv'
+    '+RTS -T -RTS -t100 --csv bench/tasty/baseline_9.8.2.csv --svg bench/tasty/baseline_9.8.2.svg --baseline bench/tasty/baseline_9.8.2.csv'
 fi
