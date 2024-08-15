@@ -37,9 +37,10 @@ import Effects.FileSystem.Utils (OsPath)
 import Effects.FileSystem.Utils qualified as FsUtils
 import GHC.Generics (Generic)
 import GHC.Natural (Natural)
+import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (Positive (MkPositive))
-import Optics.Core (A_Getter, LabelOptic (labelOptic), to, view)
+import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
 import PathSize.Data.PathData
   ( PathData
       ( MkPathData,
@@ -69,6 +70,10 @@ newtype SubPathData = UnsafeSubPathData (NESeq (PathData Natural))
     ( -- | @since 0.1
       NFData
     )
+
+-- | @since 0.1
+instance HasField "unSubPathData" SubPathData (NESeq (PathData Natural)) where
+  getField (UnsafeSubPathData xs) = xs
 
 -- NOTE: This is hand-written because we want to use labeled optics and the
 -- obvious strategy:
@@ -140,7 +145,7 @@ sortNESeq True = NESeq.sortOn pathDataSizePathOrd
 {-# INLINEABLE sortNESeq #-}
 
 pathDataSizeOrd :: PathData a -> Down a
-pathDataSizeOrd = Down . view #size
+pathDataSizeOrd = Down . (.size)
 {-# INLINEABLE pathDataSizeOrd #-}
 
 pathDataSizePathOrd :: PathData a -> Down (a, OsPath)

@@ -50,8 +50,8 @@ import PathSize.Data.Config
         strategy
       ),
     Strategy (Async, AsyncPool, Sync),
+    defaultNumPaths,
   )
-import PathSize.Data.Config (defaultNumPaths)
 import Paths_path_size qualified as Paths
 import Text.Read qualified as TR
 

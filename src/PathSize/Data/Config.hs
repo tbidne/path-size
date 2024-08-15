@@ -95,8 +95,6 @@ _AsyncPool =
     )
 {-# INLINE _AsyncPool #-}
 
-
-
 -- | Default num paths for normal, full search.
 --
 -- @since 0.1

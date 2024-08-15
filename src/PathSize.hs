@@ -48,7 +48,6 @@ import Effects.FileSystem.Utils qualified as FS.Utils
 import Effects.System.PosixCompat (MonadPosixCompat)
 import Effects.System.PosixCompat qualified as Posix
 import GHC.Natural (Natural)
-import Optics.Core ((^.))
 import PathSize.Data.Config
   ( Config
       ( MkConfig,
@@ -62,7 +61,7 @@ import PathSize.Data.Config
         strategy
       ),
     Strategy (Async, AsyncPool, Sync),
-    defaultNumPathsSize
+    defaultNumPathsSize,
   )
 import PathSize.Data.PathData
   ( PathData
@@ -109,15 +108,15 @@ findLargestPaths ::
   m (PathSizeResult SubPathData)
 findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
   where
-    f = case cfg ^. #strategy of
+    f = case cfg.strategy of
       Sync -> pathDataRecursiveSync
       Async -> pathDataRecursiveAsync
       AsyncPool -> pathDataRecursiveAsyncPool
     takeLargestN =
       maybe
-        (SPD.mkSubPathData $ cfg ^. #stableSort)
-        (SPD.takeLargestN $ cfg ^. #stableSort)
-        (cfg ^. #numPaths)
+        (SPD.mkSubPathData $ cfg.stableSort)
+        (SPD.takeLargestN $ cfg.stableSort)
+        (cfg.numPaths)
 {-# INLINEABLE findLargestPaths #-}
 
 -- | Returns the total path size in bytes. Calls 'pathSizeRecursiveConfig' with
@@ -176,7 +175,7 @@ pathSizeRecursiveConfig ::
   m (PathSizeResult Natural)
 pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
   where
-    getSize (UnsafeSubPathData (pd :<|| _)) = pd ^. #size
+    getSize (UnsafeSubPathData (pd :<|| _)) = pd.size
 {-# INLINEABLE pathSizeRecursiveConfig #-}
 
 -- | Given a path, associates all subpaths to their size, recursively.
@@ -244,28 +243,28 @@ pathDataRecursive ::
   m (PathSizeResult PathTree)
 pathDataRecursive traverseFn cfg = tryGo 0
   where
-    excluded = cfg ^. #exclude
+    excluded = cfg.exclude
     skipExcluded p = HSet.member p excluded
 
     -- NOTE: [Directory sizes]
     dirSizeFn
       -- filesOnly -> directories are set to size 0
-      | cfg ^. #filesOnly = \_ _ -> 0
+      | cfg.filesOnly = \_ _ -> 0
       -- ignoreDirIntrinsicSize -> directories are set to subfiles size;
       -- intrinsic size of the dir itself is ignored. This relies on the
       -- _first_ param being the subfiles size.
-      | cfg ^. #ignoreDirIntrinsicSize = const
+      | cfg.ignoreDirIntrinsicSize = const
       | otherwise = (+)
 
     -- NOTE: If a maxDepth is given, we do not include paths that exceed
     -- the depth. Note that they are still included in size calculation for
     -- parent directories.
-    depthExceeded = case cfg ^. #maxDepth of
+    depthExceeded = case cfg.maxDepth of
       Nothing -> const False
       Just d -> (>= d)
 
     shouldSkip =
-      if cfg ^. #searchAll
+      if cfg.searchAll
         then skipExcluded . FP.takeFileName
         else (\p -> Utils.hidden p || skipExcluded p) . FP.takeFileName
 
