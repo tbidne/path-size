@@ -12,9 +12,6 @@ module PathSize.Data.PathTree
 where
 
 import Control.DeepSeq (NFData)
-#if !MIN_VERSION_base(4, 20, 0)
-import Data.Foldable (Foldable (foldl'))
-#endif
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import GHC.Generics (Generic)
@@ -59,16 +56,19 @@ singleton :: PathData -> PathTree
 singleton pd = pd :^| Empty
 
 -- | @since 0.1
-sumTrees :: Seq PathTree -> (Integer, Integer, Integer)
-sumTrees = foldl' (\acc t -> acc `addTuple` getSum t) (0, 0, 0)
+sumTrees :: Seq PathTree -> (# Integer, Integer, Integer #)
+sumTrees = go (# 0, 0, 0 #)
+  where
+    go acc Empty = acc
+    go acc (x :<| xs) = go (acc `addTuple` getSum x) xs
 
 -- | @since 0.1
 addTuple ::
-  (Integer, Integer, Integer) ->
-  (Integer, Integer, Integer) ->
-  (Integer, Integer, Integer)
-addTuple (!a, !b, !c) (!a', !b', !c') = (a + a', b + b', c + c')
+  (# Integer, Integer, Integer #) ->
+  (# Integer, Integer, Integer #) ->
+  (# Integer, Integer, Integer #)
+addTuple (# !a, !b, !c #) (# !a', !b', !c' #) = (# a + a', b + b', c + c' #)
 
-getSum :: PathTree -> (Integer, Integer, Integer)
+getSum :: PathTree -> (# Integer, Integer, Integer #)
 getSum (MkPathData {size, numFiles, numDirectories} :^| _) =
-  (size, numFiles, numDirectories)
+  (# size, numFiles, numDirectories #)

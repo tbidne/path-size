@@ -309,7 +309,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
             Left sizeErr -> mkPathE path sizeErr
             Right dirSize -> do
               let (errs, subTrees) = Utils.unzipResultSeq resultSubTrees
-                  (!subSize, !numFiles, !subDirs) = PathTree.sumTrees subTrees
+                  (# !subSize, !numFiles, !subDirs #) = PathTree.sumTrees subTrees
                   !numDirectories = subDirs + 1
                   -- NOTE: subSize needs to be the first param to corrrectly
                   -- account for ignoreDirIntrinsicSize.

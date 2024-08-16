@@ -30,6 +30,7 @@ common common-lang
     DerivingVia
     DuplicateRecordFields
     LambdaCase
+    MagicHash
     MultiWayIf
     NamedFieldPuns
     NoFieldSelectors
@@ -38,6 +39,7 @@ common common-lang
     OverloadedStrings
     PatternSynonyms
     TypeFamilies
+    UnboxedTuples
 
   default-language:   GHC2021
 
