@@ -53,7 +53,7 @@ data PathData = MkPathData
 -- | @since 0.1
 instance
   (k ~ A_Lens, a ~ OsPath, b ~ OsPath) =>
-  LabelOptic "path" k (PathData) (PathData) a b
+  LabelOptic "path" k PathData PathData a b
   where
   labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
     fmap (\path' -> MkPathData path' _size _numFiles _numDirectories) (f _path)
@@ -62,7 +62,7 @@ instance
 -- | @since 0.1
 instance
   (k ~ A_Lens, a ~ Integer, b ~ Integer) =>
-  LabelOptic "size" k (PathData) (PathData) a b
+  LabelOptic "size" k PathData PathData a b
   where
   labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
     fmap (\size' -> MkPathData _path size' _numFiles _numDirectories) (f _size)
@@ -71,7 +71,7 @@ instance
 -- | @since 0.1
 instance
   (k ~ A_Lens, a ~ Integer, b ~ Integer) =>
-  LabelOptic "numFiles" k (PathData) (PathData) a b
+  LabelOptic "numFiles" k PathData PathData a b
   where
   labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
     fmap (\numFiles' -> MkPathData _path _size numFiles' _numDirectories) (f _numFiles)
@@ -80,7 +80,7 @@ instance
 -- | @since 0.1
 instance
   (k ~ A_Lens, a ~ Integer, b ~ Integer) =>
-  LabelOptic "numDirectories" k (PathData) (PathData) a b
+  LabelOptic "numDirectories" k PathData PathData a b
   where
   labelOptic = lensVL $ \f (MkPathData _path _size _numFiles _numDirectories) ->
     fmap (MkPathData _path _size _numFiles) (f _numDirectories)
