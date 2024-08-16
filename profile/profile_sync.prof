@@ -1,24 +1,24 @@
-	Fri Aug 16 11:08 2024 Time and Allocation Profiling Report  (Final)
+	Fri Aug 16 12:19 2024 Time and Allocation Profiling Report  (Final)
 
 	   profile +RTS -p -RTS
 
-	total time  =       16.97 secs   (16973 ticks @ 1000 us, 1 processor)
-	total alloc = 23,743,700,472 bytes  (excludes profiling overheads)
+	total time  =       18.33 secs   (18329 ticks @ 1000 us, 1 processor)
+	total alloc = 23,735,707,608 bytes  (excludes profiling overheads)
 
 COST CENTRE      MODULE                             SRC                                                         %time %alloc
 
-guardOrElse      System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)      23.7    7.0
-openFile         System.File.Platform               posix/System/File/Platform.hs:(20,1)-(27,58)                 22.3    0.4
-fdToHandle_      System.File.Platform               posix/System/File/Platform.hs:(41,1)-(43,48)                 11.6   37.3
-catch            Control.Exception.Safe             src/Control/Exception/Safe.hs:(247,1)-(252,23)                8.1    3.8
-getPathType      Effects.System.PosixCompat         src/Effects/System/PosixCompat.hs:(388,1)-(394,34)            6.7    2.7
-decodeOsToFp     Effects.FileSystem.Utils           src/Effects/FileSystem/Utils.hs:178:1-51                      5.4   14.9
-formatBase       Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67                     5.2    9.0
-display          PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(180,1)-(207,25)    5.2    4.9
-withFile         System.File.OsPath                 System/File/OsPath.hs:(60,1)-(62,25)                          2.8    1.3
-setup            PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(150,1)-(160,68)        2.1    5.5
-findLargestPaths PathSize                           src/PathSize.hs:(109,1)-(119,22)                              1.9    5.9
-formatSize       Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)            1.3    2.3
+openFile         System.File.Platform               posix/System/File/Platform.hs:(20,1)-(27,58)                 25.5    0.4
+guardOrElse      System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)      23.3    7.0
+fdToHandle_      System.File.Platform               posix/System/File/Platform.hs:(41,1)-(43,48)                 10.8   37.3
+catch            Control.Exception.Safe             src/Control/Exception/Safe.hs:(247,1)-(252,23)                7.4    3.8
+getPathType      Effects.System.PosixCompat         src/Effects/System/PosixCompat.hs:(388,1)-(394,34)            6.3    2.7
+decodeOsToFp     Effects.FileSystem.Utils           src/Effects/FileSystem/Utils.hs:178:1-51                      5.5   14.9
+formatBase       Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67                     5.4    9.0
+display          PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(180,1)-(207,25)    4.4    4.9
+withFile         System.File.OsPath                 System/File/OsPath.hs:(60,1)-(62,25)                          2.9    1.3
+findLargestPaths PathSize                           src/PathSize.hs:(109,1)-(119,22)                              2.0    5.9
+setup            PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(150,1)-(160,68)        1.8    5.6
+formatSize       Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)            1.2    2.3
 
 
                                                                                                                                                                        individual      inherited
@@ -30,7 +30,6 @@ MAIN                           MAIN                                          <bu
  CAF                           GHC.Float                                     <entire-module>                                                        917           0    0.0    0.0     0.0    0.0
  CAF                           GHC.IO.Encoding                               <entire-module>                                                        904           0    0.0    0.0     0.0    0.0
  CAF                           GHC.IO.Encoding.Iconv                         <entire-module>                                                        902           0    0.0    0.0     0.0    0.0
- CAF                           GHC.IO.Exception                              <entire-module>                                                        896           0    0.0    0.0     0.0    0.0
  CAF                           GHC.IO.Handle.FD                              <entire-module>                                                        893           0    0.0    0.0     0.0    0.0
  CAF                           GHC.Weak.Finalize                             <entire-module>                                                        857           0    0.0    0.0     0.0    0.0
  CAF                           Text.Printf                                   <entire-module>                                                        846           0    0.0    0.0     0.0    0.0
@@ -48,7 +47,7 @@ MAIN                           MAIN                                          <bu
   empty                        Data.HashSet.Internal                         Data/HashSet/Internal.hs:255:1-23                                     1058           1    0.0    0.0     0.0    0.0
  CAF                           Main                                          <entire-module>                                                        571           0    0.0    0.0     0.0    0.0
   display                      PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(180,1)-(207,25)            1116           1    0.0    0.0     0.0    0.0
-  main                         Main                                          profile/Main.hs:(35,1)-(69,9)                                         1034           1    0.0    0.0     0.0    0.0
+  main                         Main                                          profile/Main.hs:(58,1)-(92,9)                                         1034           1    0.0    0.0     0.0    0.0
    setup                       PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(150,1)-(160,68)                1036           1    0.0    0.0     0.0    0.0
  CAF                           PathSize.Bench.Common                         <entire-module>                                                        570           0    0.0    0.0     0.0    0.0
   setup                        PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(150,1)-(160,68)                1046           0    0.0    0.0     0.0    0.0
@@ -58,7 +57,7 @@ MAIN                           MAIN                                          <bu
   formatSized                  Data.Bytes.Formatting                         src/Data/Bytes/Formatting.hs:(107,1)-(108,54)                         1123           0    0.0    0.0     0.0    0.0
    formatBase                  Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:63:1-67                             1124           1    0.0    0.0     0.0    0.0
  CAF                           PathSize.Utils                                <entire-module>                                                        562           0    0.0    0.0     0.0    0.0
-  unzipResultSeq               PathSize.Utils                                src/PathSize/Utils.hs:(54,1)-(59,62)                                  1101           1    0.0    0.0     0.0    0.0
+  unzipResultSeq               PathSize.Utils                                src/PathSize/Utils.hs:(53,1)-(58,62)                                  1101           1    0.0    0.0     0.0    0.0
  CAF                           Data.Bytes.Formatting.Base                    <entire-module>                                                        560           0    0.0    0.0     0.0    0.0
  CAF                           Data.Bytes.Formatting.Size                    <entire-module>                                                        558           0    0.0    0.0     0.0    0.0
   sizedFormatterUnix           Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:152:1-75                            1121           1    0.0    0.0     0.0    0.0
@@ -67,13 +66,13 @@ MAIN                           MAIN                                          <bu
   decodeOsToFp                 Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:178:1-51                              1065           1    0.0    0.0     0.0    0.0
   encodeFpToOs                 Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:103:1-51                              1044           1    0.0    0.0     0.0    0.0
   writeBinaryFileIO            Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:268:1-37                              1047           1    0.0    0.0     0.0    0.0
- main                          Main                                          profile/Main.hs:(35,1)-(69,9)                                         1035           0    0.0    0.0   100.0   99.9
-  findLargestPaths             PathSize                                      src/PathSize.hs:(109,1)-(119,22)                                      1060           1    1.9    5.9    20.4   23.1
-   tryAny                      Control.Exception.Safe                        src/Control/Exception/Safe.hs:368:1-32                                1067      421788    0.1    0.1     9.1    5.4
-    try                        Control.Exception.Safe                        src/Control/Exception/Safe.hs:356:1-65                                1068      421788    0.1    0.3     9.0    5.3
-     catch                     Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1069      425884    1.5    0.9     8.9    5.0
-      hidden                   PathSize.Utils                                src/PathSize/Utils.hs:(66,1)-(69,12)                                  1076      413595    0.0    0.0     0.5    1.4
-       decodeOsToFp            Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:178:1-51                              1077           0    0.5    1.4     0.5    1.4
+ main                          Main                                          profile/Main.hs:(58,1)-(92,9)                                         1035           0    0.0    0.0   100.0   99.9
+  findLargestPaths             PathSize                                      src/PathSize.hs:(109,1)-(119,22)                                      1060           1    2.0    5.9    20.0   23.1
+   tryAny                      Control.Exception.Safe                        src/Control/Exception/Safe.hs:368:1-32                                1067      421788    0.1    0.1     8.8    5.4
+    try                        Control.Exception.Safe                        src/Control/Exception/Safe.hs:356:1-65                                1068      421788    0.1    0.3     8.7    5.3
+     catch                     Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1069      425884    1.6    0.9     8.5    5.0
+      hidden                   PathSize.Utils                                src/PathSize/Utils.hs:(65,1)-(68,12)                                  1076      413595    0.0    0.0     0.6    1.4
+       decodeOsToFp            Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:178:1-51                              1077           0    0.6    1.4     0.6    1.4
       member                   Data.HashSet.Internal                         Data/HashSet/Internal.hs:(348,1)-(350,30)                             1078      413595    0.1    0.0     0.1    0.0
        asMap                   Data.HashSet.Internal                         Data/HashSet/Internal.hs:113:7-11                                     1079      413595    0.0    0.0     0.0    0.0
        hash                    Data.HashMap.Internal                         Data/HashMap/Internal.hs:183:1-28                                     1080      413595    0.0    0.0     0.1    0.0
@@ -83,20 +82,20 @@ MAIN                           MAIN                                          <bu
       addCS                    Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1072        4096    0.0    0.0     0.0    0.0
        addCS                   Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1073        4096    0.0    0.0     0.0    0.0
         addOuterCS             Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1074        4096    0.0    0.0     0.0    0.0
-      getPathType              Effects.System.PosixCompat                    src/Effects/System/PosixCompat.hs:(388,1)-(394,34)                    1071           0    6.7    2.7     6.7    2.7
-   decodeOsToFpThrowM          Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:(184,1)-(187,24)                      1062      413596    0.0    0.1     2.6    7.0
-    >.>                        Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:358:1-16                              1064           0    0.1    0.1     2.6    6.9
-     decodeOsToFp              Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:178:1-51                              1066           0    2.4    6.8     2.4    6.8
+      getPathType              Effects.System.PosixCompat                    src/Effects/System/PosixCompat.hs:(388,1)-(394,34)                    1071           0    6.3    2.7     6.3    2.7
+   decodeOsToFpThrowM          Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:(184,1)-(187,24)                      1062      413596    0.0    0.1     2.7    7.0
+    >.>                        Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:358:1-16                              1064           0    0.1    0.1     2.7    6.9
+     decodeOsToFp              Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:178:1-51                              1066           0    2.6    6.8     2.6    6.8
    getPathType                 Effects.System.PosixCompat                    src/Effects/System/PosixCompat.hs:(388,1)-(394,34)                    1070      413596    0.0    0.0     0.0    0.0
-   tryCalcFile                 PathSize.Utils                                src/PathSize/Utils.hs:96:1-42                                         1086      409500    0.3    0.6     5.2    2.8
+   tryCalcFile                 PathSize.Utils                                src/PathSize/Utils.hs:91:1-42                                         1086      409500    0.2    0.6     5.0    2.8
     addCS                      Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1090      409500    0.0    0.0     0.2    0.4
-     addCS                     Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1091      409500    0.1    0.1     0.2    0.4
-      addOuterCS               Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1092      409500    0.0    0.1     0.1    0.3
-       catch                   Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1093      409500    0.1    0.2     0.1    0.2
+     addCS                     Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1091      409500    0.0    0.1     0.1    0.4
+      addOuterCS               Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1092      409500    0.1    0.1     0.1    0.3
+       catch                   Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1093      409500    0.0    0.2     0.0    0.2
     singleton                  PathSize.Data.PathTree                        src/PathSize/Data/PathTree.hs:59:1-27                                 1103      409500    0.0    0.0     0.0    0.0
-    tryAny                     Control.Exception.Safe                        src/Control/Exception/Safe.hs:368:1-32                                1087      409500    0.1    0.1     4.8    1.8
-     try                       Control.Exception.Safe                        src/Control/Exception/Safe.hs:356:1-65                                1088      409500    0.1    0.3     4.7    1.7
-      catch                    Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1089      409500    4.5    1.3     4.5    1.3
+    tryAny                     Control.Exception.Safe                        src/Control/Exception/Safe.hs:368:1-32                                1087      409500    0.1    0.1     4.6    1.8
+     try                       Control.Exception.Safe                        src/Control/Exception/Safe.hs:356:1-65                                1088      409500    0.1    0.3     4.5    1.7
+      catch                    Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1089      409500    4.4    1.4     4.4    1.4
        addCS                   Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1094           0    0.0    0.0     0.0    0.0
         addCS                  Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1095           0    0.0    0.0     0.0    0.0
          addOuterCS            Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1096           0    0.0    0.0     0.0    0.0
@@ -108,8 +107,8 @@ MAIN                           MAIN                                          <bu
    filesOnly                   PathSize.Data.Config                          src/PathSize/Data/Config.hs:128:5-13                                  1106           1    0.0    0.0     0.0    0.0
    ignoreDirIntrinsicSize      PathSize.Data.Config                          src/PathSize/Data/Config.hs:133:5-26                                  1107           1    0.0    0.0     0.0    0.0
    maxDepth                    PathSize.Data.Config                          src/PathSize/Data/Config.hs:120:5-12                                  1108           1    0.0    0.0     0.0    0.0
-   mkSubPathData               PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(118,1)-(120,61)            1111           1    0.9    0.9     1.3    1.4
-    natify                     PathSize.Data.PathData                        src/PathSize/Data/PathData.hs:(93,1)-(94,67)                          1118      413596    0.3    0.2     0.3    0.2
+   mkSubPathData               PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(118,1)-(120,61)            1111           1    0.8    0.9     1.2    1.4
+    natify                     PathSize.Data.PathData                        src/PathSize/Data/PathData.hs:(93,1)-(94,67)                          1118      413596    0.2    0.2     0.2    0.2
     size                       PathSize.Data.PathData                        src/PathSize/Data/PathData.hs:32:5-8                                  1113      413596    0.0    0.0     0.0    0.0
     pathTreeToSeq              PathSize.Data.PathTree                        src/PathSize/Data/PathTree.hs:(52,1)-(55,77)                          1112           1    0.1    0.3     0.1    0.3
     spanl                      Data.Sequence.NonEmpty                        src/Data/Sequence/NonEmpty.hs:(506,1)-(514,29)                        1114           1    0.0    0.0     0.0    0.0
@@ -119,15 +118,15 @@ MAIN                           MAIN                                          <bu
    stableSort                  PathSize.Data.Config                          src/PathSize/Data/Config.hs:142:5-14                                  1110           1    0.0    0.0     0.0    0.0
    strategy                    PathSize.Data.Config                          src/PathSize/Data/Config.hs:146:5-12                                  1061           1    0.0    0.0     0.0    0.0
    sumTrees                    PathSize.Data.PathTree                        src/PathSize/Data/PathTree.hs:63:1-63                                 1105           0    0.2    0.3     0.2    0.3
-   unzipResultSeq              PathSize.Utils                                src/PathSize/Utils.hs:(54,1)-(59,62)                                  1102           0    0.1    0.3     0.1    0.3
-  teardown                     PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(166,1)-(172,64)                1133           1    0.0    0.0    23.7    7.0
-   addCS                       Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1134           2    0.0    0.0    23.7    7.0
-    addCS                      Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1135           2    0.0    0.0    23.7    7.0
-     addOuterCS                Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1136           2    0.0    0.0    23.7    7.0
-      catch                    Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1137           2    0.0    0.0    23.7    7.0
-       guardOrElse'            System.Environment.Guard                      src/System/Environment/Guard.hs:117:1-34                              1141           0    0.0    0.0    23.7    7.0
-        guardOrElse'           System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:158:1-74                       1142           0    0.0    0.0    23.7    7.0
-         guardOrElse           System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)               1144           0   23.7    7.0    23.7    7.0
+   unzipResultSeq              PathSize.Utils                                src/PathSize/Utils.hs:(53,1)-(58,62)                                  1102           0    0.2    0.3     0.2    0.3
+  teardown                     PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(166,1)-(172,64)                1133           1    0.0    0.0    23.3    7.0
+   addCS                       Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1134           2    0.0    0.0    23.3    7.0
+    addCS                      Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1135           2    0.0    0.0    23.3    7.0
+     addOuterCS                Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1136           2    0.0    0.0    23.3    7.0
+      catch                    Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1137           2    0.0    0.0    23.3    7.0
+       guardOrElse'            System.Environment.Guard                      src/System/Environment/Guard.hs:117:1-34                              1141           0    0.0    0.0    23.3    7.0
+        guardOrElse'           System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:158:1-74                       1142           0    0.0    0.0    23.3    7.0
+         guardOrElse           System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)               1144           0   23.3    7.0    23.3    7.0
           withGuard            System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(85,1)-(89,50)                 1148           0    0.0    0.0     0.0    0.0
            guardSet            System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:180:1-46                       1149           0    0.0    0.0     0.0    0.0
             guardPredicate     System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(249,1)-(253,23)               1150           0    0.0    0.0     0.0    0.0
@@ -137,33 +136,33 @@ MAIN                           MAIN                                          <bu
       withGuard                System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(85,1)-(89,50)                 1145           1    0.0    0.0     0.0    0.0
        guardSet                System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:180:1-46                       1146           1    0.0    0.0     0.0    0.0
         guardPredicate         System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(249,1)-(253,23)               1147           1    0.0    0.0     0.0    0.0
-  display                      PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(180,1)-(207,25)            1117           0    5.2    4.9    14.6   23.2
-   decodeOsToFpShow            Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:(212,1)-(214,14)                      1119      413596    0.1    0.0     2.5    6.8
-    decodeOsToFp               Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:178:1-51                              1120           0    2.5    6.8     2.5    6.8
-   formatSized                 Data.Bytes.Formatting                         src/Data/Bytes/Formatting.hs:(107,1)-(108,54)                         1122      413596    0.2    0.1     6.9   11.6
-    formatSize                 Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)                    1126      413596    1.3    2.3     1.5    2.5
+  display                      PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(180,1)-(207,25)            1117           0    4.4    4.9    13.8   23.2
+   decodeOsToFpShow            Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:(212,1)-(214,14)                      1119      413596    0.1    0.0     2.4    6.8
+    decodeOsToFp               Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:178:1-51                              1120           0    2.3    6.8     2.3    6.8
+   formatSized                 Data.Bytes.Formatting                         src/Data/Bytes/Formatting.hs:(107,1)-(108,54)                         1122      413596    0.2    0.1     7.1   11.6
+    formatSize                 Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)                    1126      413596    1.2    2.3     1.5    2.5
      runForget                 Data.Profunctor.Indexed                       src/Data/Profunctor/Indexed.hs:66:35-43                               1127     1240788    0.0    0.0     0.0    0.0
      caseFormat                Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:100:5-14                            1129      413596    0.0    0.0     0.0    0.0
-     caseFormatToFn            Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:(141,1)-(143,42)                    1130      413596    0.2    0.3     0.2    0.3
+     caseFormatToFn            Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:(141,1)-(143,42)                    1130      413596    0.3    0.3     0.3    0.3
      leadingSpace              Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:101:5-16                            1128      413596    0.0    0.0     0.0    0.0
      sizeFormat                Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:102:5-14                            1131      413596    0.0    0.0     0.0    0.0
      ssizeToSize               Data.Bytes.Size                               src/Data/Bytes/Size.hs:(244,1)-(252,18)                               1132      413596    0.0    0.0     0.0    0.0
-    formatBase                 Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:63:1-67                             1125           0    5.2    9.0     5.2    9.0
-  setup                        PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(150,1)-(160,68)                1037           0    2.1    5.5    41.3   46.6
-   addCS                       Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1038      823097    0.0    0.0    39.1   40.9
-    addCS                      Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1039      823097    0.3    0.3    39.1   40.9
-     addOuterCS                Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1040      823097    0.1    0.2    38.8   40.7
-      catch                    Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1041      823097    2.0    1.4    38.7   40.4
-       writeBinaryFileIO       Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:268:1-37                              1051           0    0.0    0.0    36.8   39.0
-        writeFile'             System.File.OsPath                            System/File/OsPath.hs:105:1-67                                        1052           0    0.0    0.0    36.8   39.0
-         withFile              System.File.OsPath                            System/File/OsPath.hs:(60,1)-(62,25)                                  1053           0    2.8    1.3    36.7   39.0
-          openFile             System.File.Platform                          posix/System/File/Platform.hs:(20,1)-(27,58)                          1054      409500   22.3    0.4    33.9   37.7
-           fdToHandle_         System.File.Platform                          posix/System/File/Platform.hs:(41,1)-(43,48)                          1057      409500   11.6   37.3    11.6   37.3
+    formatBase                 Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:63:1-67                             1125           0    5.4    9.0     5.4    9.0
+  setup                        PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(150,1)-(160,68)                1037           0    1.8    5.6    42.9   46.6
+   addCS                       Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1038      823097    0.0    0.0    40.9   40.9
+    addCS                      Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1039      823097    0.2    0.3    40.9   40.9
+     addOuterCS                Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1040      823097    0.2    0.2    40.7   40.7
+      catch                    Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1041      823097    1.3    1.4    40.5   40.4
+       writeBinaryFileIO       Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:268:1-37                              1051           0    0.0    0.0    39.2   39.0
+        writeFile'             System.File.OsPath                            System/File/OsPath.hs:105:1-67                                        1052           0    0.0    0.0    39.2   39.0
+         withFile              System.File.OsPath                            System/File/OsPath.hs:(60,1)-(62,25)                                  1053           0    2.9    1.3    39.2   39.0
+          openFile             System.File.Platform                          posix/System/File/Platform.hs:(20,1)-(27,58)                          1054      409500   25.5    0.4    36.3   37.7
+           fdToHandle_         System.File.Platform                          posix/System/File/Platform.hs:(41,1)-(43,48)                          1057      409500   10.8   37.3    10.8   37.3
    unsafeEncodeFpToOs          Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:(157,1)-(160,14)                      1055         100    0.0    0.0     0.0    0.0
     encodeFpToOs               Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:103:1-51                              1056           0    0.0    0.0     0.0    0.0
    </>!                        Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:316:1-39                              1042           1    0.0    0.0     0.0    0.0
     unsafeEncodeFpToOs         Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:(157,1)-(160,14)                      1043           1    0.0    0.0     0.0    0.0
      encodeFpToOs              Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:103:1-51                              1045           0    0.0    0.0     0.0    0.0
-   writeBinaryFileIO           Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:268:1-37                              1048           0    0.0    0.0     0.1    0.1
-    writeFile'                 System.File.OsPath                            System/File/OsPath.hs:105:1-67                                        1049      409500    0.1    0.1     0.1    0.1
+   writeBinaryFileIO           Effects.FileSystem.Utils                      src/Effects/FileSystem/Utils.hs:268:1-37                              1048           0    0.1    0.0     0.1    0.1
+    writeFile'                 System.File.OsPath                            System/File/OsPath.hs:105:1-67                                        1049      409500    0.0    0.1     0.0    0.1
      withFile                  System.File.OsPath                            System/File/OsPath.hs:(60,1)-(62,25)                                  1050      409500    0.0    0.0     0.0    0.0

@@ -11,7 +11,6 @@ module PathSize.Utils
   )
 where
 
-import Control.Monad ((<=<))
 #if !MIN_VERSION_base(4, 20, 0)
 import Data.Foldable (foldl')
 #endif
@@ -74,16 +73,12 @@ tryCalcSymLink ::
     MonadPathReader m,
     MonadPosixCompat m
   ) =>
+  FilePath ->
   OsPath ->
   m (PathSizeResult PathTree)
-tryCalcSymLink =
-  tryCalcSize
-    (fmap fromIntegral . getSymLinkSize)
+tryCalcSymLink fp = tryCalcSize getSymLinkSize
   where
-    getSymLinkSize =
-      fmap PFiles.fileSize
-        . Posix.getSymbolicLinkStatus
-        <=< FsUtils.decodeOsToFpThrowM
+    getSymLinkSize _ = fromIntegral . PFiles.fileSize <$> Posix.getSymbolicLinkStatus fp
 {-# INLINEABLE tryCalcSymLink #-}
 
 tryCalcFile ::

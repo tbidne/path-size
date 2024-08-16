@@ -291,7 +291,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       tryAny (Posix.getPathType fp) >>= \case
         Right PathTypeFile -> Utils.tryCalcFile path
         Right PathTypeDirectory -> tryCalcDir path depth
-        Right PathTypeSymbolicLink -> Utils.tryCalcSymLink path
+        Right PathTypeSymbolicLink -> Utils.tryCalcSymLink fp path
         -- Try file for others e.g. unix named pipes
         Right PathTypeOther -> Utils.tryCalcFile path
         Left ex -> pure $ mkPathE path ex
