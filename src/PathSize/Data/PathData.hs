@@ -1,4 +1,24 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE UndecidableInstances #-}
+
+-- NOTE: For reasons I don't understand, for GHC < 9.4, we receive an error:
+--
+--  • Ignoring unusable UNPACK pragma
+--      on the second argument of ‘MkPathData’
+--  • In the definition of data constructor ‘MkPathData’
+--    In the data type declaration for ‘PathData’
+--
+-- for the unpacked Integer fields. Really it's just a warning, but it doesn't
+-- appear to have a custom warning, and is triggered by Werror on CI.
+--
+-- We __don't__ receive this warning for higher GHCs, so presumably it does
+-- what we want? Hence I don't want to remove the unpacks. It appears there is
+-- no way to silence this specific error (...sigh), so we are left with
+-- disabling Werror.
+
+#if !MIN_VERSION_base(4,18,0)
+{-# OPTIONS_GHC -Wwarn #-}
+#endif
 
 -- | Provides 'PathData' type.
 --
