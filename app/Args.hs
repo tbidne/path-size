@@ -250,7 +250,8 @@ depthParser =
         [ "The depth limit of our search. Note that we still need to fully ",
           "traverse the file system to get accurate data; this argument ",
           "merely affects what is reported i.e. any depths > d are ",
-          "implicitly included in parent directories, but not directly."
+          "implicitly included in parent directories via their size, but are ",
+          "not directly reported themselves."
         ]
 
 reverseSortParser :: Parser Bool
@@ -287,7 +288,7 @@ strategyParser =
       [ OA.value Async,
         OA.long "strategy",
         OA.short 's',
-        OA.metavar "(async|sync|pool)",
+        OA.metavar "(async | sync | pool)",
         mkHelp helpTxt
       ]
   where
@@ -299,7 +300,7 @@ strategyParser =
         other ->
           fail $
             mconcat
-              [ "Could not read strategy. Wanted one of [sync|async|pool], found: ",
+              [ "Could not read strategy. Wanted one of (sync | async | pool), found: ",
                 other
               ]
     helpTxt =
