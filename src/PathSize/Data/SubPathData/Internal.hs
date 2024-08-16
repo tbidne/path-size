@@ -36,7 +36,6 @@ import Data.Text.Lazy.Builder qualified as TLB
 import Effects.FileSystem.Utils (OsPath)
 import Effects.FileSystem.Utils qualified as FsUtils
 import GHC.Generics (Generic)
-import GHC.Natural (Natural)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (Positive (MkPositive))
@@ -49,7 +48,6 @@ import PathSize.Data.PathData
         path,
         size
       ),
-    natify,
   )
 import PathSize.Data.PathTree (PathTree, pathTreeToSeq)
 
@@ -57,7 +55,7 @@ import PathSize.Data.PathTree (PathTree, pathTreeToSeq)
 -- one element.
 --
 -- @since 0.1
-newtype SubPathData = UnsafeSubPathData (NESeq (PathData Natural))
+newtype SubPathData = UnsafeSubPathData (NESeq PathData)
   deriving stock
     ( -- | @since 0.1
       Eq,
@@ -72,7 +70,7 @@ newtype SubPathData = UnsafeSubPathData (NESeq (PathData Natural))
     )
 
 -- | @since 0.1
-instance HasField "unSubPathData" SubPathData (NESeq (PathData Natural)) where
+instance HasField "unSubPathData" SubPathData (NESeq PathData) where
   getField (UnsafeSubPathData xs) = xs
 
 -- NOTE: This is hand-written because we want to use labeled optics and the
@@ -91,8 +89,8 @@ instance
     A_Getter
     SubPathData
     SubPathData
-    (NESeq (PathData Natural))
-    (NESeq (PathData Natural))
+    (NESeq PathData)
+    (NESeq PathData)
   where
   labelOptic = to (\(UnsafeSubPathData sbd) -> sbd)
 
@@ -100,7 +98,7 @@ instance
 -- underlying 'NESeq', so it is not constant.
 --
 -- @since 0.1
-pattern MkSubPathData :: NESeq (PathData Natural) -> SubPathData
+pattern MkSubPathData :: NESeq PathData -> SubPathData
 pattern MkSubPathData sbd <- UnsafeSubPathData sbd
   where
     MkSubPathData sbd = UnsafeSubPathData (sortNESeq False sbd)
@@ -108,21 +106,21 @@ pattern MkSubPathData sbd <- UnsafeSubPathData sbd
 {-# COMPLETE MkSubPathData #-}
 
 -- | @since 0.1
-unSubPathData :: SubPathData -> NESeq (PathData Natural)
+unSubPathData :: SubPathData -> NESeq PathData
 unSubPathData (UnsafeSubPathData sbd) = sbd
 
 -- | Creates a 'SubPathData' from a 'PathTree'.
 --
 -- @since 0.1
 mkSubPathData :: Bool -> PathTree -> SubPathData
-mkSubPathData stableSort tree = UnsafeSubPathData (natify first :<|| fmap natify rest)
+mkSubPathData stableSort tree = UnsafeSubPathData (first :<|| rest)
   where
     first :<|| rest = sortSeq stableSort (pathTreeToSeq tree)
 
 -- | Returns a 'Seq' representation of 'SubPathData'.
 --
 -- @since 0.1
-subPathDataToSeq :: SubPathData -> Seq (PathData Natural)
+subPathDataToSeq :: SubPathData -> Seq PathData
 subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 
 -- NOTE: Annoyingly, this sort seems to cost quite a bit of performance over
@@ -134,21 +132,21 @@ subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortSeq :: (Ord a) => Bool -> NESeq (PathData a) -> NESeq (PathData a)
+sortSeq :: Bool -> NESeq PathData -> NESeq PathData
 sortSeq False = NESeq.sortOn pathDataSizeOrd
 sortSeq True = NESeq.sortOn pathDataSizePathOrd
 {-# INLINEABLE sortSeq #-}
 
-sortNESeq :: (Ord a) => Bool -> NESeq (PathData a) -> NESeq (PathData a)
+sortNESeq :: Bool -> NESeq PathData -> NESeq PathData
 sortNESeq False = NESeq.sortOn pathDataSizeOrd
 sortNESeq True = NESeq.sortOn pathDataSizePathOrd
 {-# INLINEABLE sortNESeq #-}
 
-pathDataSizeOrd :: PathData a -> Down a
+pathDataSizeOrd :: PathData -> Down Integer
 pathDataSizeOrd = Down . (.size)
 {-# INLINEABLE pathDataSizeOrd #-}
 
-pathDataSizePathOrd :: PathData a -> Down (a, OsPath)
+pathDataSizePathOrd :: PathData -> Down (Integer, OsPath)
 pathDataSizePathOrd = Down . \(MkPathData p s _ _) -> (s, p)
 {-# INLINEABLE pathDataSizePathOrd #-}
 
@@ -159,7 +157,7 @@ pathDataSizePathOrd = Down . \(MkPathData p s _ _) -> (s, p)
 -- @since 0.1
 takeLargestN :: (HasCallStack) => Bool -> Positive Int -> PathTree -> SubPathData
 takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
-  (first :<| rest) -> UnsafeSubPathData (natify first :<|| fmap natify rest)
+  (first :<| rest) -> UnsafeSubPathData (first :<|| rest)
   -- NOTE: Should only happen if n == 0
   _ ->
     error $
@@ -179,7 +177,7 @@ takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
 display :: Bool -> SubPathData -> Text
 display revSort = showList' . subPathDataToSeq
   where
-    showList' :: Seq (PathData Natural) -> Text
+    showList' :: Seq PathData -> Text
     showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
@@ -194,7 +192,7 @@ display revSort = showList' . subPathDataToSeq
           acc
         ]
 
-    formatSize :: Natural -> Text
+    formatSize :: Integer -> Text
     formatSize =
       Bytes.formatSized
         (MkFloatingFormatter (Just 2))

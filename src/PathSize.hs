@@ -47,7 +47,6 @@ import Effects.FileSystem.Utils (OsPath, (</>))
 import Effects.FileSystem.Utils qualified as FS.Utils
 import Effects.System.PosixCompat (MonadPosixCompat)
 import Effects.System.PosixCompat qualified as Posix
-import GHC.Natural (Natural)
 import PathSize.Data.Config
   ( Config
       ( MkConfig,
@@ -144,7 +143,7 @@ pathSizeRecursive ::
     MonadPosixCompat m
   ) =>
   OsPath ->
-  m (PathSizeResult Natural)
+  m (PathSizeResult Integer)
 pathSizeRecursive = pathSizeRecursiveConfig cfg
   where
     cfg =
@@ -172,7 +171,7 @@ pathSizeRecursiveConfig ::
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult Natural)
+  m (PathSizeResult Integer)
 pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
   where
     getSize (UnsafeSubPathData (pd :<|| _)) = pd.size

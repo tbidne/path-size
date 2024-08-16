@@ -23,7 +23,6 @@ import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
 import Effects.FileSystem.Utils qualified as FsUtils
 import Effects.System.PosixCompat (MonadPosixCompat)
-import GHC.Num.Natural (Natural)
 import PathSize
   ( PathData (MkPathData),
     PathE (MkPathE),
@@ -88,7 +87,7 @@ tests =
           mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0
         ]
 
-mkPathData :: String -> a -> a -> a -> PathData a
+mkPathData :: String -> Integer -> Integer -> Integer -> PathData
 mkPathData p size numFiles numDirectories =
   case FsUtils.encodeFpToOs p of
     Left ex -> error $ "Error creating OsPath in func test: " ++ displayException ex
@@ -382,7 +381,7 @@ assertLists [] ys@(_ : _) = assertFailure $ "Empty expected but non-empty result
 assertLists xs@(_ : _) [] = assertFailure $ "Empty results but non-empty expected: " <> show xs
 assertLists (x : xs) (y : ys) = (x @=? y) *> assertLists xs ys
 
-toSubPathData :: [PathData Natural] -> SubPathData
+toSubPathData :: [PathData] -> SubPathData
 toSubPathData [] = error "Functional.PathSize.toSubPathData: empty list!"
 toSubPathData (x : xs) = UnsafeSubPathData $ x :<|| Seq.fromList xs
 
