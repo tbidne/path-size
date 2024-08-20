@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -- | @since 0.1
 module PathSize
   ( -- * Types
@@ -20,7 +22,6 @@ module PathSize
   )
 where
 
-import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
@@ -33,20 +34,9 @@ import Effects.Exception
     MonadCatch,
     tryAny,
   )
-import Effects.FileSystem.PathReader
-  ( MonadPathReader,
-    PathType
-      ( PathTypeDirectory,
-        PathTypeFile,
-        PathTypeOther,
-        PathTypeSymbolicLink
-      ),
-  )
+import Effects.FileSystem.OsPath (OsPath, (</>))
+import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.Utils (OsPath, (</>))
-import Effects.FileSystem.Utils qualified as FS.Utils
-import Effects.System.PosixCompat (MonadPosixCompat)
-import Effects.System.PosixCompat qualified as Posix
 import PathSize.Data.Config
   ( Config
       ( MkConfig,
@@ -84,8 +74,10 @@ import PathSize.Data.PathTree qualified as PathTree
 import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Data.SubPathData.Internal (SubPathData (UnsafeSubPathData))
 import PathSize.Exception (PathE (MkPathE))
+import PathSize.Utils (MonadPosixC)
 import PathSize.Utils qualified as Utils
 import System.OsPath qualified as FP
+import System.PosixCompat.Files qualified as PCompat.Files
 
 {- HLINT ignore "Redundant bracket" -}
 
@@ -97,7 +89,7 @@ findLargestPaths ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixC m
   ) =>
   -- | Configuration.
   Config ->
@@ -113,8 +105,8 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
       AsyncPool -> pathDataRecursiveAsyncPool
     takeLargestN =
       maybe
-        (SPD.mkSubPathData $ cfg.stableSort)
-        (SPD.takeLargestN $ cfg.stableSort)
+        (SPD.mkSubPathData cfg.stableSort)
+        (SPD.takeLargestN cfg.stableSort)
         (cfg.numPaths)
 {-# INLINEABLE findLargestPaths #-}
 
@@ -140,7 +132,7 @@ pathSizeRecursive ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixC m
   ) =>
   OsPath ->
   m (PathSizeResult Integer)
@@ -167,7 +159,7 @@ pathSizeRecursiveConfig ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixC m
   ) =>
   Config ->
   OsPath ->
@@ -182,7 +174,11 @@ pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
 --
 -- @since 0.1
 pathDataRecursiveSync ::
-  (HasCallStack, MonadCatch m, MonadPathReader m, MonadPosixCompat m) =>
+  ( HasCallStack,
+    MonadCatch m,
+    MonadPathReader m,
+    MonadPosixC m
+  ) =>
   Config ->
   OsPath ->
   m (PathSizeResult PathTree)
@@ -198,7 +194,7 @@ pathDataRecursiveAsync ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixC m
   ) =>
   Config ->
   OsPath ->
@@ -214,7 +210,7 @@ pathDataRecursiveAsyncPool ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixC m
   ) =>
   Config ->
   OsPath ->
@@ -226,12 +222,13 @@ pathDataRecursiveAsyncPool = pathDataRecursive Async.pooledMapConcurrently
 -- The searching is performed via the parameter traversal.
 --
 -- @since 0.1
+{-# INLINEABLE pathDataRecursive #-}
 pathDataRecursive ::
   forall m.
   ( HasCallStack,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixCompat m
+    MonadPosixC m
   ) =>
   -- | Traversal function.
   (forall a b t. (HasCallStack, Traversable t) => (a -> m b) -> t a -> m (t b)) ->
@@ -243,6 +240,7 @@ pathDataRecursive ::
 pathDataRecursive traverseFn cfg = tryGo 0
   where
     excluded = cfg.exclude
+    -- TODO: Investigate if making this const when the set is empty is faster.
     skipExcluded p = HSet.member p excluded
 
     -- NOTE: [Directory sizes]
@@ -270,33 +268,44 @@ pathDataRecursive traverseFn cfg = tryGo 0
     -- Base recursive function. If the path is determined to be a symlink or
     -- file, calculates the size. If it is a directory, we recursively call
     -- tryGo on all subpaths.
+    {-# INLINEABLE tryGo #-}
     tryGo ::
       (HasCallStack) =>
       Word16 ->
       OsPath ->
       m (PathSizeResult PathTree)
-    tryGo !depth !path = do
-      fp <- FS.Utils.decodeOsToFpThrowM path
-      -- NOTE: Need to handle symlinks separately so that we:
-      --   a. Do not chase.
-      --   b. Ensure we call the right size function (getFileSize
-      --      errors on dangling symlinks since it operates on the target).
-      --
-      -- It is tempting to use RDir.getPathType path here instead of making the
-      -- doesXExist calls manually, but the former has worse performance
-      -- as it also performs doesFileExist, whereas we just assume that any
-      -- paths that make it through are files. At least for now this seems
-      -- to work fine, and the extra call costs performance.
-      tryAny (Posix.getPathType fp) >>= \case
-        Right PathTypeFile -> Utils.tryCalcFile path
-        Right PathTypeDirectory -> tryCalcDir path depth
-        Right PathTypeSymbolicLink -> Utils.tryCalcSymLink fp path
-        -- Try file for others e.g. unix named pipes
-        Right PathTypeOther -> Utils.tryCalcFile path
+    tryGo !depth !path =
+      tryAny (Utils.getFileStatus path) >>= \case
         Left ex -> pure $ mkPathE path ex
+        Right stats -> do
+          let size = fromIntegral $ PCompat.Files.fileSize stats
+          -- Treat all non-directories identically. getFileStatus already
+          -- handles symbolic links for us (by using getSymbolicLinkStatus),
+          -- There are still other file types e.g. named pipes, but I see no
+          -- reason to differentiate here i.e. the only choice we have to make
+          -- is directory vs. non-directory.
+          if PCompat.Files.isDirectory stats
+            then tryCalcDir size path depth
+            else
+              pure $
+                PathSizeSuccess $
+                  PathTree.singleton $
+                    MkPathData
+                      { path,
+                        size,
+                        numFiles = 1,
+                        numDirectories = 0
+                      }
 
-    tryCalcDir :: (HasCallStack) => OsPath -> Word16 -> m (PathSizeResult PathTree)
-    tryCalcDir path depth =
+    {-# INLINEABLE tryCalcDir #-}
+    tryCalcDir ::
+      ( HasCallStack
+      ) =>
+      Integer ->
+      OsPath ->
+      Word16 ->
+      m (PathSizeResult PathTree)
+    tryCalcDir !dirSize !path !depth =
       tryAny (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx
         Right subPaths -> do
@@ -304,32 +313,26 @@ pathDataRecursive traverseFn cfg = tryGo 0
             traverseFn
               (tryGo (depth + 1) . (path </>))
               (Seq.fromList subPaths)
-          -- Add the cost of the directory itself.
-          tryAny (RDir.getFileSize path) <&> \case
-            Left sizeErr -> mkPathE path sizeErr
-            Right dirSize -> do
-              let (errs, subTrees) = Utils.unzipResultSeq resultSubTrees
-                  (# !subSize, !numFiles, !subDirs #) = PathTree.sumTrees subTrees
-                  !numDirectories = subDirs + 1
-                  -- NOTE: subSize needs to be the first param to corrrectly
-                  -- account for ignoreDirIntrinsicSize.
-                  -- See NOTE: [Directory sizes]
-                  !size = dirSizeFn subSize dirSize
-                  -- Do not report subpaths if the depth is exceeded.
-                  subTrees'
-                    | depthExceeded depth = Empty
-                    | otherwise = subTrees
-                  tree =
-                    MkPathData
-                      { path,
-                        size,
-                        numFiles,
-                        numDirectories
-                      }
-                      :^| subTrees'
-              case errs of
-                Empty -> PathSizeSuccess tree
-                (e :<| es) -> PathSizePartial (e :<|| es) tree
-    {-# INLINEABLE tryGo #-}
-    {-# INLINEABLE tryCalcDir #-}
-{-# INLINEABLE pathDataRecursive #-}
+
+          let (errs, subTrees) = Utils.unzipResultSeq resultSubTrees
+              (# !subSize, !numFiles, !subDirs #) = PathTree.sumTrees subTrees
+              !numDirectories = subDirs + 1
+              -- NOTE: subSize needs to be the first param to corrrectly
+              -- account for ignoreDirIntrinsicSize.
+              -- See NOTE: [Directory sizes]
+              !size = dirSizeFn subSize dirSize
+              -- Do not report subpaths if the depth is exceeded.
+              subTrees'
+                | depthExceeded depth = Empty
+                | otherwise = subTrees
+              tree =
+                MkPathData
+                  { path,
+                    size,
+                    numFiles,
+                    numDirectories
+                  }
+                  :^| subTrees'
+          pure $ case errs of
+            Empty -> PathSizeSuccess tree
+            (e :<| es) -> PathSizePartial (e :<|| es) tree

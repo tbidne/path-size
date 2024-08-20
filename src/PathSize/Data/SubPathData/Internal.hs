@@ -33,8 +33,8 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
-import Effects.FileSystem.Utils (OsPath)
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effects.FileSystem.OsPath (OsPath)
+import Effects.FileSystem.OsPath qualified as FS.OsPath
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
@@ -181,7 +181,8 @@ display revSort = showList' . subPathDataToSeq
     showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
-        [ TLB.fromString $ FsUtils.decodeOsToFpShow path,
+        [ -- TODO: Can we do better (at least on unix)?
+          TLB.fromString $ FS.OsPath.decodeShow path,
           ": ",
           TLB.fromLazyText $ TL.fromStrict $ formatSize size,
           ", Directories: ",

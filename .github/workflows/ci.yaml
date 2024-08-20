@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - unix
 
   pull_request:
     branches:
@@ -38,13 +39,22 @@ jobs:
         run: cabal configure --enable-tests --enable-benchmarks --ghc-options -Werror
 
       - name: Compile
-        run: cabal build
+        run: cabal build path-size:exe:path-size
 
       - name: Unit Tests
         run: cabal test unit --test-options '--hedgehog-tests 100000'
 
       - name: Functional Tests
+        id: functional
         run: cabal test functional
+
+      - uses: actions/upload-artifact@v3
+        name: CLI Tests Upload
+        if: ${{ failure() && steps.functional.conclusion == 'failure' }}
+        with:
+          name: functional-tests-artifacts
+          path: |
+            test/functional/goldens/*
 
       # Only benchmark on ubuntu to reduce maintenance burden as other
       # benchmarks are not really actionable.

@@ -77,10 +77,12 @@
                 "effects-async"
                 "effects-exceptions"
                 "effects-fs"
+                "effects-fs-utils"
                 "effects-ioref"
                 "effects-optparse"
                 "effects-stm"
                 "effects-thread"
+                "effects-unix"
                 "effects-unix-compat"
               ];
           };

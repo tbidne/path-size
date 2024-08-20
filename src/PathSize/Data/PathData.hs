@@ -29,7 +29,7 @@ module PathSize.Data.PathData
 where
 
 import Control.DeepSeq (NFData)
-import Effects.FileSystem.Utils (OsPath)
+import Effects.FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)
 

@@ -5,6 +5,7 @@ module Main (main) where
 
 import Functional.PathSize qualified as PathSize
 import Test.Tasty qualified as Tasty
+import Test.Tasty.Golden (DeleteOutputFile (OnPass))
 
 -- | Runs functional tests.
 --
@@ -12,7 +13,8 @@ import Test.Tasty qualified as Tasty
 main :: IO ()
 main =
   Tasty.defaultMain $
-    Tasty.testGroup
-      "Functional Tests"
-      [ PathSize.tests
-      ]
+    Tasty.localOption OnPass $
+      Tasty.testGroup
+        "Functional Tests"
+        [ PathSize.tests
+        ]

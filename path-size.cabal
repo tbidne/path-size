@@ -22,6 +22,16 @@ source-repository head
   type:     git
   location: https://github.com/tbidne/path-size
 
+-- TODO: [OsString upgrade]
+--
+-- Once we can build with nix and filepath >= 1.5 (GHC 9.10+), unconditionally
+-- require filepath >= 1.5. Remove the os-string flag and corresponding cpp.
+
+flag os-string
+  description: Use the new os-string package
+  default:     False
+  manual:      False
+
 common common-lang
   default-extensions:
     DataKinds
@@ -40,6 +50,18 @@ common common-lang
     PatternSynonyms
     TypeFamilies
     UnboxedTuples
+
+  if os(windows)
+    cpp-options: -DWINDOWS
+
+  elif os(osx)
+    cpp-options: -DOSX -DPOSIX
+
+  else
+    cpp-options: -DLINUX -DPOSIX
+
+  if flag(os-string)
+    cpp-options: -DOS_STRING
 
   default-language:   GHC2021
 
@@ -63,8 +85,6 @@ library
     , effects-async         ^>=0.1
     , effects-exceptions    ^>=0.1
     , effects-fs            ^>=0.1
-    , effects-unix-compat   ^>=0.1
-    , filepath              >=1.4.2.1   && <1.6
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , si-bytes              ^>=0.1
@@ -72,6 +92,24 @@ library
     , text                  >=1.2.3.2   && <2.2
     , unix-compat           >=0.6       && <0.8
     , unordered-containers  ^>=0.2.14.0
+
+  if !os(windows)
+    -- See TODO: [OsString upgrade]
+    if flag(os-string)
+      build-depends:
+        , effects-unix  ^>=0.1
+        , filepath      >=1.5.2.0 && <1.6
+        , os-string     ^>=2.0.0
+
+    else
+      build-depends:
+        , effects-unix  ^>=0.1
+        , filepath      >=1.4.2.1 && <1.5
+
+  else
+    build-depends:
+      , effects-unix-compat  ^>=0.1
+      , filepath             >=1.4.2.1 && <1.6
 
   hs-source-dirs:  src
 
@@ -85,7 +123,7 @@ executable path-size
   autogen-modules: Paths_path_size
   build-depends:
     , base
-    , effects-fs
+    , effects-fs-utils      ^>=0.1
     , effects-optparse      ^>=0.1
     , optparse-applicative  >=0.16.1.0 && <0.19
     , path-size
@@ -115,11 +153,11 @@ test-suite unit
   other-modules:  Unit.PathSize.Utils
   build-depends:
     , base
-    , effects-fs
-    , hedgehog        >=1.0.2   && <1.5
+    , effects-fs-utils
+    , hedgehog          >=1.0.2   && <1.5
     , path-size
-    , tasty           >=1.1.0.3 && <1.6
-    , tasty-hedgehog  >=1.2.0.0 && <1.5
+    , tasty             >=1.1.0.3 && <1.6
+    , tasty-hedgehog    >=1.2.0.0 && <1.5
 
   hs-source-dirs: test/unit
   ghc-options:    -threaded -with-rtsopts=-N
@@ -128,20 +166,36 @@ test-suite functional
   import:         common-lang
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
-  other-modules:  Functional.PathSize
+  other-modules:
+    Functional.PathSize
+    GoldenParams
+
   build-depends:
     , base
-    , containers
     , effects-async
     , effects-exceptions
     , effects-fs
-    , effects-unix-compat
     , nonempty-containers
     , path-size
     , tasty
-    , tasty-hunit           >=0.9 && <0.11
+    , tasty-golden          ^>=2.3.1.1
     , text
     , unordered-containers
+
+  if !os(windows)
+    -- See TODO: [OsString upgrade]
+    if flag(os-string)
+      build-depends:
+        , effects-unix
+        , os-string
+
+    else
+      build-depends:
+        , effects-unix
+        , filepath
+
+  else
+    build-depends: effects-unix-compat
 
   hs-source-dirs: test/functional
   ghc-options:    -threaded -with-rtsopts=-N

@@ -7,6 +7,7 @@
 module PathSize.Data.PathSizeResult
   ( PathSizeResult (..),
     mkPathE,
+    mkPathEString,
     _PathSizeSuccess,
     _PathSizePartial,
     _PathSizeFailure,
@@ -18,7 +19,7 @@ import Control.Exception (Exception)
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Sequence.NonEmpty qualified as NESeq
 import Effects.Exception qualified as Ex
-import Effects.FileSystem.Utils (OsPath)
+import Effects.FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 import Optics.Core (Prism', prism)
 import PathSize.Exception (PathE (MkPathE))
@@ -92,7 +93,7 @@ _PathSizeFailure =
 
 -- | @since 0.1
 mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
-mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayFn
+mkPathE path = mkPathEString path . displayFn
   where
     displayFn =
 #if MIN_VERSION_base(4, 20, 0)
@@ -102,3 +103,6 @@ mkPathE path = PathSizeFailure . NESeq.singleton . MkPathE path . displayFn
 #endif
 
 {- ORMOLU_ENABLE -}
+
+mkPathEString :: OsPath -> String -> PathSizeResult a
+mkPathEString path = PathSizeFailure . NESeq.singleton . MkPathE path

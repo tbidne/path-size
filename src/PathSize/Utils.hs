@@ -4,47 +4,52 @@
 --
 -- @since 0.1
 module PathSize.Utils
-  ( tryCalcSymLink,
-    tryCalcFile,
-    unzipResultSeq,
+  ( -- * Windows / Unix compat
+    MonadPosixC,
     hidden,
+    getFileStatus,
+
+    -- * Misc
+    unzipResultSeq,
   )
 where
 
 #if !MIN_VERSION_base(4, 20, 0)
 import Data.Foldable (foldl')
 #endif
-import Data.Functor ((<&>))
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
-import Effects.Exception (HasCallStack, MonadCatch, tryAny)
-import Effects.FileSystem.PathReader (MonadPathReader)
-import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.Utils (OsPath)
-import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.PosixCompat (MonadPosixCompat)
-import Effects.System.PosixCompat qualified as Posix
-import PathSize.Data.PathData
-  ( PathData
-      ( MkPathData,
-        numDirectories,
-        numFiles,
-        path,
-        size
-      ),
-  )
+import Effects.FileSystem.OsPath (OsPath)
 import PathSize.Data.PathSizeResult
   ( PathSizeResult
       ( PathSizeFailure,
         PathSizePartial,
         PathSizeSuccess
       ),
-    mkPathE,
   )
 import PathSize.Data.PathTree (PathTree)
-import PathSize.Data.PathTree qualified as PathTree
 import PathSize.Exception (PathE)
-import System.PosixCompat.Files qualified as PFiles
+import System.PosixCompat.Files (FileStatus)
+
+#if POSIX
+import Effects.Exception (HasCallStack)
+import Effects.System.Posix (MonadPosix)
+import Effects.System.Posix qualified as Posix
+import System.OsString.Internal.Types
+  ( OsString (getOsString),
+    PosixString(getPosixString),
+  )
+#if OS_STRING
+import System.OsString.Data.ByteString.Short qualified as Short
+#else
+import System.OsPath.Data.ByteString.Short qualified as Short
+#endif
+#else
+import Effects.Exception (HasCallStack, MonadThrow)
+import Effects.FileSystem.OsPath qualified as FS.OsPath
+import Effects.System.PosixCompat (MonadPosixCompat)
+import Effects.System.PosixCompat qualified as PosixCompat
+#endif
 
 -- | Unzips a sequence of results.
 --
@@ -62,50 +67,73 @@ unzipResultSeq = foldl' f (Empty, Empty)
 --
 -- @since 0.1
 hidden :: OsPath -> Bool
-hidden p = case FsUtils.decodeOsToFp p of
-  Right ('.' : '/' : _) -> False
-  Right ('.' : _) -> True
-  _ -> False
-
-tryCalcSymLink ::
-  ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixCompat m
-  ) =>
-  FilePath ->
-  OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcSymLink fp = tryCalcSize getSymLinkSize
+#if POSIX
+hidden p = case Short.uncons2 sbs of
+  Nothing -> False
+  Just (46, 47, _) -> False -- "./"
+  Just (46, _, _) -> True   -- "."
+  Just _ -> False
   where
-    getSymLinkSize _ = fromIntegral . PFiles.fileSize <$> Posix.getSymbolicLinkStatus fp
-{-# INLINEABLE tryCalcSymLink #-}
+    sbs = p.getOsString.getPosixString
+#else
+hidden = const False
+#endif
 
-tryCalcFile ::
+{- ORMOLU_DISABLE -}
+
+-- | Alias for MonadPosix* constraints. On Posix, this is MonadPosix (unix),
+-- which allows for greater efficiency. On Windows, this is just
+-- MonadPosixCompat (unix-compat).
+type MonadPosixC m =
+#if POSIX
+  MonadPosix m
+#else
+  MonadPosixCompat m
+#endif
+
+{- ORMOLU_ENABLE -}
+
+#if POSIX
+-- | Retrieves the FileStatus for the given path.
+--
+-- @since 0.1
+getFileStatus ::
+  forall m.
   ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m
+    MonadPosixC m
   ) =>
   OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcFile = tryCalcSize RDir.getFileSize
-{-# INLINEABLE tryCalcFile #-}
-
-tryCalcSize ::
-  (HasCallStack, MonadCatch m) =>
-  ((HasCallStack) => OsPath -> m Integer) ->
+  m FileStatus
+getFileStatus path =
+  -- NOTE: On posix, we can take advantage of the fact that we know OsPath
+  -- is a PosixString. This means we can call the unix library directly,
+  -- saving expensive @OsPath -> FilePath (unix-compat)@ and
+  -- @FilePath -> PosixString (unix)@ conversions.
+  --
+  -- Because we are getting the FileStatus directly, we also have more
+  -- freedom to change the underlying size type for more potential
+  -- efficiency gains, as we have one fewer fromIntegral call. The normal
+  -- getFileSize already converts the stats to Integer, which is wasted if
+  -- that's not the type we want.
+  Posix.getSymbolicLinkStatus path.getOsString
+#else
+-- | Retrieves the FileStatus for the given path.
+--
+-- @since 0.1
+getFileStatus ::
+  forall m.
+  ( HasCallStack,
+    MonadPosixC m,
+    MonadThrow m
+  ) =>
   OsPath ->
-  m (PathSizeResult PathTree)
-tryCalcSize sizeFn path = do
-  tryAny (sizeFn path) <&> \case
-    Left ex -> mkPathE path ex
-    Right size ->
-      PathSizeSuccess $
-        PathTree.singleton $
-          MkPathData
-            { path,
-              size,
-              numFiles = 1,
-              numDirectories = 0
-            }
-{-# INLINEABLE tryCalcSize #-}
+  m FileStatus
+getFileStatus path = do
+  -- It would be nice if we could do something similar here i.e. take advantage
+  -- of the fact that we know OsPath is a WindowsString and call the relevant
+  -- function directly. Alas, the getSymbolicLinkStatus logic in PosixCompat
+  -- is bespoke, and there does not appear to be a drop-in replacement
+  -- @getSymbolicLinkStatus :: WindowsString -> IO FileStatus@ in Wind32.
+  fp <- FS.OsPath.decodeThrowM path
+  PosixCompat.getSymbolicLinkStatus fp
+#endif

@@ -1,4 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-methods #-}
 
 module Functional.PathSize
@@ -9,23 +11,40 @@ where
 import Control.Exception (Exception (displayException))
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (Foldable (toList))
-import Data.HashMap.Strict qualified as Map
 import Data.HashSet qualified as HSet
-import Data.Sequence qualified as Seq
-import Data.Sequence.NonEmpty (NESeq ((:<||)))
-import Data.Set qualified as Set
+import Data.Sequence.NonEmpty (NESeq)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
 import Effects.Exception (MonadCatch, MonadThrow, throwM, tryAny)
+import Effects.FileSystem.OsPath (OsPath, osp, ospPathSep, (</>))
+import Effects.FileSystem.OsPath qualified as FS.OsPath
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
-import Effects.FileSystem.Utils qualified as FsUtils
-import Effects.System.PosixCompat (MonadPosixCompat)
+#if POSIX
+import Effects.System.Posix (MonadPosix (getSymbolicLinkStatus))
+import System.OsString.Internal.Types (OsString (OsString))
+#else
+import Effects.System.PosixCompat (MonadPosixCompat (getSymbolicLinkStatus))
+#endif
+import Data.Functor ((<&>))
+import Data.Maybe (fromMaybe)
+import Effects.FileSystem.FileWriter (ByteString)
+import Effects.FileSystem.IO qualified as FS.IO
+import Effects.FileSystem.UTF8 qualified as FS.UTF8
+import GoldenParams
+  ( GoldenParams
+      ( MkGoldenParams,
+        mConfig,
+        runner,
+        testDesc,
+        testName,
+        testPath
+      ),
+  )
 import PathSize
-  ( PathData (MkPathData),
-    PathE (MkPathE),
+  ( PathE,
     PathSizeResult (PathSizeFailure, PathSizePartial, PathSizeSuccess),
     Strategy (Sync),
   )
@@ -43,12 +62,9 @@ import PathSize.Data.Config
         strategy
       ),
   )
-import PathSize.Data.SubPathData.Internal
-  ( SubPathData (UnsafeSubPathData),
-    unSubPathData,
-  )
+import PathSize.Data.SubPathData.Internal (SubPathData)
 import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.HUnit (assertFailure, testCase, (@=?))
+import Test.Tasty.Golden (goldenVsFile)
 
 tests :: TestTree
 tests =
@@ -59,190 +75,92 @@ tests =
       calculatesExcluded,
       calculatesFilesOnly,
       calculatesIgnoreDirIntrinsicSize,
-      calculatesDepthN 0 expectedD0,
-      calculatesDepthN 1 expectedD1,
-      calculatesDepthN 2 expectedD2,
-      displayTests,
+      calculatesDepthN 0,
+      calculatesDepthN 1,
+      calculatesDepthN 2,
       exceptionTests
     ]
-  where
-    expectedD0 =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6
-        ]
-    expectedD1 =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1
-        ]
-    expectedD2 =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 8206 1 2,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 4098 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0
-        ]
-
-mkPathData :: String -> Integer -> Integer -> Integer -> PathData
-mkPathData p size numFiles numDirectories =
-  case FsUtils.encodeFpToOs p of
-    Left ex -> error $ "Error creating OsPath in func test: " ++ displayException ex
-    Right path ->
-      MkPathData
-        { path,
-          size,
-          numFiles,
-          numDirectories
-        }
-
-mkPathE :: String -> String -> PathE
-mkPathE p err =
-  case FsUtils.encodeFpToOs p of
-    Left ex -> error $ "Error creating PathE in func test: " ++ displayException ex
-    Right path -> MkPathE path err
 
 calculatesSizes :: TestTree
-calculatesSizes = testCase "Calculates sizes correctly" $ do
-  PathSizeSuccess result <- runTest baseConfig successTestDir
-  assertSubPathData expected result
+calculatesSizes = testGoldenParams params
   where
-    expected =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 24601 4 6,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 8206 1 2,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 4110 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 4098 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0
-        ]
+    params =
+      MkGoldenParams
+        { mConfig = Nothing,
+          testDesc = "Calculates sizes correctly",
+          testName = [osp|calculatesSizes|],
+          testPath = successTestDir,
+          runner = runTest
+        }
 
 calculatesAll :: TestTree
-calculatesAll = testCase "Includes hidden files" $ do
-  PathSizeSuccess result <- runTest cfg successTestDir
-  assertSubPathData expected result
+calculatesAll = testGoldenParams params
   where
+    params =
+      MkGoldenParams
+        { mConfig = Just cfg,
+          testDesc = "Includes hidden files",
+          testName = [osp|calculatesAll|],
+          testPath = successTestDir,
+          runner = runTest
+        }
+
     cfg = baseConfig {searchAll = True}
-    expected =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 28726 6 7,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16400 2 4,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 8206 1 2,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden") 4113 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 4110 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4105 2 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 4098 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden" `cfp` "f1") 17 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".h1") 12 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0
-        ]
 
 calculatesExcluded :: TestTree
-calculatesExcluded = testCase "Excludes paths" $ do
-  excluded <- traverse FsUtils.encodeFpToOsThrowM ["d2", "f2"]
-  let cfg = baseConfig {exclude = HSet.fromList excluded}
-  PathSizeSuccess result <- runTest cfg successTestDir
-  assertSubPathData expected result
+calculatesExcluded = testGoldenParams params
   where
-    expected =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 8196 1 2,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 4100 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0
-        ]
+    params =
+      MkGoldenParams
+        { mConfig = Just cfg,
+          testDesc = "Excludes paths",
+          testName = [osp|calculatesExcluded|],
+          testPath = successTestDir,
+          runner = runTest
+        }
+
+    cfg = baseConfig {exclude = HSet.fromList [[osp|d2|], [osp|f2|]]}
 
 calculatesFilesOnly :: TestTree
-calculatesFilesOnly = testCase "Includes only files" $ do
-  PathSizeSuccess result <- runTest cfg successTestDir
-  assertSubPathData expected result
+calculatesFilesOnly = testGoldenParams params
   where
+    params =
+      MkGoldenParams
+        { mConfig = Just cfg,
+          testDesc = "Includes only files",
+          testName = [osp|calculatesFilesOnly|],
+          testPath = successTestDir,
+          runner = runTest
+        }
     cfg = baseConfig {filesOnly = True}
-    expected =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 0 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 0 1 2,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 0 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 0 2 4,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 0 2 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 0 4 6
-        ]
 
 calculatesIgnoreDirIntrinsicSize :: TestTree
-calculatesIgnoreDirIntrinsicSize = testCase "Ignores dir intrinsic size" $ do
-  PathSizeSuccess result <- runTest cfg successTestDir
-  assertSubPathData expected result
+calculatesIgnoreDirIntrinsicSize = testGoldenParams params
   where
+    params =
+      MkGoldenParams
+        { mConfig = Just cfg,
+          testDesc = "Ignores dir intrinsic size",
+          testName = [osp|calculatesIgnoreDirIntrinsicSize|],
+          testPath = successTestDir,
+          runner = runTest
+        }
+
     cfg = baseConfig {ignoreDirIntrinsicSize = True}
-    expected =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success") 25 4 6,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") 16 2 4,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") 14 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") 14 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") 14 1 2,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") 9 2 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") 5 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") 4 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") 2 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") 2 1 1
-        ]
 
-calculatesDepthN :: Word16 -> SubPathData -> TestTree
-calculatesDepthN n expected = testCase ("Calculates depth = " <> show n) $ do
-  PathSizeSuccess result <- runTest cfg successTestDir
-  assertSubPathData expected result
+calculatesDepthN :: Word16 -> TestTree
+calculatesDepthN n = testGoldenParams params
   where
+    params =
+      MkGoldenParams
+        { mConfig = Just cfg,
+          testDesc = "Calculates depth = " <> show n,
+          testName = [osp|calculatesDepth_|] <> FS.OsPath.unsafeEncode (show n),
+          testPath = successTestDir,
+          runner = runTest
+        }
+
     cfg = baseConfig {maxDepth = Just n}
-
-displayTests :: TestTree
-displayTests =
-  testGroup
-    "Display"
-    [ displays,
-      displaysReverse
-    ]
-
-displays :: TestTree
-displays = testCase "Displays correctly" $ do
-  PathSizeSuccess result <- runTest baseConfig successTestDir
-  expected @=? PathSize.display False result
-  where
-    expected = T.unlines displayResults
-
-displaysReverse :: TestTree
-displaysReverse = testCase "Displays reverse correctly" $ do
-  PathSizeSuccess result <- runTest baseConfig successTestDir
-  expected @=? PathSize.display True result
-  where
-    expected = T.unlines $ reverse displayResults
-
-displayResults :: [Text]
-displayResults =
-  [ T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success") <> ": 24.60K, Directories: 6, Files: 4",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2") <> ": 16.40K, Directories: 4, Files: 2",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2") <> ": 8.21K, Directories: 2, Files: 1",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1") <> ": 4.11K, Directories: 1, Files: 1",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1") <> ": 4.10K, Directories: 1, Files: 2",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1") <> ": 4.10K, Directories: 1, Files: 1",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1") <> ": 14.00B, Directories: 0, Files: 1",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2") <> ": 5.00B, Directories: 0, Files: 1",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1") <> ": 4.00B, Directories: 0, Files: 1",
-    T.pack ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1") <> ": 2.00B, Directories: 0, Files: 1"
-  ]
 
 exceptionTests :: TestTree
 exceptionTests =
@@ -253,31 +171,28 @@ exceptionTests =
     ]
 
 testsPartial :: TestTree
-testsPartial = testCase "Partial success" $ do
-  PathSizePartial errs result <- runTestNoCatch baseConfig partialTestDir
-  assertSubPathData expectedResults result
-  assertErrs expectedErrs errs
+testsPartial = testGoldenParams params
   where
-    expectedResults =
-      toSubPathData
-        [ mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial") 8199 2 2,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1") 4099 1 1,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "f1") 4 1 0,
-          mkPathData ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "good") 3 1 0
-        ]
-    expectedErrs =
-      [ mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-dir-err") "dir err",
-        mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-sym-link-err") "sym link err",
-        mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "size-err") "bad size"
-      ]
+    params =
+      MkGoldenParams
+        { mConfig = Nothing,
+          testDesc = "Partial success",
+          testName = [osp|testsPartial|],
+          testPath = partialTestDir,
+          runner = runTest
+        }
 
 testsFailure :: TestTree
-testsFailure = testCase "Failure" $ do
-  PathSizeFailure errs <- runTestNoCatch baseConfig failureTestDir
-  assertErrs expectedErrs errs
+testsFailure = testGoldenParams params
   where
-    expectedErrs =
-      [mkPathE ("test" `cfp` "functional" `cfp` "data" `cfp` "failure") "does not exist"]
+    params =
+      MkGoldenParams
+        { mConfig = Nothing,
+          testDesc = "Failure",
+          testName = [osp|testsFailure|],
+          testPath = failureTestDir,
+          runner = runTest
+        }
 
 newtype FuncIO a = MkFuncIO (IO a)
   deriving
@@ -287,10 +202,35 @@ newtype FuncIO a = MkFuncIO (IO a)
       MonadAsync,
       MonadCatch,
       MonadIO,
-      MonadPosixCompat,
       MonadThrow
     )
     via IO
+
+#if POSIX
+
+instance MonadPosix FuncIO where
+  getSymbolicLinkStatus path = case pathToErr (OsString path) of
+    Just err -> throwM err
+    Nothing -> liftIO $ getSymbolicLinkStatus path
+
+#else
+
+instance MonadPosixCompat FuncIO where
+  getSymbolicLinkStatus path = case pathToErr (FS.OsPath.unsafeEncode path) of
+    Just err -> throwM err
+    Nothing -> liftIO $ getSymbolicLinkStatus path
+
+#endif
+
+pathToErr :: OsPath -> Maybe E
+pathToErr path
+  | path == basePath </> [ospPathSep|partial/d1/is-dir-err|] = Just $ MkE "dir err"
+  | path == basePath </> [ospPathSep|partial/size-err|] = Just $ MkE "bad size"
+  | path == basePath </> [ospPathSep|failure|] = Just $ MkE "does not exist"
+  | path == basePath </> [ospPathSep|partial/d1/is-sym-link-err|] = Just $ MkE "sym link err"
+  | otherwise = Nothing
+  where
+    basePath = [ospPathSep|test/functional/data|]
 
 newtype E = MkE String
   deriving stock (Show)
@@ -301,98 +241,58 @@ instance Exception E where
 instance MonadPathReader FuncIO where
   listDirectory = liftIO . RDir.listDirectory
 
-  doesDirectoryExist p = do
-    path <- FsUtils.decodeOsToFpThrowM p
-    if path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-dir-err"
-      then throwM $ MkE "dir err"
-      else liftIO $ RDir.doesDirectoryExist p
-
-  doesFileExist = liftIO . RDir.doesFileExist
-
-  pathIsSymbolicLink p = do
-    path <- FsUtils.decodeOsToFpThrowM p
-    if
-      | path == "test" `cfp` "functional" `cfp` "data" `cfp` "failure" -> throwM $ MkE "does not exist"
-      | path == "test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "is-sym-link-err" -> throwM $ MkE "sym link err"
-      | otherwise -> liftIO $ RDir.pathIsSymbolicLink p
-
-  getFileSize p = do
-    path <- FsUtils.decodeOsToFpThrowM p
-    case Map.lookup path mp of
-      Just m -> m
-      Nothing -> error "p"
-    where
-      mp =
-        Map.fromList
-          [ ("test" `cfp` "functional" `cfp` "data" `cfp` "partial", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "d1" `cfp` "good", pure 3),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "f1", pure 4),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial" `cfp` "size-err", throwM (MkE "bad size")),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".hidden" `cfp` "f1", pure 17),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` ".h1", pure 12),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f1", pure 4),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d1" `cfp` "f2", pure 5),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d1" `cfp` "f1", pure 2),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1", pure 4096),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "success" `cfp` "d2" `cfp` "d2" `cfp` "d1" `cfp` "f1", pure 14),
-            ("test" `cfp` "functional" `cfp` "data" `cfp` "partial", pure 4096)
-          ]
-
 runFuncIO :: FuncIO a -> IO a
 runFuncIO (MkFuncIO io) = io
 
-runTest :: Config -> FilePath -> IO (PathSizeResult SubPathData)
+testGoldenParams :: GoldenParams -> TestTree
+testGoldenParams goldenParams =
+  goldenVsFile goldenParams.testDesc goldenPath actualPath $ do
+    let config = fromMaybe baseConfig goldenParams.mConfig
+
+    result <- goldenParams.runner config goldenParams.testPath
+    writeActualFile result
+  where
+    outputPathStart =
+      FS.OsPath.unsafeDecode $
+        [ospPathSep|test/functional/goldens|] </> goldenParams.testName
+
+    actualPath = outputPathStart <> ext <> ".actual"
+    goldenPath = outputPathStart <> ext <> ".golden"
+
+    toBS :: Text -> ByteString
+    toBS = (<> "\n") . FS.UTF8.encodeUtf8
+
+    writeActualFile :: Text -> IO ()
+    writeActualFile result =
+      FS.IO.writeBinaryFileIO (FS.OsPath.unsafeEncode actualPath) (toBS result)
+
+runTest :: Config -> OsPath -> IO Text
 runTest cfg testDir = do
-  tryAny (runTestNoCatch cfg testDir) >>= \case
-    Right r@(PathSizeSuccess _) -> pure r
-    Right r@(PathSizePartial _ _) -> assertFailure (show r)
-    Right r@(PathSizeFailure _) -> assertFailure (show r)
-    Left ex -> assertFailure $ displayException ex
-
-runTestNoCatch :: Config -> FilePath -> IO (PathSizeResult SubPathData)
-runTestNoCatch cfg testDir = do
-  testDir' <- FsUtils.encodeFpToOsThrowM testDir
-  runFuncIO (PathSize.findLargestPaths cfg testDir')
-
-assertSubPathData :: SubPathData -> SubPathData -> IO ()
-assertSubPathData expected results =
-  assertLists (sbdToList expected) (sbdToList results)
+  tryAny (runTestNoCatch cfg testDir) <&> \case
+    Right (PathSizeSuccess spd) -> display spd
+    Right (PathSizePartial errs spd) -> fmtErrs errs <> "\n" <> display spd
+    Right (PathSizeFailure errs) -> fmtErrs errs
+    Left ex -> T.pack $ displayException ex
   where
-    sbdToList = toList . unSubPathData
+    display = PathSize.display False
 
-assertErrs :: [PathE] -> NESeq PathE -> IO ()
-assertErrs expected results = assertLists (zeroErrMsg <$> expected) (toList' results)
-  where
-    toList' = Set.toList . Set.fromList . fmap zeroErrMsg . toList
+    fmtErrs :: NESeq PathE -> Text
+    fmtErrs =
+      T.unlines
+        . fmap (T.pack . displayException)
+        . toList
 
-zeroErrMsg :: PathE -> PathE
-zeroErrMsg (MkPathE p _) = MkPathE p ""
+runTestNoCatch :: Config -> OsPath -> IO (PathSizeResult SubPathData)
+runTestNoCatch cfg = runFuncIO . PathSize.findLargestPaths cfg
 
-assertLists :: (Eq a, Show a) => [a] -> [a] -> IO ()
-assertLists [] [] = pure ()
-assertLists [] ys@(_ : _) = assertFailure $ "Empty expected but non-empty results: " <> show ys
-assertLists xs@(_ : _) [] = assertFailure $ "Empty results but non-empty expected: " <> show xs
-assertLists (x : xs) (y : ys) = (x @=? y) *> assertLists xs ys
+successTestDir :: OsPath
+successTestDir = [ospPathSep|test/functional/data/success|]
 
-toSubPathData :: [PathData] -> SubPathData
-toSubPathData [] = error "Functional.PathSize.toSubPathData: empty list!"
-toSubPathData (x : xs) = UnsafeSubPathData $ x :<|| Seq.fromList xs
+partialTestDir :: OsPath
+partialTestDir = [ospPathSep|test/functional/data/partial|]
 
-successTestDir :: FilePath
-successTestDir = "test" `cfp` "functional" `cfp` "data" `cfp` "success"
-
-partialTestDir :: FilePath
-partialTestDir = "test" `cfp` "functional" `cfp` "data" `cfp` "partial"
-
-failureTestDir :: FilePath
-failureTestDir = "test" `cfp` "functional" `cfp` "data" `cfp` "failure"
+failureTestDir :: OsPath
+failureTestDir = [ospPathSep|test/functional/data/failure|]
 
 baseConfig :: Config
 baseConfig =
@@ -408,6 +308,16 @@ baseConfig =
       strategy = Sync
     }
 
--- For brevity
-cfp :: FilePath -> FilePath -> FilePath
-cfp = FsUtils.combineFilePaths
+{- ORMOLU_DISABLE -}
+
+ext :: FilePath
+ext =
+#if WINDOWS
+  "_windows"
+#elif OSX
+  "_osx"
+#else
+  "_linux"
+#endif
+
+{- ORMOLU_ENABLE -}

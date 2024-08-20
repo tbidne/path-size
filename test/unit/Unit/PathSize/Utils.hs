@@ -5,8 +5,8 @@ module Unit.PathSize.Utils (tests) where
 #if !MIN_VERSION_base(4,18,0)
 import Control.Applicative (liftA2)
 #endif
-import Effects.FileSystem.Utils (OsPath)
-import Effects.FileSystem.Utils qualified as FsUtils
+import Effects.FileSystem.OsPath (OsPath)
+import Effects.FileSystem.OsPath qualified as FS.OsPath
 import Hedgehog (Gen, annotate, forAll, property)
 import Hedgehog qualified as H
 import Hedgehog.Gen qualified as Gen
@@ -28,12 +28,15 @@ testHidden :: TestTree
 testHidden = testPropertyNamed desc "testHidden" $ do
   property $ do
     p <- forAll genDotPath
-    let p' = FsUtils.decodeOsToFpDisplayEx p
+    let p' = FS.OsPath.decodeLenient p
 
     -- For debugging
     annotate p'
 
-    H.assert $ Utils.hidden p
+    -- windows is always considered unhidden
+    if isWindows
+      then H.assert $ not $ Utils.hidden p
+      else H.assert $ Utils.hidden p
   where
     desc = "Hidden dir correctly identified"
 
@@ -41,7 +44,7 @@ testNotHidden :: TestTree
 testNotHidden = testPropertyNamed desc "testNotHidden" $ do
   property $ do
     p <- forAll genNoDotPath
-    let p' = FsUtils.decodeOsToFpDisplayEx p
+    let p' = FS.OsPath.decodeLenient p
 
     -- For debugging
     annotate p'
@@ -57,7 +60,7 @@ testNotHidden = testPropertyNamed desc "testNotHidden" $ do
 -- @
 genNoDotPath :: Gen OsPath
 genNoDotPath =
-  FsUtils.unsafeEncodeFpToOs <$> genPath
+  FS.OsPath.unsafeEncode <$> genPath
   where
     genFirst = Gen.filter (/= '.') Gen.unicode
     genPath =
@@ -73,7 +76,7 @@ genNoDotPath =
 -- @
 genDotPath :: Gen OsPath
 genDotPath =
-  FsUtils.unsafeEncodeFpToOs . ('.' :) <$> genPath
+  FS.OsPath.unsafeEncode . ('.' :) <$> genPath
   where
     genFirst = Gen.filter (/= '/') Gen.unicode
     genPath =
@@ -81,3 +84,15 @@ genDotPath =
         (:)
         genFirst
         (Gen.string (Range.linear 0 18) Gen.unicode)
+
+{- ORMOLU_DISABLE -}
+
+isWindows :: Bool
+isWindows =
+#if WINDOWS
+  True
+#else
+  False
+#endif
+
+{- ORMOLU_ENABLE -}

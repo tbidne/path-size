@@ -35,14 +35,33 @@ source-repository-package
     location: https://github.com/tbidne/bounds.git
     tag: f93b202c9d154b25b42b048570cf6648451aa577
 
-source-repository-package
+-- windows cannot build effects-unix package
+if !os(windows)
+  source-repository-package
     type: git
     location: https://github.com/tbidne/monad-effects.git
-    tag: f3496c0d2606540498d6fd503e6855441ca03ee1
+    tag: 5424bf8d0a97b258f670795f223df0d9f74437ee
     subdir:
       lib/effects-async
       lib/effects-exceptions
       lib/effects-fs
+      lib/effects-fs-utils
+      lib/effects-ioref
+      lib/effects-optparse
+      lib/effects-stm
+      lib/effects-thread
+      lib/effects-unix
+      lib/effects-unix-compat
+else
+  source-repository-package
+    type: git
+    location: https://github.com/tbidne/monad-effects.git
+    tag: 5424bf8d0a97b258f670795f223df0d9f74437ee
+    subdir:
+      lib/effects-async
+      lib/effects-exceptions
+      lib/effects-fs
+      lib/effects-fs-utils
       lib/effects-ioref
       lib/effects-optparse
       lib/effects-stm

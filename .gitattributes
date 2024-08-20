@@ -2,3 +2,4 @@ bench/criterion/*csv linguist-vendored
 bench/criterion/*html linguist-vendored
 bench/tasty/*csv linguist-vendored
 bench/tasty/*svg linguist-vendored
+*.golden -text

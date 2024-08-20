@@ -15,7 +15,7 @@ import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Version (Version (versionBranch))
 import Data.Word (Word16)
-import Effects.FileSystem.Utils (OsPath)
+import Effects.FileSystem.OsPath (OsPath)
 import Effects.Optparse (osPath)
 import Numeric.Data.Positive (Positive, mkPositive)
 import Options.Applicative

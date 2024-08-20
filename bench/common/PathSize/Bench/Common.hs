@@ -27,13 +27,13 @@ import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
 import Effects.Exception (HasCallStack, addCS, throwCS)
 import Effects.FileSystem.FileWriter (ByteString, writeBinaryFile)
+import Effects.FileSystem.OsPath (OsPath, osp, (</>), (</>!))
+import Effects.FileSystem.OsPath qualified as FS.OsPath
 import Effects.FileSystem.PathReader (getTemporaryDirectory)
 import Effects.FileSystem.PathWriter
   ( createDirectoryIfMissing,
     removePathForcibly,
   )
-import Effects.FileSystem.Utils (OsPath, osp, (</>), (</>!))
-import Effects.FileSystem.Utils qualified as FsUtils
 import Numeric.Data.Positive (mkPositive)
 import PathSize
   ( Config
@@ -157,7 +157,7 @@ setup base = do
   putStrLn "*** Setup finished ***"
   pure rootDir
   where
-    files100 = FsUtils.unsafeEncodeFpToOs . show @Int <$> [1 .. 100]
+    files100 = FS.OsPath.unsafeEncode . show @Int <$> [1 .. 100]
 
 -- | Deletes directories created by 'setup'.
 --
@@ -202,7 +202,9 @@ createFileContents paths = for_ paths $
 baseConfig :: Config
 baseConfig =
   MkConfig
-    { searchAll = False,
+    { -- Want hidden check on even if there are no hidden files, so that we
+      -- benchmark the cost.
+      searchAll = True,
       maxDepth = Nothing,
       exclude = HSet.empty,
       filesOnly = False,

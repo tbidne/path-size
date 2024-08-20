@@ -8,7 +8,7 @@ where
 
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception (displayException))
-import Effects.FileSystem.Utils (OsPath)
+import Effects.FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 
 -- | Exception for a path. The second param is the reason i.e. the exceptions'
