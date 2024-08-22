@@ -33,6 +33,28 @@ import Effects.FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 import Optics.Core (A_Lens, LabelOptic (labelOptic), lensVL)
 
+-- NOTE: [Efficient Int Type]
+--
+-- Currently, sizes use the type 'Integer'. Due to the potentialy for a very
+-- large size (e.g. a gigabytes => bilions), the only appropriate types are
+-- unbounded (Integer, Natural) or 64 bits (Int64, Word64).
+--
+-- One would think Int64 would be the fastest, since:
+--
+--   1. Fixed size. Unbounded require branching.
+--   2. The underlying size function we use, unix's getFileSize returns a
+--      newtype wrapper over Int64, so theoretically this should be free. Any
+--      other type requires a fromIntegral conversion in a very tight loop.
+--
+-- Confusingly, Integer seems to be the fastest. It's possible that this is
+-- a benchmark problem, but we cannot justify a switch when the benchmarks
+-- get __worse__. Keep this in mind, maybe we can find an improvement in the
+-- future.
+--
+-- It might be worth exploring, say, Int64#, but the difficulty there is that
+-- we'd probably have to reimplement much of the sorting outselves, since
+-- all the built-in sort logic assumes Type.
+
 -- | Associates a path to its total (recursive) size in the file-system.
 -- Takes a parameter for the size, allowing us to use a more efficient
 -- temporary type (e.g. 'Integer') before finally converting to

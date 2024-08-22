@@ -282,6 +282,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       tryAny (Utils.getFileStatus path) >>= \case
         Left ex -> pure $ mkPathE path ex
         Right stats -> do
+          -- see NOTE: [Efficient Int Type]
           let size = fromIntegral $ PCompat.Files.fileSize stats
           -- Treat all non-directories identically. getFileStatus already
           -- handles symbolic links for us (by using getSymbolicLinkStatus),
