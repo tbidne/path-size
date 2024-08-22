@@ -40,20 +40,24 @@ path-size: A utility for reporting the recursive size of a directory.
 Usage: path-size [-a|--all] [-d|--depth NAT] [-e|--exclude PATHS...]
                  [-f|--files-only] [--ignore-dir-size]
                  [-n|--num-paths (NAT | all)] [-r|--reverse] [--stable]
-                 [-s|--strategy (async|sync|pool)] [-v|--version] PATH
+                 [-s|--strategy (async | sync | pool)] [-v|--version] PATH
 
   path-size allows one to find large paths on the file-system. In particular,
   the command will recursively associate a given path and all of its subpaths to
   their respective sizes.
 
 Available options:
-  -a,--all                 If enabled, searches hidden files/directories.
+  -a,--all                 If enabled, searches hidden files/directories. We
+                           only consider hidden files per the unix dot
+                           convention (e.g. .hidden_path). All files are
+                           considered unhidden on windows.
 
   -d,--depth NAT           The depth limit of our search. Note that we still
                            need to fully traverse the file system to get
                            accurate data; this argument merely affects what is
                            reported i.e. any depths > d are implicitly included
-                           in parent directories, but not directly.
+                           in parent directories via their size, but are not
+                           directly reported themselves.
 
   -e,--exclude PATHS...    Paths to skip. These must match the desired
                            directory/file name e.g. to skip /path/to/dir you
@@ -82,7 +86,7 @@ Available options:
                            be deterministic (as paths are unique), at the cost
                            of performance.
 
-  -s,--strategy (async|sync|pool)
+  -s,--strategy (async | sync | pool)
                            The search strategy is intended to improve
                            performance. The default is 'async', which uses
                            lightweight threads. The 'sync' option is a
@@ -102,7 +106,7 @@ Version: 0.1
 
 **Arg:** `-a, --all`
 
-**Description:** If enabled, searches hidden files/directories.
+**Description:** If enabled, searches hidden files/directories. We only consider hidden files per the unix dot convention (e.g. `.hidden_path`). All files are considered unhidden on windows.
 
 **Examples:**
 
@@ -162,7 +166,7 @@ $ path-size --ignore-dir-size ./
 
 **Arg:** `-n,--num-paths (NAT | all)`
 
-**Description:** The number of paths to display. Defaults to 10. Can be a natural number of the string `all`, in which case all paths are returned.
+**Description:** The number of paths to display. If unspecified, defaults to 10. The option 'all' returns everything.
 
 **Examples:**
 
@@ -200,7 +204,7 @@ $ path-size --stable ./
 
 ## Strategy
 
-**Arg:** `-s,--strategy (async|sync|pool)`
+**Arg:** `-s,--strategy (async | sync | pool)`
 
 **Description:** The search strategy is intended to improve performance. The default is `async`, which uses lightweight threads. The `sync` option is a sequential search and likely the slowest. Finally, `pool` uses an explicit thread pool for concurrency. This is potentially the fastest, though experimentation is recommended.
 
@@ -225,6 +229,8 @@ Using `ghcup`, install `cabal 2.4+` and one of:
 - `ghc 9.2`
 - `ghc 9.4`
 - `ghc 9.6`
+- `ghc 9.8`
+- `ghc 9.10`
 
 ### Build path-size
 
