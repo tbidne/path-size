@@ -196,7 +196,12 @@ allParser =
         mkHelp helpTxt
       ]
   where
-    helpTxt = "If enabled, searches hidden files/directories."
+    helpTxt =
+      mconcat
+        [ "If enabled, searches hidden files/directories. We only consider ",
+          "hidden files per the unix dot convention (e.g. .hidden_path). ",
+          "All files are considered unhidden on windows."
+        ]
 
 filesOnlyParser :: Parser Bool
 filesOnlyParser =
@@ -226,7 +231,7 @@ ignoreDirIntrinsicSizeParser =
         [ "If enabled, ignores the size of the directories themselves i.e. ",
           "a directory's size is determined by the sum of all of its subfiles, ",
           "only. The size of the directory itself (e.g. 4096 bytes on a ",
-          " typical ext4 filesystem) is ignored."
+          "typical ext4 filesystem) is ignored."
         ]
 
 depthParser :: Parser (Maybe Word16)
