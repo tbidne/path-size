@@ -97,14 +97,16 @@ library
     -- See TODO: [OsString upgrade]
     if flag(os-string)
       build-depends:
+        , bytestring    >=0.10.12.0 && <0.13
         , effects-unix  ^>=0.1
-        , filepath      >=1.5.2.0 && <1.6
+        , filepath      >=1.5.2.0   && <1.6
         , os-string     ^>=2.0.0
 
     else
       build-depends:
+        , bytestring    >=0.10.12.0 && <0.13
         , effects-unix  ^>=0.1
-        , filepath      >=1.4.2.1 && <1.5
+        , filepath      >=1.4.2.1   && <1.5
 
   else
     build-depends:

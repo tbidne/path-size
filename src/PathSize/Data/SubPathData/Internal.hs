@@ -34,7 +34,6 @@ import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import Effects.FileSystem.OsPath (OsPath)
-import Effects.FileSystem.OsPath qualified as FS.OsPath
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
@@ -50,6 +49,16 @@ import PathSize.Data.PathData
       ),
   )
 import PathSize.Data.PathTree (PathTree, pathTreeToSeq)
+#if POSIX
+import Data.ByteString.Short qualified as BS.Short
+import System.OsString.Internal.Types
+  ( OsString (getOsString),
+    PosixString(getPosixString),
+  )
+import Effects.FileSystem.UTF8 qualified as FS.UTF8
+#else
+import Effects.FileSystem.OsPath qualified as FS.OsPath
+#endif
 
 -- | A flattened and sorted representation of 'PathTree'. Contains at least
 -- one element.
@@ -181,8 +190,7 @@ display revSort = showList' . subPathDataToSeq
     showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
-        [ -- TODO: Can we do better (at least on unix)?
-          TLB.fromString $ FS.OsPath.decodeShow path,
+        [ pathToBuilder path,
           ": ",
           TLB.fromLazyText $ TL.fromStrict $ formatSize size,
           ", Directories: ",
@@ -204,3 +212,15 @@ display revSort = showList' . subPathDataToSeq
     foldSeq
       | revSort = foldl' . flip
       | otherwise = foldr
+
+pathToBuilder :: OsPath -> TLB.Builder
+
+#if POSIX
+pathToBuilder =
+  TLB.fromText
+    . FS.UTF8.decodeUtf8Lenient
+    . BS.Short.fromShort
+    . (\p -> p.getOsString.getPosixString)
+#else
+pathToBuilder = TLB.fromString . FS.OsPath.decodeLenient
+#endif
