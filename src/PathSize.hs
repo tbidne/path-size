@@ -240,8 +240,12 @@ pathDataRecursive ::
 pathDataRecursive traverseFn cfg = tryGo 0
   where
     excluded = cfg.exclude
-    -- TODO: Investigate if making this const when the set is empty is faster.
-    skipExcluded p = HSet.member p excluded
+    -- Const False function for faster perf when not excluding any
+    -- paths.
+    skipExcluded =
+      if HSet.null excluded
+        then const False
+        else (`HSet.member` excluded)
 
     -- NOTE: [Directory sizes]
     dirSizeFn
