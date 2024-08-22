@@ -64,7 +64,7 @@ jobs:
         id: bench-tasty
         run: |
           cabal bench bench-tasty --benchmark-options '
-            +RTS -T -RTS
+            +RTS -T -RTS -t100
             --csv bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             --svg bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
             --baseline bench/tasty/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
