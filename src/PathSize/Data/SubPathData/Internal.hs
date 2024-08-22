@@ -124,7 +124,7 @@ unSubPathData (UnsafeSubPathData sbd) = sbd
 mkSubPathData :: Bool -> PathTree -> SubPathData
 mkSubPathData stableSort tree = UnsafeSubPathData (first :<|| rest)
   where
-    first :<|| rest = sortSeq stableSort (pathTreeToSeq tree)
+    first :<|| rest = sortNESeq stableSort (pathTreeToSeq tree)
 
 -- | Returns a 'Seq' representation of 'SubPathData'.
 --
@@ -141,11 +141,6 @@ subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 -- | Sorts the path size.
 --
 -- @since 0.1
-sortSeq :: Bool -> NESeq PathData -> NESeq PathData
-sortSeq False = NESeq.sortOn pathDataSizeOrd
-sortSeq True = NESeq.sortOn pathDataSizePathOrd
-{-# INLINEABLE sortSeq #-}
-
 sortNESeq :: Bool -> NESeq PathData -> NESeq PathData
 sortNESeq False = NESeq.sortOn pathDataSizeOrd
 sortNESeq True = NESeq.sortOn pathDataSizePathOrd
@@ -178,7 +173,7 @@ takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
           show tree
         ]
   where
-    sorted = sortSeq stableSort (pathTreeToSeq tree)
+    sorted = sortNESeq stableSort (pathTreeToSeq tree)
 
 -- | Displays the data.
 --
