@@ -240,12 +240,9 @@ pathDataRecursive ::
 pathDataRecursive traverseFn cfg = tryGo 0
   where
     excluded = cfg.exclude
-    -- Const False function for faster perf when not excluding any
-    -- paths.
-    skipExcluded =
-      if HSet.null excluded
-        then const False
-        else (`HSet.member` excluded)
+
+    skipExcluded :: OsPath -> Bool
+    skipExcluded = (`HSet.member` excluded)
 
     -- NOTE: [Directory sizes]
     dirSizeFn
@@ -264,10 +261,15 @@ pathDataRecursive traverseFn cfg = tryGo 0
       Nothing -> const False
       Just d -> (>= d)
 
-    shouldSkip =
-      if cfg.searchAll
-        then skipExcluded . FP.takeFileName
-        else (\p -> Utils.hidden p || skipExcluded p) . FP.takeFileName
+    shouldSkip = case (cfg.searchAll, HSet.null excluded) of
+      -- 1. Search all and no excluded paths: no checks
+      (True, True) -> const False
+      -- 2. No search all: check hidden
+      (False, True) -> Utils.hidden . FP.takeFileName
+      -- 3. Some excluded paths: check excluded
+      (True, False) -> skipExcluded . FP.takeFileName
+      -- 4. No search all and some excluded paths: check hidden and excluded
+      (False, False) -> (\p -> Utils.hidden p || skipExcluded p) . FP.takeFileName
 
     -- Base recursive function. If the path is determined to be a symlink or
     -- file, calculates the size. If it is a directory, we recursively call
