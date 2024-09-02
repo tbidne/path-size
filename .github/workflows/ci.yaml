@@ -23,9 +23,9 @@ jobs:
           - "9.8.2"
           - "9.10.1"
         os:
-        - "macos-latest"
-        - "ubuntu-latest"
-        - "windows-latest"
+          - "macos-latest"
+          - "ubuntu-latest"
+          - "windows-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -70,8 +70,13 @@ jobs:
             --fail-if-slower 30
             --fail-if-faster 30'
 
+      # Only run criterion benchmarks when bench-tasty fails. We need the
+      # failure() condition to override the implicit success() condition, that
+      # only runs the job when the "overall status" is success (i.e. not
+      # previous jobs have failed).
+
       - name: Benchmark Criterion
-        if: ${{ matrix.os == 'ubuntu-latest' && (failure() || success()) }}
+        if: ${{ failure() && steps.bench-tasty.conclusion == 'failure' && matrix.os == 'ubuntu-latest' }}
         id: bench-criterion
         run: |
           cabal bench bench-criterion --benchmark-options '
@@ -92,8 +97,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - "macos-latest"
-        - "ubuntu-latest"
+          - "macos-latest"
+          - "ubuntu-latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
