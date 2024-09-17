@@ -12,6 +12,7 @@ import Control.Exception (Exception (displayException))
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (Foldable (toList))
 import Data.HashSet qualified as HSet
+import Data.List qualified as L
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -280,6 +281,9 @@ runTest cfg testDir = do
     fmtErrs =
       T.unlines
         . fmap (T.pack . displayException)
+        -- sorted because error order is non-deterministic (consequence of
+        -- subpath non-determinism)
+        . L.sort
         . toList
 
 runTestNoCatch :: Config -> OsPath -> IO (PathSizeResult SubPathData)
