@@ -1,6 +1,6 @@
-Path: "test/functional/data/partial/d1/is-dir-err". Error: dir err
-Path: "test/functional/data/partial/d1/is-sym-link-err". Error: sym link err
-Path: "test/functional/data/partial/size-err". Error: bad size
+Error for path 'test/functional/data/partial/d1/is-dir-err': dir err
+Error for path 'test/functional/data/partial/d1/is-sym-link-err': sym link err
+Error for path 'test/functional/data/partial/size-err': bad size
 
 test/functional/data/partial: 327.00B, Directories: 2, Files: 2
 test/functional/data/partial/d1: 163.00B, Directories: 1, Files: 1

@@ -1,2 +1,2 @@
-Path: "test\\functional\\data\\failure". Error: does not exist
+Error for path 'test\functional\data\failure': does not exist
 
