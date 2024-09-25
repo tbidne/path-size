@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Provides 'SubPathData' type.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">PathSize.Data.SubPathData</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Type</span></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#SubPathData"><span class="hs-identifier">SubPathData</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#MkSubPathData"><span class="hs-identifier">MkSubPathData</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Construction</span></span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#mkSubPathData"><span class="hs-identifier">mkSubPathData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#takeLargestN"><span class="hs-identifier">takeLargestN</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Elimination</span></span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#unSubPathData"><span class="hs-identifier">unSubPathData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Operations</span></span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#display"><span class="hs-identifier">display</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Reexports</span></span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier">NESeq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.html"><span class="hs-identifier">Data.Sequence.NonEmpty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier">NESeq</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html"><span class="hs-identifier">PathSize.Data.SubPathData.Internal</span></a></span><span>
+</span><span id="line-25"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#SubPathData"><span class="hs-identifier">SubPathData</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#MkSubPathData"><span class="hs-identifier">MkSubPathData</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#display"><span class="hs-identifier">display</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#mkSubPathData"><span class="hs-identifier">mkSubPathData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#takeLargestN"><span class="hs-identifier">takeLargestN</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="PathSize.Data.SubPathData.Internal.html#unSubPathData"><span class="hs-identifier">unSubPathData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span></pre></body></html>

@@ -1,0 +1,961 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="local-6989586621679120948"><span id="local-6989586621679120949"></span></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Supplies PathSize 'Config'.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">PathSize.Data.Config</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Config</span></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier">Config</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#defaultConfig"><span class="hs-identifier">defaultConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Strategy</span></span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier">Strategy</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#_Sync"><span class="hs-identifier">_Sync</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#_Async"><span class="hs-identifier">_Async</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#_AsyncPool"><span class="hs-identifier">_AsyncPool</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Constants</span></span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#defaultNumPaths"><span class="hs-identifier">defaultNumPaths</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>    </span><span class="annot"><a href="PathSize.Data.Config.html#defaultNumPathsSize"><span class="hs-identifier">defaultNumPathsSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.html"><span class="hs-identifier">Data.HashSet</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier">HashSet</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.html"><span class="hs-identifier">Data.HashSet</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">HSet</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Word</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Word16</span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-utils-0.1-63291e697f80f5495c55c94c60ce67a5dc30f47d1074d2264475d78aa5752aa5/share/doc/html/src/Effects.FileSystem.OsPath.html"><span class="hs-identifier">Effects.FileSystem.OsPath</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">OsPath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html"><span class="hs-identifier">Numeric.Data.Positive.Internal</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#Positive"><span class="hs-identifier">Positive</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#UnsafePositive"><span class="hs-identifier">UnsafePositive</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Core.html"><span class="hs-identifier">Optics.Core</span></a></span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier">A_Lens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier">LabelOptic</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier">labelOptic</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#Prism%27"><span class="hs-identifier">Prism'</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier">lensVL</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#prism"><span class="hs-identifier">prism</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- | Describes the path search strategy.</span><span>
+</span><span id="line-37"></span><span class="hs-comment">--</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">data</span><span> </span><span id="Strategy"><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier hs-var">Strategy</span></a></span></span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | No threads.</span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-43"></span><span>    </span><span id="Sync"><span class="annot"><a href="PathSize.Data.Config.html#Sync"><span class="hs-identifier hs-var">Sync</span></a></span></span><span>
+</span><span id="line-44"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Lightweight threads.</span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-47"></span><span>    </span><span id="Async"><span class="annot"><a href="PathSize.Data.Config.html#Async"><span class="hs-identifier hs-var">Async</span></a></span></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Uses a thread pool.</span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-51"></span><span>    </span><span id="AsyncPool"><span class="annot"><a href="PathSize.Data.Config.html#AsyncPool"><span class="hs-identifier hs-var">AsyncPool</span></a></span></span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-54"></span><span>      </span><span id="local-6989586621679120967"><span id="local-6989586621679120969"><span class="annot"><span class="annottext">Strategy
+Strategy -&gt; Strategy -&gt; Bounded Strategy
+forall a. a -&gt; a -&gt; Bounded a
+$cminBound :: Strategy
+minBound :: Strategy
+$cmaxBound :: Strategy
+maxBound :: Strategy
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Bounded</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-56"></span><span>      </span><span id="local-6989586621679120973"><span id="local-6989586621679120975"><span class="annot"><span class="annottext">Strategy -&gt; Strategy -&gt; Bool
+(Strategy -&gt; Strategy -&gt; Bool)
+-&gt; (Strategy -&gt; Strategy -&gt; Bool) -&gt; Eq Strategy
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Strategy -&gt; Strategy -&gt; Bool
+== :: Strategy -&gt; Strategy -&gt; Bool
+$c/= :: Strategy -&gt; Strategy -&gt; Bool
+/= :: Strategy -&gt; Strategy -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-58"></span><span>      </span><span id="local-6989586621679120980"><span id="local-6989586621679120987"><span id="local-6989586621679120993"><span id="local-6989586621679121007"><span id="local-6989586621679121009"><span id="local-6989586621679121013"><span id="local-6989586621679121017"><span id="local-6989586621679121021"><span class="annot"><span class="annottext">Int -&gt; Strategy
+Strategy -&gt; Int
+Strategy -&gt; [Strategy]
+Strategy -&gt; Strategy
+Strategy -&gt; Strategy -&gt; [Strategy]
+Strategy -&gt; Strategy -&gt; Strategy -&gt; [Strategy]
+(Strategy -&gt; Strategy)
+-&gt; (Strategy -&gt; Strategy)
+-&gt; (Int -&gt; Strategy)
+-&gt; (Strategy -&gt; Int)
+-&gt; (Strategy -&gt; [Strategy])
+-&gt; (Strategy -&gt; Strategy -&gt; [Strategy])
+-&gt; (Strategy -&gt; Strategy -&gt; [Strategy])
+-&gt; (Strategy -&gt; Strategy -&gt; Strategy -&gt; [Strategy])
+-&gt; Enum Strategy
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+$csucc :: Strategy -&gt; Strategy
+succ :: Strategy -&gt; Strategy
+$cpred :: Strategy -&gt; Strategy
+pred :: Strategy -&gt; Strategy
+$ctoEnum :: Int -&gt; Strategy
+toEnum :: Int -&gt; Strategy
+$cfromEnum :: Strategy -&gt; Int
+fromEnum :: Strategy -&gt; Int
+$cenumFrom :: Strategy -&gt; [Strategy]
+enumFrom :: Strategy -&gt; [Strategy]
+$cenumFromThen :: Strategy -&gt; Strategy -&gt; [Strategy]
+enumFromThen :: Strategy -&gt; Strategy -&gt; [Strategy]
+$cenumFromTo :: Strategy -&gt; Strategy -&gt; [Strategy]
+enumFromTo :: Strategy -&gt; Strategy -&gt; [Strategy]
+$cenumFromThenTo :: Strategy -&gt; Strategy -&gt; Strategy -&gt; [Strategy]
+enumFromThenTo :: Strategy -&gt; Strategy -&gt; Strategy -&gt; [Strategy]
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-60"></span><span>      </span><span id="local-6989586621679121027"><span id="local-6989586621679121029"><span id="local-6989586621679121031"><span id="local-6989586621679121035"><span id="local-6989586621679121038"><span id="local-6989586621679121041"><span id="local-6989586621679121044"><span class="annot"><span class="annottext">Eq Strategy
+Eq Strategy =&gt;
+(Strategy -&gt; Strategy -&gt; Ordering)
+-&gt; (Strategy -&gt; Strategy -&gt; Bool)
+-&gt; (Strategy -&gt; Strategy -&gt; Bool)
+-&gt; (Strategy -&gt; Strategy -&gt; Bool)
+-&gt; (Strategy -&gt; Strategy -&gt; Bool)
+-&gt; (Strategy -&gt; Strategy -&gt; Strategy)
+-&gt; (Strategy -&gt; Strategy -&gt; Strategy)
+-&gt; Ord Strategy
+Strategy -&gt; Strategy -&gt; Bool
+Strategy -&gt; Strategy -&gt; Ordering
+Strategy -&gt; Strategy -&gt; Strategy
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Strategy -&gt; Strategy -&gt; Ordering
+compare :: Strategy -&gt; Strategy -&gt; Ordering
+$c&lt; :: Strategy -&gt; Strategy -&gt; Bool
+&lt; :: Strategy -&gt; Strategy -&gt; Bool
+$c&lt;= :: Strategy -&gt; Strategy -&gt; Bool
+&lt;= :: Strategy -&gt; Strategy -&gt; Bool
+$c&gt; :: Strategy -&gt; Strategy -&gt; Bool
+&gt; :: Strategy -&gt; Strategy -&gt; Bool
+$c&gt;= :: Strategy -&gt; Strategy -&gt; Bool
+&gt;= :: Strategy -&gt; Strategy -&gt; Bool
+$cmax :: Strategy -&gt; Strategy -&gt; Strategy
+max :: Strategy -&gt; Strategy -&gt; Strategy
+$cmin :: Strategy -&gt; Strategy -&gt; Strategy
+min :: Strategy -&gt; Strategy -&gt; Strategy
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-62"></span><span>      </span><span id="local-6989586621679121048"><span id="local-6989586621679121050"><span id="local-6989586621679121054"><span class="annot"><span class="annottext">Int -&gt; Strategy -&gt; ShowS
+[Strategy] -&gt; ShowS
+Strategy -&gt; [Char]
+(Int -&gt; Strategy -&gt; ShowS)
+-&gt; (Strategy -&gt; [Char]) -&gt; ([Strategy] -&gt; ShowS) -&gt; Show Strategy
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; [Char]) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Strategy -&gt; ShowS
+showsPrec :: Int -&gt; Strategy -&gt; ShowS
+$cshow :: Strategy -&gt; [Char]
+show :: Strategy -&gt; [Char]
+$cshowList :: [Strategy] -&gt; ShowS
+showList :: [Strategy] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-66"></span><span class="annot"><a href="PathSize.Data.Config.html#_Sync"><span class="hs-identifier hs-type">_Sync</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#Prism%27"><span class="hs-identifier hs-type">Prism'</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier hs-type">Strategy</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span id="_Sync"><span class="annot"><span class="annottext">_Sync :: Prism' Strategy ()
+</span><a href="PathSize.Data.Config.html#_Sync"><span class="hs-identifier hs-var hs-var">_Sync</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-68"></span><span>  </span><span class="annot"><span class="annottext">(() -&gt; Strategy)
+-&gt; (Strategy -&gt; Either Strategy ()) -&gt; Prism' Strategy ()
+forall b t s a. (b -&gt; t) -&gt; (s -&gt; Either t a) -&gt; Prism s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#prism"><span class="hs-identifier hs-var">prism</span></a></span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Strategy -&gt; () -&gt; Strategy
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">Strategy
+</span><a href="PathSize.Data.Config.html#Sync"><span class="hs-identifier hs-var">Sync</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-71"></span><span>        </span><span class="annot"><span class="annottext">Strategy
+</span><a href="PathSize.Data.Config.html#Sync"><span class="hs-identifier hs-var">Sync</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; Either Strategy ()
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>        </span><span id="local-6989586621679121058"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121058"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Strategy -&gt; Either Strategy ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121058"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#_Sync"><span class="hs-pragma hs-type">_Sync</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="PathSize.Data.Config.html#_Async"><span class="hs-identifier hs-type">_Async</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#Prism%27"><span class="hs-identifier hs-type">Prism'</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier hs-type">Strategy</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span id="_Async"><span class="annot"><span class="annottext">_Async :: Prism' Strategy ()
+</span><a href="PathSize.Data.Config.html#_Async"><span class="hs-identifier hs-var hs-var">_Async</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-79"></span><span>  </span><span class="annot"><span class="annottext">(() -&gt; Strategy)
+-&gt; (Strategy -&gt; Either Strategy ()) -&gt; Prism' Strategy ()
+forall b t s a. (b -&gt; t) -&gt; (s -&gt; Either t a) -&gt; Prism s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#prism"><span class="hs-identifier hs-var">prism</span></a></span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Strategy -&gt; () -&gt; Strategy
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">Strategy
+</span><a href="PathSize.Data.Config.html#Async"><span class="hs-identifier hs-var">Async</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-82"></span><span>        </span><span class="annot"><span class="annottext">Strategy
+</span><a href="PathSize.Data.Config.html#Async"><span class="hs-identifier hs-var">Async</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; Either Strategy ()
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>        </span><span id="local-6989586621679121059"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121059"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Strategy -&gt; Either Strategy ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121059"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#_Async"><span class="hs-pragma hs-type">_Async</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-88"></span><span class="annot"><a href="PathSize.Data.Config.html#_AsyncPool"><span class="hs-identifier hs-type">_AsyncPool</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#Prism%27"><span class="hs-identifier hs-type">Prism'</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier hs-type">Strategy</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span id="_AsyncPool"><span class="annot"><span class="annottext">_AsyncPool :: Prism' Strategy ()
+</span><a href="PathSize.Data.Config.html#_AsyncPool"><span class="hs-identifier hs-var hs-var">_AsyncPool</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-90"></span><span>  </span><span class="annot"><span class="annottext">(() -&gt; Strategy)
+-&gt; (Strategy -&gt; Either Strategy ()) -&gt; Prism' Strategy ()
+forall b t s a. (b -&gt; t) -&gt; (s -&gt; Either t a) -&gt; Prism s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Prism.html#prism"><span class="hs-identifier hs-var">prism</span></a></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Strategy -&gt; () -&gt; Strategy
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">Strategy
+</span><a href="PathSize.Data.Config.html#AsyncPool"><span class="hs-identifier hs-var">AsyncPool</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-93"></span><span>        </span><span class="annot"><span class="annottext">Strategy
+</span><a href="PathSize.Data.Config.html#AsyncPool"><span class="hs-identifier hs-var">AsyncPool</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; Either Strategy ()
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>        </span><span id="local-6989586621679121060"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121060"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Strategy -&gt; Either Strategy ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121060"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#_AsyncPool"><span class="hs-pragma hs-type">_AsyncPool</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-97"></span><span>
+</span><span id="line-98"></span><span class="hs-comment">-- | Default num paths for normal, full search.</span><span>
+</span><span id="line-99"></span><span class="hs-comment">--</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-101"></span><span class="annot"><a href="PathSize.Data.Config.html#defaultNumPaths"><span class="hs-identifier hs-type">defaultNumPaths</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#Positive"><span class="hs-identifier hs-type">Positive</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-102"></span><span id="defaultNumPaths"><span class="annot"><span class="annottext">defaultNumPaths :: Positive Int
+</span><a href="PathSize.Data.Config.html#defaultNumPaths"><span class="hs-identifier hs-var hs-var">defaultNumPaths</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive Int
+forall a. a -&gt; Positive a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#UnsafePositive"><span class="hs-identifier hs-var">UnsafePositive</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- | Default num paths for size search.</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-107"></span><span class="annot"><a href="PathSize.Data.Config.html#defaultNumPathsSize"><span class="hs-identifier hs-type">defaultNumPathsSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#Positive"><span class="hs-identifier hs-type">Positive</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-108"></span><span id="defaultNumPathsSize"><span class="annot"><span class="annottext">defaultNumPathsSize :: Positive Int
+</span><a href="PathSize.Data.Config.html#defaultNumPathsSize"><span class="hs-identifier hs-var hs-var">defaultNumPathsSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Positive Int
+forall a. a -&gt; Positive a
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#UnsafePositive"><span class="hs-identifier hs-var">UnsafePositive</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-109"></span><span>
+</span><span id="line-110"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-111"></span><span class="hs-keyword">data</span><span> </span><span id="Config"><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-var">Config</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkConfig"><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span></span><span>
+</span><span id="line-112"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | Whether to search hidden files/directories.</span><span>
+</span><span id="line-113"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-114"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-115"></span><span>    </span><span id="searchAll"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="PathSize.Data.Config.html#searchAll"><span class="hs-identifier hs-var hs-var">searchAll</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-116"></span><span>    </span><span class="hs-comment">-- | The depth limit of our search. Note that we still need to fully</span><span>
+</span><span id="line-117"></span><span>    </span><span class="hs-comment">-- traverse the file system to get accurate data; this argument merely</span><span>
+</span><span id="line-118"></span><span>    </span><span class="hs-comment">-- affects what is reported i.e. any depths &gt; d are implicitly included</span><span>
+</span><span id="line-119"></span><span>    </span><span class="hs-comment">-- in parent directories, but not directly.</span><span>
+</span><span id="line-120"></span><span>    </span><span id="maxDepth"><span class="annot"><span class="annottext">Config -&gt; Maybe Word16
+</span><a href="PathSize.Data.Config.html#maxDepth"><span class="hs-identifier hs-var hs-var">maxDepth</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-121"></span><span>    </span><span class="hs-comment">-- | Paths to skip.</span><span>
+</span><span id="line-122"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-123"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-124"></span><span>    </span><span id="exclude"><span class="annot"><span class="annottext">Config -&gt; HashSet OsPath
+</span><a href="PathSize.Data.Config.html#exclude"><span class="hs-identifier hs-var hs-var">exclude</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier hs-type">HashSet</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-125"></span><span>    </span><span class="hs-comment">-- | Whether to limit our search to just files.</span><span>
+</span><span id="line-126"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-127"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-128"></span><span>    </span><span id="filesOnly"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="PathSize.Data.Config.html#filesOnly"><span class="hs-identifier hs-var hs-var">filesOnly</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-129"></span><span>    </span><span class="hs-comment">-- | If active, this flag ignores the size of the directory itself e.g.</span><span>
+</span><span id="line-130"></span><span>    </span><span class="hs-comment">-- 4096 bytes on a typical ext4 filesystem.</span><span>
+</span><span id="line-131"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-132"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-133"></span><span>    </span><span id="ignoreDirIntrinsicSize"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="PathSize.Data.Config.html#ignoreDirIntrinsicSize"><span class="hs-identifier hs-var hs-var">ignoreDirIntrinsicSize</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-134"></span><span>    </span><span class="hs-comment">-- | The number of paths to return.</span><span>
+</span><span id="line-135"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-136"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-137"></span><span>    </span><span id="numPaths"><span class="annot"><span class="annottext">Config -&gt; Maybe (Positive Int)
+</span><a href="PathSize.Data.Config.html#numPaths"><span class="hs-identifier hs-var hs-var">numPaths</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#Positive"><span class="hs-identifier hs-type">Positive</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-138"></span><span>    </span><span class="hs-comment">-- | If enabled, sorts by path name after the size. This makes the sort</span><span>
+</span><span id="line-139"></span><span>    </span><span class="hs-comment">-- stable, at the cost of performance.</span><span>
+</span><span id="line-140"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-141"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-142"></span><span>    </span><span id="stableSort"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="PathSize.Data.Config.html#stableSort"><span class="hs-identifier hs-var hs-var">stableSort</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-143"></span><span>    </span><span class="hs-comment">-- | The search strategy.</span><span>
+</span><span id="line-144"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-145"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-146"></span><span>    </span><span id="strategy"><span class="annot"><span class="annottext">Config -&gt; Strategy
+</span><a href="PathSize.Data.Config.html#strategy"><span class="hs-identifier hs-var hs-var">strategy</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier hs-type">Strategy</span></a></span><span>
+</span><span id="line-147"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-148"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-149"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-150"></span><span>      </span><span id="local-6989586621679121071"><span id="local-6989586621679121087"><span class="annot"><span class="annottext">Config -&gt; Config -&gt; Bool
+(Config -&gt; Config -&gt; Bool)
+-&gt; (Config -&gt; Config -&gt; Bool) -&gt; Eq Config
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Config -&gt; Config -&gt; Bool
+== :: Config -&gt; Config -&gt; Bool
+$c/= :: Config -&gt; Config -&gt; Bool
+/= :: Config -&gt; Config -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-151"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-152"></span><span>      </span><span id="local-6989586621679121095"><span id="local-6989586621679121112"><span id="local-6989586621679121116"><span class="annot"><span class="annottext">Int -&gt; Config -&gt; ShowS
+[Config] -&gt; ShowS
+Config -&gt; [Char]
+(Int -&gt; Config -&gt; ShowS)
+-&gt; (Config -&gt; [Char]) -&gt; ([Config] -&gt; ShowS) -&gt; Show Config
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; [Char]) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Config -&gt; ShowS
+showsPrec :: Int -&gt; Config -&gt; ShowS
+$cshow :: Config -&gt; [Char]
+show :: Config -&gt; [Char]
+$cshowList :: [Config] -&gt; ShowS
+showList :: [Config] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-153"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-156"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-157"></span><span>  </span><span id="local-6989586621679120881"><span id="local-6989586621679120882"><span id="local-6989586621679120883"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120881"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120882"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120883"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-158"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;searchAll&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120881"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120882"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120883"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-159"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-160"></span><span>  </span><span id="local-6989586621679121131"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-161"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-162"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121134"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121134"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-163"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-164"></span><span>           </span><span id="local-6989586621679121135"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121135"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-165"></span><span>           </span><span id="local-6989586621679121136"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121136"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-166"></span><span>           </span><span id="local-6989586621679121137"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121137"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-167"></span><span>           </span><span id="local-6989586621679121138"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121138"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-168"></span><span>           </span><span id="local-6989586621679121139"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121139"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-169"></span><span>           </span><span id="local-6989586621679121140"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121140"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-170"></span><span>           </span><span id="local-6989586621679121141"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121141"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-171"></span><span>           </span><span id="local-6989586621679121142"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121142"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-172"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-173"></span><span>          </span><span class="annot"><span class="annottext">(Bool -&gt; Config) -&gt; f Bool -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-174"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121143"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121143"><span class="hs-identifier hs-var">searchAll'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-175"></span><span>                </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-176"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121143"><span class="hs-identifier hs-var">searchAll'</span></a></span><span>
+</span><span id="line-177"></span><span>                  </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121136"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span>
+</span><span id="line-178"></span><span>                  </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121137"><span class="hs-identifier hs-var">_exclude</span></a></span><span>
+</span><span id="line-179"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121138"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span>
+</span><span id="line-180"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121139"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span>
+</span><span id="line-181"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121140"><span class="hs-identifier hs-var">_numPaths</span></a></span><span>
+</span><span id="line-182"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121141"><span class="hs-identifier hs-var">_stableSort</span></a></span><span>
+</span><span id="line-183"></span><span>                  </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121142"><span class="hs-identifier hs-var">_strategy</span></a></span><span>
+</span><span id="line-184"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-185"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121134"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Bool
+</span><a href="#local-6989586621679121135"><span class="hs-identifier hs-var">_searchAll</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-186"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-187"></span><span>
+</span><span id="line-188"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-189"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-190"></span><span>  </span><span id="local-6989586621679120901"><span id="local-6989586621679120902"><span id="local-6989586621679120903"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120901"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120902"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120903"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-191"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;maxDepth&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120901"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120902"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120903"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-192"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-193"></span><span>  </span><span id="local-6989586621679121152"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-194"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-195"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121155"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121155"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-196"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-197"></span><span>           </span><span id="local-6989586621679121156"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121156"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-198"></span><span>           </span><span id="local-6989586621679121157"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121157"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-199"></span><span>           </span><span id="local-6989586621679121158"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121158"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-200"></span><span>           </span><span id="local-6989586621679121159"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121159"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-201"></span><span>           </span><span id="local-6989586621679121160"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121160"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-202"></span><span>           </span><span id="local-6989586621679121161"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121161"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-203"></span><span>           </span><span id="local-6989586621679121162"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121162"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-204"></span><span>           </span><span id="local-6989586621679121163"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121163"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-205"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-206"></span><span>          </span><span class="annot"><span class="annottext">(Maybe Word16 -&gt; Config) -&gt; f (Maybe Word16) -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-207"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121164"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121164"><span class="hs-identifier hs-var">maxDepth'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-208"></span><span>                </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-209"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121156"><span class="hs-identifier hs-var">_searchAll</span></a></span><span>
+</span><span id="line-210"></span><span>                  </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121164"><span class="hs-identifier hs-var">maxDepth'</span></a></span><span>
+</span><span id="line-211"></span><span>                  </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121158"><span class="hs-identifier hs-var">_exclude</span></a></span><span>
+</span><span id="line-212"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121159"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span>
+</span><span id="line-213"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121160"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span>
+</span><span id="line-214"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121161"><span class="hs-identifier hs-var">_numPaths</span></a></span><span>
+</span><span id="line-215"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121162"><span class="hs-identifier hs-var">_stableSort</span></a></span><span>
+</span><span id="line-216"></span><span>                  </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121163"><span class="hs-identifier hs-var">_strategy</span></a></span><span>
+</span><span id="line-217"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-218"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121155"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Maybe Word16
+</span><a href="#local-6989586621679121157"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-219"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-220"></span><span>
+</span><span id="line-221"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-222"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-223"></span><span>  </span><span id="local-6989586621679120908"><span id="local-6989586621679120909"><span id="local-6989586621679120910"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120908"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120909"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier hs-type">HashSet</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120910"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#HashSet"><span class="hs-identifier hs-type">HashSet</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-224"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;exclude&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120908"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120909"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120910"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-225"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-226"></span><span>  </span><span id="local-6989586621679121173"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-227"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-228"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121176"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121176"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-229"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-230"></span><span>           </span><span id="local-6989586621679121177"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121177"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-231"></span><span>           </span><span id="local-6989586621679121178"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121178"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-232"></span><span>           </span><span id="local-6989586621679121179"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121179"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-233"></span><span>           </span><span id="local-6989586621679121180"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121180"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-234"></span><span>           </span><span id="local-6989586621679121181"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121181"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-235"></span><span>           </span><span id="local-6989586621679121182"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121182"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-236"></span><span>           </span><span id="local-6989586621679121183"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121183"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-237"></span><span>           </span><span id="local-6989586621679121184"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121184"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-238"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-239"></span><span>          </span><span class="annot"><span class="annottext">(HashSet OsPath -&gt; Config) -&gt; f (HashSet OsPath) -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-240"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121185"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121185"><span class="hs-identifier hs-var">exclude'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-241"></span><span>                </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-242"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121177"><span class="hs-identifier hs-var">_searchAll</span></a></span><span>
+</span><span id="line-243"></span><span>                  </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121178"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span>
+</span><span id="line-244"></span><span>                  </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121185"><span class="hs-identifier hs-var">exclude'</span></a></span><span>
+</span><span id="line-245"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121180"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span>
+</span><span id="line-246"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121181"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span>
+</span><span id="line-247"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121182"><span class="hs-identifier hs-var">_numPaths</span></a></span><span>
+</span><span id="line-248"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121183"><span class="hs-identifier hs-var">_stableSort</span></a></span><span>
+</span><span id="line-249"></span><span>                  </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121184"><span class="hs-identifier hs-var">_strategy</span></a></span><span>
+</span><span id="line-250"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-251"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121176"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+HashSet OsPath
+</span><a href="#local-6989586621679121179"><span class="hs-identifier hs-var">_exclude</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-252"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-253"></span><span>
+</span><span id="line-254"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-255"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-256"></span><span>  </span><span id="local-6989586621679120915"><span id="local-6989586621679120916"><span id="local-6989586621679120917"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120915"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120916"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120917"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-257"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;filesOnly&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120915"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120916"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120917"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-258"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-259"></span><span>  </span><span id="local-6989586621679121194"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-260"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-261"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121197"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121197"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-262"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-263"></span><span>           </span><span id="local-6989586621679121198"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121198"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-264"></span><span>           </span><span id="local-6989586621679121199"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121199"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-265"></span><span>           </span><span id="local-6989586621679121200"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121200"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-266"></span><span>           </span><span id="local-6989586621679121201"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121201"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-267"></span><span>           </span><span id="local-6989586621679121202"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121202"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-268"></span><span>           </span><span id="local-6989586621679121203"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121203"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-269"></span><span>           </span><span id="local-6989586621679121204"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121204"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-270"></span><span>           </span><span id="local-6989586621679121205"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121205"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-271"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-272"></span><span>          </span><span class="annot"><span class="annottext">(Bool -&gt; Config) -&gt; f Bool -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-273"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121206"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121206"><span class="hs-identifier hs-var">filesOnly'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-274"></span><span>                </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-275"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121198"><span class="hs-identifier hs-var">_searchAll</span></a></span><span>
+</span><span id="line-276"></span><span>                  </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121199"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span>
+</span><span id="line-277"></span><span>                  </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121200"><span class="hs-identifier hs-var">_exclude</span></a></span><span>
+</span><span id="line-278"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121206"><span class="hs-identifier hs-var">filesOnly'</span></a></span><span>
+</span><span id="line-279"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121202"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span>
+</span><span id="line-280"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121203"><span class="hs-identifier hs-var">_numPaths</span></a></span><span>
+</span><span id="line-281"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121204"><span class="hs-identifier hs-var">_stableSort</span></a></span><span>
+</span><span id="line-282"></span><span>                  </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121205"><span class="hs-identifier hs-var">_strategy</span></a></span><span>
+</span><span id="line-283"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-284"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121197"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Bool
+</span><a href="#local-6989586621679121201"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-285"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-286"></span><span>
+</span><span id="line-287"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-288"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-289"></span><span>  </span><span id="local-6989586621679120922"><span id="local-6989586621679120923"><span id="local-6989586621679120924"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120922"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120923"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120924"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-290"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;ignoreDirIntrinsicSize&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120922"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120923"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120924"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-291"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-292"></span><span>  </span><span id="local-6989586621679121215"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-293"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-294"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121218"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121218"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-295"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-296"></span><span>           </span><span id="local-6989586621679121219"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121219"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-297"></span><span>           </span><span id="local-6989586621679121220"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121220"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-298"></span><span>           </span><span id="local-6989586621679121221"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121221"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-299"></span><span>           </span><span id="local-6989586621679121222"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121222"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-300"></span><span>           </span><span id="local-6989586621679121223"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121223"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-301"></span><span>           </span><span id="local-6989586621679121224"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121224"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-302"></span><span>           </span><span id="local-6989586621679121225"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121225"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-303"></span><span>           </span><span id="local-6989586621679121226"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121226"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-304"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-305"></span><span>          </span><span class="annot"><span class="annottext">(Bool -&gt; Config) -&gt; f Bool -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-306"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121227"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121227"><span class="hs-identifier hs-var">ignoreDirIntrinsicSize'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-307"></span><span>                </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-308"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121219"><span class="hs-identifier hs-var">_searchAll</span></a></span><span>
+</span><span id="line-309"></span><span>                  </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121220"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span>
+</span><span id="line-310"></span><span>                  </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121221"><span class="hs-identifier hs-var">_exclude</span></a></span><span>
+</span><span id="line-311"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121222"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span>
+</span><span id="line-312"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121227"><span class="hs-identifier hs-var">ignoreDirIntrinsicSize'</span></a></span><span>
+</span><span id="line-313"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121224"><span class="hs-identifier hs-var">_numPaths</span></a></span><span>
+</span><span id="line-314"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121225"><span class="hs-identifier hs-var">_stableSort</span></a></span><span>
+</span><span id="line-315"></span><span>                  </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121226"><span class="hs-identifier hs-var">_strategy</span></a></span><span>
+</span><span id="line-316"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-317"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121218"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Bool
+</span><a href="#local-6989586621679121223"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-318"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-319"></span><span>
+</span><span id="line-320"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-321"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-322"></span><span>  </span><span id="local-6989586621679120929"><span id="local-6989586621679120930"><span id="local-6989586621679120931"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120929"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120930"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#Positive"><span class="hs-identifier hs-type">Positive</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120931"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/smart-math-0.1-0b95315b21a6a69ebe988e96f62c8ea75d6158da2cb659ceca194755f22ca28b/share/doc/html/src/Numeric.Data.Positive.Internal.html#Positive"><span class="hs-identifier hs-type">Positive</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-323"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;numPaths&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120929"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120930"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120931"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-324"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-325"></span><span>  </span><span id="local-6989586621679121236"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-326"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-327"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121239"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121239"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-328"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-329"></span><span>           </span><span id="local-6989586621679121240"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121240"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-330"></span><span>           </span><span id="local-6989586621679121241"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121241"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-331"></span><span>           </span><span id="local-6989586621679121242"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121242"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-332"></span><span>           </span><span id="local-6989586621679121243"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121243"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-333"></span><span>           </span><span id="local-6989586621679121244"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121244"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-334"></span><span>           </span><span id="local-6989586621679121245"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121245"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-335"></span><span>           </span><span id="local-6989586621679121246"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121246"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-336"></span><span>           </span><span id="local-6989586621679121247"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121247"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-337"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-338"></span><span>          </span><span class="annot"><span class="annottext">(Maybe (Positive Int) -&gt; Config)
+-&gt; f (Maybe (Positive Int)) -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-339"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121248"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121248"><span class="hs-identifier hs-var">numPaths'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-340"></span><span>                </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-341"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121240"><span class="hs-identifier hs-var">_searchAll</span></a></span><span>
+</span><span id="line-342"></span><span>                  </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121241"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span>
+</span><span id="line-343"></span><span>                  </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121242"><span class="hs-identifier hs-var">_exclude</span></a></span><span>
+</span><span id="line-344"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121243"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span>
+</span><span id="line-345"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121244"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span>
+</span><span id="line-346"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121248"><span class="hs-identifier hs-var">numPaths'</span></a></span><span>
+</span><span id="line-347"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121246"><span class="hs-identifier hs-var">_stableSort</span></a></span><span>
+</span><span id="line-348"></span><span>                  </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121247"><span class="hs-identifier hs-var">_strategy</span></a></span><span>
+</span><span id="line-349"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-350"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121239"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Maybe (Positive Int)
+</span><a href="#local-6989586621679121245"><span class="hs-identifier hs-var">_numPaths</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-351"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-352"></span><span>
+</span><span id="line-353"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-354"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-355"></span><span>  </span><span id="local-6989586621679120936"><span id="local-6989586621679120937"><span id="local-6989586621679120938"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120936"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120937"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120938"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-356"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;stableSort&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120936"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120937"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120938"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-357"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-358"></span><span>  </span><span id="local-6989586621679121257"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-359"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-360"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121260"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121260"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-361"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-362"></span><span>           </span><span id="local-6989586621679121261"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121261"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-363"></span><span>           </span><span id="local-6989586621679121262"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121262"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-364"></span><span>           </span><span id="local-6989586621679121263"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121263"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-365"></span><span>           </span><span id="local-6989586621679121264"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121264"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-366"></span><span>           </span><span id="local-6989586621679121265"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121265"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-367"></span><span>           </span><span id="local-6989586621679121266"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121266"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-368"></span><span>           </span><span id="local-6989586621679121267"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121267"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-369"></span><span>           </span><span id="local-6989586621679121268"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121268"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-370"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-371"></span><span>          </span><span class="annot"><span class="annottext">(Bool -&gt; Config) -&gt; f Bool -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-372"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121269"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121269"><span class="hs-identifier hs-var">stableSort'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-373"></span><span>                </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-374"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121261"><span class="hs-identifier hs-var">_searchAll</span></a></span><span>
+</span><span id="line-375"></span><span>                  </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121262"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span>
+</span><span id="line-376"></span><span>                  </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121263"><span class="hs-identifier hs-var">_exclude</span></a></span><span>
+</span><span id="line-377"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121264"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span>
+</span><span id="line-378"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121265"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span>
+</span><span id="line-379"></span><span>                  </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121266"><span class="hs-identifier hs-var">_numPaths</span></a></span><span>
+</span><span id="line-380"></span><span>                  </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121269"><span class="hs-identifier hs-var">stableSort'</span></a></span><span>
+</span><span id="line-381"></span><span>                  </span><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121268"><span class="hs-identifier hs-var">_strategy</span></a></span><span>
+</span><span id="line-382"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-383"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121260"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Bool
+</span><a href="#local-6989586621679121267"><span class="hs-identifier hs-var">_stableSort</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-384"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-385"></span><span>
+</span><span id="line-386"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-387"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-388"></span><span>  </span><span id="local-6989586621679120943"><span id="local-6989586621679120944"><span id="local-6989586621679120945"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679120943"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120944"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier hs-type">Strategy</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679120945"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Strategy"><span class="hs-identifier hs-type">Strategy</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-389"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;strategy&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679120943"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120944"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679120945"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-390"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-391"></span><span>  </span><span id="local-6989586621679121278"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx Config Config a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-392"></span><span>    </span><span class="annot"><span class="annottext">LensVL Config Config a b -&gt; Lens Config Config a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL Config Config a b -&gt; Lens Config Config a b)
+-&gt; LensVL Config Config a b -&gt; Lens Config Config a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-393"></span><span>      </span><span class="hs-glyph">\</span><span id="local-6989586621679121281"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121281"><span class="hs-identifier hs-var">f</span></a></span></span><span>
+</span><span id="line-394"></span><span>       </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-395"></span><span>           </span><span id="local-6989586621679121282"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121282"><span class="hs-identifier hs-var">_searchAll</span></a></span></span><span>
+</span><span id="line-396"></span><span>           </span><span id="local-6989586621679121283"><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121283"><span class="hs-identifier hs-var">_maxDepth</span></a></span></span><span>
+</span><span id="line-397"></span><span>           </span><span id="local-6989586621679121284"><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121284"><span class="hs-identifier hs-var">_exclude</span></a></span></span><span>
+</span><span id="line-398"></span><span>           </span><span id="local-6989586621679121285"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121285"><span class="hs-identifier hs-var">_filesOnly</span></a></span></span><span>
+</span><span id="line-399"></span><span>           </span><span id="local-6989586621679121286"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121286"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span></span><span>
+</span><span id="line-400"></span><span>           </span><span id="local-6989586621679121287"><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121287"><span class="hs-identifier hs-var">_numPaths</span></a></span></span><span>
+</span><span id="line-401"></span><span>           </span><span id="local-6989586621679121288"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121288"><span class="hs-identifier hs-var">_stableSort</span></a></span></span><span>
+</span><span id="line-402"></span><span>           </span><span id="local-6989586621679121289"><span class="annot"><span class="annottext">Strategy
+</span><a href="#local-6989586621679121289"><span class="hs-identifier hs-var">_strategy</span></a></span></span><span>
+</span><span id="line-403"></span><span>         </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-404"></span><span>          </span><span class="annot"><span class="annottext">(Strategy -&gt; Config) -&gt; f Strategy -&gt; f Config
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span>
+</span><span id="line-405"></span><span>            </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="annottext">Bool
+-&gt; Maybe Word16
+-&gt; HashSet OsPath
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe (Positive Int)
+-&gt; Bool
+-&gt; Strategy
+-&gt; Config
+</span><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-406"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121282"><span class="hs-identifier hs-var">_searchAll</span></a></span><span>
+</span><span id="line-407"></span><span>                </span><span class="annot"><span class="annottext">Maybe Word16
+</span><a href="#local-6989586621679121283"><span class="hs-identifier hs-var">_maxDepth</span></a></span><span>
+</span><span id="line-408"></span><span>                </span><span class="annot"><span class="annottext">HashSet OsPath
+</span><a href="#local-6989586621679121284"><span class="hs-identifier hs-var">_exclude</span></a></span><span>
+</span><span id="line-409"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121285"><span class="hs-identifier hs-var">_filesOnly</span></a></span><span>
+</span><span id="line-410"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121286"><span class="hs-identifier hs-var">_ignoreDirIntrinsicSize</span></a></span><span>
+</span><span id="line-411"></span><span>                </span><span class="annot"><span class="annottext">Maybe (Positive Int)
+</span><a href="#local-6989586621679121287"><span class="hs-identifier hs-var">_numPaths</span></a></span><span>
+</span><span id="line-412"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679121288"><span class="hs-identifier hs-var">_stableSort</span></a></span><span>
+</span><span id="line-413"></span><span>            </span><span class="hs-special">)</span><span>
+</span><span id="line-414"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121281"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Strategy
+</span><a href="#local-6989586621679121289"><span class="hs-identifier hs-var">_strategy</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-415"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-416"></span><span>
+</span><span id="line-417"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-418"></span><span class="hs-comment">--</span><span>
+</span><span id="line-419"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-420"></span><span class="hs-comment">-- MkConfig</span><span>
+</span><span id="line-421"></span><span class="hs-comment">--   { searchAll = True,</span><span>
+</span><span id="line-422"></span><span class="hs-comment">--     maxDepth = Nothing,</span><span>
+</span><span id="line-423"></span><span class="hs-comment">--     exclude = [],</span><span>
+</span><span id="line-424"></span><span class="hs-comment">--     filesOnly = False,</span><span>
+</span><span id="line-425"></span><span class="hs-comment">--     ignoreDirIntrinsicSize = False,</span><span>
+</span><span id="line-426"></span><span class="hs-comment">--     numPaths = Just 10,</span><span>
+</span><span id="line-427"></span><span class="hs-comment">--     strategy = Async</span><span>
+</span><span id="line-428"></span><span class="hs-comment">--   }</span><span>
+</span><span id="line-429"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-430"></span><span class="hs-comment">--</span><span>
+</span><span id="line-431"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-432"></span><span class="annot"><a href="PathSize.Data.Config.html#defaultConfig"><span class="hs-identifier hs-type">defaultConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="PathSize.Data.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span>
+</span><span id="line-433"></span><span id="defaultConfig"><span class="annot"><span class="annottext">defaultConfig :: Config
+</span><a href="PathSize.Data.Config.html#defaultConfig"><span class="hs-identifier hs-var hs-var">defaultConfig</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-434"></span><span>  </span><span class="annot"><a href="PathSize.Data.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span>
+</span><span id="line-435"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">searchAll :: Bool
+</span><a href="PathSize.Data.Config.html#searchAll"><span class="hs-identifier hs-var">searchAll</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span>
+</span><span id="line-436"></span><span>      </span><span class="annot"><span class="annottext">maxDepth :: Maybe Word16
+</span><a href="PathSize.Data.Config.html#maxDepth"><span class="hs-identifier hs-var">maxDepth</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Word16
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-437"></span><span>      </span><span class="annot"><span class="annottext">exclude :: HashSet OsPath
+</span><a href="PathSize.Data.Config.html#exclude"><span class="hs-identifier hs-var">exclude</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HashSet OsPath
+forall a. HashSet a
+</span><a href="file:///nix/store/2g2ycicahw77sclmzzbrim691gxz10lw-unordered-containers-0.2.20-doc/share/doc/unordered-containers-0.2.20/html/src/Data.HashSet.Internal.html#empty"><span class="hs-identifier hs-var">HSet.empty</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-438"></span><span>      </span><span class="annot"><span class="annottext">filesOnly :: Bool
+</span><a href="PathSize.Data.Config.html#filesOnly"><span class="hs-identifier hs-var">filesOnly</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-439"></span><span>      </span><span class="annot"><span class="annottext">ignoreDirIntrinsicSize :: Bool
+</span><a href="PathSize.Data.Config.html#ignoreDirIntrinsicSize"><span class="hs-identifier hs-var">ignoreDirIntrinsicSize</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-440"></span><span>      </span><span class="annot"><span class="annottext">numPaths :: Maybe (Positive Int)
+</span><a href="PathSize.Data.Config.html#numPaths"><span class="hs-identifier hs-var">numPaths</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Positive Int -&gt; Maybe (Positive Int)
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Positive Int
+</span><a href="PathSize.Data.Config.html#defaultNumPaths"><span class="hs-identifier hs-var">defaultNumPaths</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-441"></span><span>      </span><span class="annot"><span class="annottext">stableSort :: Bool
+</span><a href="PathSize.Data.Config.html#stableSort"><span class="hs-identifier hs-var">stableSort</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-442"></span><span>      </span><span class="annot"><span class="annottext">strategy :: Strategy
+</span><a href="PathSize.Data.Config.html#strategy"><span class="hs-identifier hs-var">strategy</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Strategy
+</span><a href="PathSize.Data.Config.html#Async"><span class="hs-identifier hs-var">Async</span></a></span><span>
+</span><span id="line-443"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-444"></span></pre></body></html>

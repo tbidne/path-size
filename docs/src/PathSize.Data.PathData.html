@@ -1,0 +1,260 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE UndecidableInstances #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- NOTE: For reasons I don't understand, for GHC &lt; 9.4, we receive an error:</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--  &#8226; Ignoring unusable UNPACK pragma</span><span>
+</span><span id="line-7"></span><span class="hs-comment">--      on the second argument of &#8216;MkPathData&#8217;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">--  &#8226; In the definition of data constructor &#8216;MkPathData&#8217;</span><span>
+</span><span id="line-9"></span><span class="hs-comment">--    In the data type declaration for &#8216;PathData&#8217;</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- for the unpacked Integer fields. Really it's just a warning, but it doesn't</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- appear to have a custom warning, and is triggered by Werror on CI.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- We __don't__ receive this warning for higher GHCs, so presumably it does</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- what we want? Hence I don't want to remove the unpacks. It appears there is</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- no way to silence this specific error (...sigh), so we are left with</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- disabling Werror.</span><span class="hs-cpp">
+
+#if !MIN_VERSION_base(4,18,0)
+</span><span class="hs-pragma">{-# OPTIONS_GHC -Wwarn #-}</span><span class="hs-cpp">
+#endif
+</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- | Provides 'PathData' type.</span><span>
+</span><span id="line-24"></span><span class="hs-comment">--</span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">PathSize.Data.PathData</span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier">PathData</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.DeepSeq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NFData</span></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-utils-0.1-63291e697f80f5495c55c94c60ce67a5dc30f47d1074d2264475d78aa5752aa5/share/doc/html/src/Effects.FileSystem.OsPath.html"><span class="hs-identifier">Effects.FileSystem.OsPath</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">OsPath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Generics</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Generic</span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Core.html"><span class="hs-identifier">Optics.Core</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier">LabelOptic</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier">labelOptic</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier">lensVL</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- NOTE: [Efficient Int Type]</span><span>
+</span><span id="line-37"></span><span class="hs-comment">--</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- Currently, sizes use the type 'Integer'. Due to the potentialy for a very</span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- large size (e.g. a gigabytes =&gt; bilions), the only appropriate types are</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- unbounded (Integer, Natural) or 64 bits (Int64, Word64).</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- One would think Int64 would be the fastest, since:</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   1. Fixed size. Unbounded require branching.</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   2. The underlying size function we use, unix's getFileSize returns a</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--      newtype wrapper over Int64, so theoretically this should be free. Any</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--      other type requires a fromIntegral conversion in a very tight loop.</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- Confusingly, Integer seems to be the fastest. It's possible that this is</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- a benchmark problem, but we cannot justify a switch when the benchmarks</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- get __worse__. Keep this in mind, maybe we can find an improvement in the</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- future.</span><span>
+</span><span id="line-53"></span><span class="hs-comment">--</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- It might be worth exploring, say, Int64#, but the difficulty there is that</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- we'd probably have to reimplement much of the sorting outselves, since</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- all the built-in sort logic assumes Type.</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- | Associates a path to its total (recursive) size in the file-system.</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- Takes a parameter for the size, allowing us to use a more efficient</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- temporary type (e.g. 'Integer') before finally converting to</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- Natural.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-64"></span><span class="hs-keyword">data</span><span> </span><span id="PathData"><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-var">PathData</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkPathData"><span class="annot"><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-var">MkPathData</span></a></span></span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-special">{</span><span> </span><span class="hs-comment">-- | Path.</span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-68"></span><span>    </span><span id="path"><span class="annot"><span class="annottext">PathData -&gt; OsPath
+</span><a href="PathSize.Data.PathData.html#path"><span class="hs-identifier hs-var hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">,</span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-comment">-- | Size in bytes.</span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-72"></span><span>    </span><span id="size"><span class="annot"><span class="annottext">PathData -&gt; Integer
+</span><a href="PathSize.Data.PathData.html#size"><span class="hs-identifier hs-var hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-pragma">{-# UNPACK</span><span> </span><span class="hs-pragma">#-}</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-comment">-- | Number of files.</span><span>
+</span><span id="line-74"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-76"></span><span>    </span><span id="numFiles"><span class="annot"><span class="annottext">PathData -&gt; Integer
+</span><a href="PathSize.Data.PathData.html#numFiles"><span class="hs-identifier hs-var hs-var">numFiles</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-pragma">{-# UNPACK</span><span> </span><span class="hs-pragma">#-}</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-comment">-- | Number of directories.</span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-comment">--</span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-80"></span><span>    </span><span id="numDirectories"><span class="annot"><span class="annottext">PathData -&gt; Integer
+</span><a href="PathSize.Data.PathData.html#numDirectories"><span class="hs-identifier hs-var hs-var">numDirectories</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-pragma">{-# UNPACK</span><span> </span><span class="hs-pragma">#-}</span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span>
+</span><span id="line-81"></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-82"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-83"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-84"></span><span>      </span><span id="local-6989586621679121376"><span id="local-6989586621679121384"><span class="annot"><span class="annottext">PathData -&gt; PathData -&gt; Bool
+(PathData -&gt; PathData -&gt; Bool)
+-&gt; (PathData -&gt; PathData -&gt; Bool) -&gt; Eq PathData
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PathData -&gt; PathData -&gt; Bool
+== :: PathData -&gt; PathData -&gt; Bool
+$c/= :: PathData -&gt; PathData -&gt; Bool
+/= :: PathData -&gt; PathData -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-85"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-86"></span><span>      </span><span id="local-6989586621679121389"><span id="local-6989586621679121391"><span class="annot"><span class="annottext">(forall x. PathData -&gt; Rep PathData x)
+-&gt; (forall x. Rep PathData x -&gt; PathData) -&gt; Generic PathData
+forall x. Rep PathData x -&gt; PathData
+forall x. PathData -&gt; Rep PathData x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cfrom :: forall x. PathData -&gt; Rep PathData x
+from :: forall x. PathData -&gt; Rep PathData x
+$cto :: forall x. Rep PathData x -&gt; PathData
+to :: forall x. Rep PathData x -&gt; PathData
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Generic</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-87"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-88"></span><span>      </span><span id="local-6989586621679121395"><span id="local-6989586621679121405"><span id="local-6989586621679121409"><span class="annot"><span class="annottext">Int -&gt; PathData -&gt; ShowS
+[PathData] -&gt; ShowS
+PathData -&gt; String
+(Int -&gt; PathData -&gt; ShowS)
+-&gt; (PathData -&gt; String) -&gt; ([PathData] -&gt; ShowS) -&gt; Show PathData
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PathData -&gt; ShowS
+showsPrec :: Int -&gt; PathData -&gt; ShowS
+$cshow :: PathData -&gt; String
+show :: PathData -&gt; String
+$cshowList :: [PathData] -&gt; ShowS
+showList :: [PathData] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-90"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-92"></span><span>      </span><span id="local-6989586621679121413"><span class="annot"><span class="annottext">PathData -&gt; ()
+(PathData -&gt; ()) -&gt; NFData PathData
+forall a. (a -&gt; ()) -&gt; NFData a
+$crnf :: PathData -&gt; ()
+rnf :: PathData -&gt; ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">NFData</span></span></span><span>
+</span><span id="line-93"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-96"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-97"></span><span>  </span><span id="local-6989586621679121327"><span id="local-6989586621679121328"><span id="local-6989586621679121329"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679121327"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121328"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121329"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-98"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;path&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679121327"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121328"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121329"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-99"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-100"></span><span>  </span><span id="local-6989586621679121446"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx PathData PathData a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL PathData PathData a b -&gt; Lens PathData PathData a b)
+-&gt; LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121449"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121449"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-type">MkPathData</span></a></span><span> </span><span id="local-6989586621679121450"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121450"><span class="hs-identifier hs-var">_path</span></a></span></span><span> </span><span id="local-6989586621679121451"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121451"><span class="hs-identifier hs-var">_size</span></a></span></span><span> </span><span id="local-6989586621679121452"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121452"><span class="hs-identifier hs-var">_numFiles</span></a></span></span><span> </span><span id="local-6989586621679121453"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121453"><span class="hs-identifier hs-var">_numDirectories</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-101"></span><span>    </span><span class="annot"><span class="annottext">(OsPath -&gt; PathData) -&gt; f OsPath -&gt; f PathData
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679121454"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121454"><span class="hs-identifier hs-var">path'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; Integer -&gt; Integer -&gt; Integer -&gt; PathData
+</span><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-var">MkPathData</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121454"><span class="hs-identifier hs-var">path'</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121451"><span class="hs-identifier hs-var">_size</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121452"><span class="hs-identifier hs-var">_numFiles</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121453"><span class="hs-identifier hs-var">_numDirectories</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121449"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+OsPath
+</span><a href="#local-6989586621679121450"><span class="hs-identifier hs-var">_path</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-105"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-106"></span><span>  </span><span id="local-6989586621679121350"><span id="local-6989586621679121351"><span id="local-6989586621679121352"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679121350"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121351"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121352"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-107"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;size&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679121350"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121351"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121352"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-109"></span><span>  </span><span id="local-6989586621679121463"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx PathData PathData a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL PathData PathData a b -&gt; Lens PathData PathData a b)
+-&gt; LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121466"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121466"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-type">MkPathData</span></a></span><span> </span><span id="local-6989586621679121467"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121467"><span class="hs-identifier hs-var">_path</span></a></span></span><span> </span><span id="local-6989586621679121468"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121468"><span class="hs-identifier hs-var">_size</span></a></span></span><span> </span><span id="local-6989586621679121469"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121469"><span class="hs-identifier hs-var">_numFiles</span></a></span></span><span> </span><span id="local-6989586621679121470"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121470"><span class="hs-identifier hs-var">_numDirectories</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-110"></span><span>    </span><span class="annot"><span class="annottext">(Integer -&gt; PathData) -&gt; f Integer -&gt; f PathData
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679121471"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121471"><span class="hs-identifier hs-var">size'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; Integer -&gt; Integer -&gt; Integer -&gt; PathData
+</span><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-var">MkPathData</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121467"><span class="hs-identifier hs-var">_path</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121471"><span class="hs-identifier hs-var">size'</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121469"><span class="hs-identifier hs-var">_numFiles</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121470"><span class="hs-identifier hs-var">_numDirectories</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121466"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Integer
+</span><a href="#local-6989586621679121468"><span class="hs-identifier hs-var">_size</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-114"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-115"></span><span>  </span><span id="local-6989586621679121357"><span id="local-6989586621679121358"><span id="local-6989586621679121359"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679121357"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121358"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121359"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-116"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;numFiles&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679121357"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121358"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121359"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-117"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-118"></span><span>  </span><span id="local-6989586621679121480"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx PathData PathData a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL PathData PathData a b -&gt; Lens PathData PathData a b)
+-&gt; LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121483"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121483"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-type">MkPathData</span></a></span><span> </span><span id="local-6989586621679121484"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121484"><span class="hs-identifier hs-var">_path</span></a></span></span><span> </span><span id="local-6989586621679121485"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121485"><span class="hs-identifier hs-var">_size</span></a></span></span><span> </span><span id="local-6989586621679121486"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121486"><span class="hs-identifier hs-var">_numFiles</span></a></span></span><span> </span><span id="local-6989586621679121487"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121487"><span class="hs-identifier hs-var">_numDirectories</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-119"></span><span>    </span><span class="annot"><span class="annottext">(Integer -&gt; PathData) -&gt; f Integer -&gt; f PathData
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679121488"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121488"><span class="hs-identifier hs-var">numFiles'</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">OsPath -&gt; Integer -&gt; Integer -&gt; Integer -&gt; PathData
+</span><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-var">MkPathData</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121484"><span class="hs-identifier hs-var">_path</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121485"><span class="hs-identifier hs-var">_size</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121488"><span class="hs-identifier hs-var">numFiles'</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121487"><span class="hs-identifier hs-var">_numDirectories</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121483"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Integer
+</span><a href="#local-6989586621679121486"><span class="hs-identifier hs-var">_numFiles</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-120"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-121"></span><span>
+</span><span id="line-122"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-123"></span><span class="hs-keyword">instance</span><span>
+</span><span id="line-124"></span><span>  </span><span id="local-6989586621679121364"><span id="local-6989586621679121365"><span id="local-6989586621679121366"><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679121364"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Internal.Optic.Types.html#A_Lens"><span class="hs-identifier hs-type">A_Lens</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121365"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679121366"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">~</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-125"></span><span>  </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#LabelOptic"><span class="hs-identifier hs-type">LabelOptic</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;numDirectories&quot;</span></span><span> </span><span class="annot"><a href="#local-6989586621679121364"><span class="hs-identifier hs-type">k</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathData.html#PathData"><span class="hs-identifier hs-type">PathData</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121365"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679121366"><span class="hs-identifier hs-type">b</span></a></span></span></span></span><span>
+</span><span id="line-126"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-127"></span><span>  </span><span id="local-6989586621679121497"><span class="annot"><span class="annottext">labelOptic :: Optic k NoIx PathData PathData a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-identifier hs-var hs-var hs-var hs-var">labelOptic</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall s t a b. LensVL s t a b -&gt; Lens s t a b
+</span><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Lens.html#lensVL"><span class="hs-identifier hs-var">lensVL</span></a></span><span> </span><span class="annot"><span class="annottext">(LensVL PathData PathData a b -&gt; Lens PathData PathData a b)
+-&gt; LensVL PathData PathData a b -&gt; Lens PathData PathData a b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679121500"><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121500"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-type">MkPathData</span></a></span><span> </span><span id="local-6989586621679121501"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121501"><span class="hs-identifier hs-var">_path</span></a></span></span><span> </span><span id="local-6989586621679121502"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121502"><span class="hs-identifier hs-var">_size</span></a></span></span><span> </span><span id="local-6989586621679121503"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121503"><span class="hs-identifier hs-var">_numFiles</span></a></span></span><span> </span><span id="local-6989586621679121504"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121504"><span class="hs-identifier hs-var">_numDirectories</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-128"></span><span>    </span><span class="annot"><span class="annottext">(Integer -&gt; PathData) -&gt; f Integer -&gt; f PathData
+forall a b. (a -&gt; b) -&gt; f a -&gt; f b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">OsPath -&gt; Integer -&gt; Integer -&gt; Integer -&gt; PathData
+</span><a href="PathSize.Data.PathData.html#MkPathData"><span class="hs-identifier hs-var">MkPathData</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679121501"><span class="hs-identifier hs-var">_path</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121502"><span class="hs-identifier hs-var">_size</span></a></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679121503"><span class="hs-identifier hs-var">_numFiles</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; f b
+</span><a href="#local-6989586621679121500"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">a
+Integer
+</span><a href="#local-6989586621679121504"><span class="hs-identifier hs-var">_numDirectories</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-129"></span><span>  </span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="file:///nix/store/kpg5cmxmxp7aaby0kpg2q9k29pn7k6ng-optics-core-0.4.1.1-doc/share/doc/optics-core-0.4.1.1/html/src/Optics.Label.html#labelOptic"><span class="hs-pragma hs-type">labelOptic</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-130"></span></pre></body></html>

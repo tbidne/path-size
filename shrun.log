@@ -1,0 +1,204 @@
+[2024-09-25 08:11:11][Command][haddock_push] Starting...
+[2024-09-25 08:11:11][Command][haddock_push] Your branch is up to date with 'origin/main'.
+[2024-09-25 08:11:11][Command][haddock_push] Already on 'main'
+[2024-09-25 08:11:11][Command][haddock_push] Deleted branch gh-pages (was 7ab4f72).
+[2024-09-25 08:11:11][Command][haddock_push] Switched to a new branch 'gh-pages'
+[2024-09-25 08:11:12][Command][haddock_push] Build profile: -w ghc-9.8.2 -O2
+[2024-09-25 08:11:12][Command][haddock_push] In order, the following will be built (use -v for more details):
+[2024-09-25 08:11:12][Command][haddock_push]  - algebra-simple-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - bounds-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - effects-exceptions-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - smart-math-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - si-bytes-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - effects-thread-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - effects-ioref-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - effects-fs-utils-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - effects-async-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - effects-unix-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - effects-fs-0.1 (lib) (requires build)
+[2024-09-25 08:11:12][Command][haddock_push]  - path-size-0.1 (lib) (configuration changed)
+[2024-09-25 08:11:12][Command][haddock_push]  - path-size-0.1 (lib:bench-common) (configuration changed)
+[2024-09-25 08:11:12][Command][haddock_push] Starting     bounds-0.1 (lib)
+[2024-09-25 08:11:12][Command][haddock_push] Starting     effects-exceptions-0.1 (lib)
+[2024-09-25 08:11:12][Command][haddock_push] Starting     algebra-simple-0.1 (lib)
+[2024-09-25 08:11:16][Command][haddock_push] Building     algebra-simple-0.1 (lib)
+[2024-09-25 08:11:17][Command][haddock_push] Building     bounds-0.1 (lib)
+[2024-09-25 08:11:17][Command][haddock_push] Building     effects-exceptions-0.1 (lib)
+[2024-09-25 08:11:23][Command][haddock_push] Haddock      effects-exceptions-0.1 (lib)
+[2024-09-25 08:11:23][Command][haddock_push] Haddock      bounds-0.1 (lib)
+[2024-09-25 08:11:27][Command][haddock_push] Haddock      algebra-simple-0.1 (lib)
+[2024-09-25 08:11:42][Command][haddock_push] Installing   bounds-0.1 (lib)
+[2024-09-25 08:11:44][Command][haddock_push] Installing   algebra-simple-0.1 (lib)
+[2024-09-25 08:11:45][Command][haddock_push] Completed    bounds-0.1 (lib)
+[2024-09-25 08:11:46][Command][haddock_push] Completed    algebra-simple-0.1 (lib)
+[2024-09-25 08:11:46][Command][haddock_push] Starting     si-bytes-0.1 (lib)
+[2024-09-25 08:11:47][Command][haddock_push] Starting     smart-math-0.1 (lib)
+[2024-09-25 08:11:47][Command][haddock_push] Installing   effects-exceptions-0.1 (lib)
+[2024-09-25 08:11:50][Command][haddock_push] Completed    effects-exceptions-0.1 (lib)
+[2024-09-25 08:11:50][Command][haddock_push] Starting     effects-ioref-0.1 (lib)
+[2024-09-25 08:11:50][Command][haddock_push] Starting     effects-thread-0.1 (lib)
+[2024-09-25 08:11:50][Command][haddock_push] Starting     effects-fs-utils-0.1 (lib)
+[2024-09-25 08:11:53][Command][haddock_push] Building     si-bytes-0.1 (lib)
+[2024-09-25 08:11:53][Command][haddock_push] Building     smart-math-0.1 (lib)
+[2024-09-25 08:11:56][Command][haddock_push] Building     effects-ioref-0.1 (lib)
+[2024-09-25 08:11:56][Command][haddock_push] Building     effects-thread-0.1 (lib)
+[2024-09-25 08:11:56][Command][haddock_push] Building     effects-fs-utils-0.1 (lib)
+[2024-09-25 08:12:00][Command][haddock_push] Haddock      effects-ioref-0.1 (lib)
+[2024-09-25 08:12:02][Command][haddock_push] Haddock      effects-thread-0.1 (lib)
+[2024-09-25 08:12:04][Command][haddock_push] Haddock      effects-fs-utils-0.1 (lib)
+[2024-09-25 08:12:21][Command][haddock_push] Installing   effects-ioref-0.1 (lib)
+[2024-09-25 08:12:22][Command][haddock_push] Installing   effects-thread-0.1 (lib)
+[2024-09-25 08:12:23][Command][haddock_push] Completed    effects-ioref-0.1 (lib)
+[2024-09-25 08:12:24][Command][haddock_push] Completed    effects-thread-0.1 (lib)
+[2024-09-25 08:12:27][Command][haddock_push] Haddock      smart-math-0.1 (lib)
+[2024-09-25 08:12:29][Command][haddock_push] Installing   effects-fs-utils-0.1 (lib)
+[2024-09-25 08:12:30][Command][haddock_push] Completed    effects-fs-utils-0.1 (lib)
+[2024-09-25 08:12:30][Command][haddock_push] Starting     effects-unix-0.1 (lib)
+[2024-09-25 08:12:30][Command][haddock_push] Starting     effects-fs-0.1 (lib)
+[2024-09-25 08:12:34][Command][haddock_push] Building     effects-fs-0.1 (lib)
+[2024-09-25 08:12:34][Command][haddock_push] Building     effects-unix-0.1 (lib)
+[2024-09-25 08:12:35][Command][haddock_push] Haddock      si-bytes-0.1 (lib)
+[2024-09-25 08:12:38][Command][haddock_push] Haddock      effects-unix-0.1 (lib)
+[2024-09-25 08:12:50][Command][haddock_push] Installing   smart-math-0.1 (lib)
+[2024-09-25 08:12:51][Command][haddock_push] Completed    smart-math-0.1 (lib)
+[2024-09-25 08:12:52][Command][haddock_push] Starting     effects-async-0.1 (lib)
+[2024-09-25 08:12:53][Command][haddock_push] Haddock      effects-fs-0.1 (lib)
+[2024-09-25 08:12:56][Command][haddock_push] Building     effects-async-0.1 (lib)
+[2024-09-25 08:12:58][Command][haddock_push] Installing   effects-unix-0.1 (lib)
+[2024-09-25 08:13:00][Command][haddock_push] Completed    effects-unix-0.1 (lib)
+[2024-09-25 08:13:00][Command][haddock_push] Installing   si-bytes-0.1 (lib)
+[2024-09-25 08:13:02][Command][haddock_push] Completed    si-bytes-0.1 (lib)
+[2024-09-25 08:13:05][Command][haddock_push] Haddock      effects-async-0.1 (lib)
+[2024-09-25 08:13:13][Command][haddock_push] Installing   effects-fs-0.1 (lib)
+[2024-09-25 08:13:15][Command][haddock_push] Completed    effects-fs-0.1 (lib)
+[2024-09-25 08:13:23][Command][haddock_push] Installing   effects-async-0.1 (lib)
+[2024-09-25 08:13:24][Command][haddock_push] Completed    effects-async-0.1 (lib)
+[2024-09-25 08:13:24][Command][haddock_push] Configuring library for path-size-0.1..
+[2024-09-25 08:13:28][Command][haddock_push] Preprocessing library for path-size-0.1..
+[2024-09-25 08:13:28][Command][haddock_push] Building library for path-size-0.1..
+[2024-09-25 08:13:29][Command][haddock_push] [1 of 9] Compiling PathSize.Data.Config ( src/PathSize/Data/Config.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/Config.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/Config.dyn_o ) [Effects.FileSystem.OsPath package changed]
+[2024-09-25 08:13:32][Command][haddock_push] [2 of 9] Compiling PathSize.Data.PathData ( src/PathSize/Data/PathData.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/PathData.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/PathData.dyn_o ) [Effects.FileSystem.OsPath package changed]
+[2024-09-25 08:13:34][Command][haddock_push] [3 of 9] Compiling PathSize.Data.PathTree ( src/PathSize/Data/PathTree.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/PathTree.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/PathTree.dyn_o ) [PathSize.Data.PathData changed]
+[2024-09-25 08:13:35][Command][haddock_push] [4 of 9] Compiling PathSize.Data.SubPathData.Internal ( src/PathSize/Data/SubPathData/Internal.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/SubPathData/Internal.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/SubPathData/Internal.dyn_o ) [Effects.FileSystem.UTF8 package changed]
+[2024-09-25 08:13:37][Command][haddock_push] [5 of 9] Compiling PathSize.Data.SubPathData ( src/PathSize/Data/SubPathData.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/SubPathData.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/SubPathData.dyn_o ) [PathSize.Data.SubPathData.Internal changed]
+[2024-09-25 08:13:37][Command][haddock_push] [6 of 9] Compiling PathSize.Exception ( src/PathSize/Exception.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Exception.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Exception.dyn_o ) [Effects.FileSystem.OsPath package changed]
+[2024-09-25 08:13:38][Command][haddock_push] [7 of 9] Compiling PathSize.Data.PathSizeResult ( src/PathSize/Data/PathSizeResult.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/PathSizeResult.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Data/PathSizeResult.dyn_o ) [Effects.Exception package changed]
+[2024-09-25 08:13:38][Command][haddock_push] [8 of 9] Compiling PathSize.Utils   ( src/PathSize/Utils.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Utils.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize/Utils.dyn_o ) [Effects.Exception package changed]
+[2024-09-25 08:13:39][Command][haddock_push] [9 of 9] Compiling PathSize         ( src/PathSize.hs, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize.o, /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/build/PathSize.dyn_o ) [Effects.Concurrent.Async package changed]
+[2024-09-25 08:13:42][Command][haddock_push] Preprocessing library for path-size-0.1..
+[2024-09-25 08:13:42][Command][haddock_push] Running Haddock on library for path-size-0.1..
+[2024-09-25 08:13:42][Command][haddock_push] Warning: --source-* options are ignored when --hyperlinked-source is enabled.
+[2024-09-25 08:13:43][Command][haddock_push] [1 of 9] Compiling PathSize.Data.Config ( src/PathSize/Data/Config.hs, nothing )
+[2024-09-25 08:13:44][Command][haddock_push] [2 of 9] Compiling PathSize.Data.PathData ( src/PathSize/Data/PathData.hs, nothing )
+[2024-09-25 08:13:44][Command][haddock_push] [3 of 9] Compiling PathSize.Data.PathTree ( src/PathSize/Data/PathTree.hs, nothing )
+[2024-09-25 08:13:44][Command][haddock_push] [4 of 9] Compiling PathSize.Data.SubPathData.Internal ( src/PathSize/Data/SubPathData/Internal.hs, nothing )
+[2024-09-25 08:13:45][Command][haddock_push] 
+[2024-09-25 08:13:45][Command][haddock_push] src/PathSize/Data/SubPathData/Internal.hs:54:1: warning: [GHC-15328] [-Wdeprecations]
+[2024-09-25 08:13:45][Command][haddock_push]     Module ‘System.OsString.Internal.Types’ is deprecated:
+[2024-09-25 08:13:45][Command][haddock_push]       "Use System.OsString.Internal.Types from os-string >= 2.0.0 package instead. This module will be removed in filepath >= 1.5."
+[2024-09-25 08:13:45][Command][haddock_push]    |
+[2024-09-25 08:13:45][Command][haddock_push] 54 | import System.OsString.Internal.Types
+[2024-09-25 08:13:45][Command][haddock_push]    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[2024-09-25 08:13:45][Command][haddock_push] [5 of 9] Compiling PathSize.Data.SubPathData ( src/PathSize/Data/SubPathData.hs, nothing )
+[2024-09-25 08:13:45][Command][haddock_push] [6 of 9] Compiling PathSize.Exception ( src/PathSize/Exception.hs, nothing )
+[2024-09-25 08:13:45][Command][haddock_push] [7 of 9] Compiling PathSize.Data.PathSizeResult ( src/PathSize/Data/PathSizeResult.hs, nothing )
+[2024-09-25 08:13:45][Command][haddock_push] 
+[2024-09-25 08:13:45][Command][haddock_push] src/PathSize/Data/PathSizeResult.hs:102:7: warning: [GHC-68441] [-Wdeprecations]
+[2024-09-25 08:13:45][Command][haddock_push]     In the use of ‘displayNoCS’
+[2024-09-25 08:13:45][Command][haddock_push]     (imported from Effects.Exception, but defined in Effects.Exception.Annotation.CallStack.Legacy):
+[2024-09-25 08:13:45][Command][haddock_push]     Deprecated: "The legacy CallStack exception annotations are deprecated as
+[2024-09-25 08:13:45][Command][haddock_push]                  the functionality is subsumed in base 4.20 (GHC 9.10)."
+[2024-09-25 08:13:45][Command][haddock_push]     |
+[2024-09-25 08:13:45][Command][haddock_push] 102 |       Ex.displayNoCS
+[2024-09-25 08:13:45][Command][haddock_push]     |       ^^^^^^^^^^^^^^
+[2024-09-25 08:13:45][Command][haddock_push] [8 of 9] Compiling PathSize.Utils   ( src/PathSize/Utils.hs, nothing )
+[2024-09-25 08:13:45][Command][haddock_push] [9 of 9] Compiling PathSize         ( src/PathSize.hs, nothing )
+[2024-09-25 08:13:45][Command][haddock_push] 
+[2024-09-25 08:13:45][Command][haddock_push] src/PathSize/Utils.hs:38:1: warning: [GHC-15328] [-Wdeprecations]
+[2024-09-25 08:13:45][Command][haddock_push]     Module ‘System.OsString.Internal.Types’ is deprecated:
+[2024-09-25 08:13:45][Command][haddock_push]       "Use System.OsString.Internal.Types from os-string >= 2.0.0 package instead. This module will be removed in filepath >= 1.5."
+[2024-09-25 08:13:45][Command][haddock_push]    |
+[2024-09-25 08:13:45][Command][haddock_push] 38 | import System.OsString.Internal.Types
+[2024-09-25 08:13:45][Command][haddock_push]    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^...
+[2024-09-25 08:13:45][Command][haddock_push] 
+[2024-09-25 08:13:45][Command][haddock_push] src/PathSize/Utils.hs:45:1: warning: [GHC-15328] [-Wdeprecations]
+[2024-09-25 08:13:45][Command][haddock_push]     Module ‘System.OsPath.Data.ByteString.Short’ is deprecated:
+[2024-09-25 08:13:45][Command][haddock_push]       "Use System.OsString.Data.ByteString.Short from os-string >= 2.0.0 package instead. This module will be removed in filepath >= 1.5."
+[2024-09-25 08:13:45][Command][haddock_push]    |
+[2024-09-25 08:13:45][Command][haddock_push] 45 | import System.OsPath.Data.ByteString.Short qualified as Short
+[2024-09-25 08:13:45][Command][haddock_push]    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[2024-09-25 08:14:09][Command][haddock_push] Haddock coverage:
+[2024-09-25 08:14:09][Command][haddock_push]  100% ( 12 / 12) in 'PathSize.Data.Config'
+[2024-09-25 08:14:09][Command][haddock_push]  100% (  2 /  2) in 'PathSize.Data.PathData'
+[2024-09-25 08:14:09][Command][haddock_push]  100% (  5 /  5) in 'PathSize.Data.PathTree'
+[2024-09-25 08:14:09][Command][haddock_push]  100% (  6 /  6) in 'PathSize.Data.SubPathData.Internal'
+[2024-09-25 08:14:09][Command][haddock_push]  100% ( 12 / 12) in 'PathSize.Data.SubPathData'
+[2024-09-25 08:14:09][Command][haddock_push]  100% (  2 /  2) in 'PathSize.Exception'
+[2024-09-25 08:14:09][Command][haddock_push]   85% (  6 /  7) in 'PathSize.Data.PathSizeResult'
+[2024-09-25 08:14:09][Command][haddock_push]   Missing documentation for:
+[2024-09-25 08:14:09][Command][haddock_push]     mkPathEString (src/PathSize/Data/PathSizeResult.hs:108)
+[2024-09-25 08:14:09][Command][haddock_push] Warning: 'dot' is out of scope.
+[2024-09-25 08:14:09][Command][haddock_push]     If you qualify the identifier, haddock can try to link it anyway.
+[2024-09-25 08:14:09][Command][haddock_push]  100% (  7 /  7) in 'PathSize.Utils'
+[2024-09-25 08:14:09][Command][haddock_push]  100% ( 15 / 15) in 'PathSize'
+[2024-09-25 08:14:09][Command][haddock_push] Warning: PathSize.Data.PathData: could not find link destinations for: 
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.PathData.Rep_PathData
+[2024-09-25 08:14:09][Command][haddock_push] Warning: PathSize.Data.PathTree: could not find link destinations for: 
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.PathTree.Rep_PathTree
+[2024-09-25 08:14:09][Command][haddock_push] Warning: PathSize.Data.SubPathData.Internal: could not find link destinations for: 
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.SubPathData.Internal.Rep_SubPathData
+[2024-09-25 08:14:09][Command][haddock_push] Warning: PathSize.Data.SubPathData: could not find link destinations for: 
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.SubPathData.Internal.Rep_SubPathData
+[2024-09-25 08:14:09][Command][haddock_push] Warning: PathSize.Exception: could not find link destinations for: 
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Exception.Rep_PathE
+[2024-09-25 08:14:09][Command][haddock_push] Warning: PathSize.Data.PathSizeResult: could not find link destinations for: 
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.PathSizeResult.Rep_PathSizeResult
+[2024-09-25 08:14:09][Command][haddock_push] Warning: PathSize: could not find link destinations for: 
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.PathData.Rep_PathData
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.SubPathData.Internal.Rep_SubPathData
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Exception.Rep_PathE
+[2024-09-25 08:14:09][Command][haddock_push] - PathSize.Data.PathSizeResult.Rep_PathSizeResult
+[2024-09-25 08:14:09][Command][haddock_push] Documentation created:
+[2024-09-25 08:14:09][Command][haddock_push] /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/opt/doc/html/path-size/
+[2024-09-25 08:14:09][Command][haddock_push] Configuring library 'bench-common' for path-size-0.1..
+[2024-09-25 08:14:13][Command][haddock_push] Preprocessing library 'bench-common' for path-size-0.1..
+[2024-09-25 08:14:13][Command][haddock_push] Running Haddock on library 'bench-common' for path-size-0.1..
+[2024-09-25 08:14:13][Command][haddock_push] Warning: --source-* options are ignored when --hyperlinked-source is enabled.
+[2024-09-25 08:14:14][Command][haddock_push] [1 of 1] Compiling PathSize.Bench.Common ( bench/common/PathSize/Bench/Common.hs, nothing )
+[2024-09-25 08:14:16][Command][haddock_push] 
+[2024-09-25 08:14:16][Command][haddock_push] bench/common/PathSize/Bench/Common.hs:138:54: warning: [GHC-68441] [-Wdeprecations]
+[2024-09-25 08:14:16][Command][haddock_push]     In the use of ‘throwCS’ (imported from Effects.Exception):
+[2024-09-25 08:14:16][Command][haddock_push]     Deprecated: "The legacy CallStack exception annotations are deprecated as
+[2024-09-25 08:14:16][Command][haddock_push]                  the functionality is subsumed in base 4.20 (GHC 9.10)."
+[2024-09-25 08:14:16][Command][haddock_push]     |
+[2024-09-25 08:14:16][Command][haddock_push] 138 |     displayResult (PathSizePartial (err :<|| _) _) = throwCS err
+[2024-09-25 08:14:16][Command][haddock_push]     |                                                      ^^^^^^^
+[2024-09-25 08:14:16][Command][haddock_push] 
+[2024-09-25 08:14:16][Command][haddock_push] bench/common/PathSize/Bench/Common.hs:139:52: warning: [GHC-68441] [-Wdeprecations]
+[2024-09-25 08:14:16][Command][haddock_push]     In the use of ‘throwCS’ (imported from Effects.Exception):
+[2024-09-25 08:14:16][Command][haddock_push]     Deprecated: "The legacy CallStack exception annotations are deprecated as
+[2024-09-25 08:14:16][Command][haddock_push]                  the functionality is subsumed in base 4.20 (GHC 9.10)."
+[2024-09-25 08:14:16][Command][haddock_push]     |
+[2024-09-25 08:14:16][Command][haddock_push] 139 |     displayResult (Pat
+[2024-09-25 08:14:16][Command][haddock_push] hSizeFailure (err :<|| _)) = throwCS err
+[2024-09-25 08:14:16][Command][haddock_push]     |                                                    ^^^^^^^
+[2024-09-25 08:14:16][Command][haddock_push] 
+[2024-09-25 08:14:16][Command][haddock_push] bench/common/PathSize/Bench/Common.hs:167:3: warning: [GHC-68441] [-Wdeprecations]
+[2024-09-25 08:14:16][Command][haddock_push]     In the use of ‘addCS’ (imported from Effects.Exception):
+[2024-09-25 08:14:16][Command][haddock_push]     Deprecated: "The legacy CallStack exception annotations are deprecated as
+[2024-09-25 08:14:16][Command][haddock_push]                  the functionality is subsumed in base 4.20 (GHC 9.10)."
+[2024-09-25 08:14:16][Command][haddock_push]     |
+[2024-09-25 08:14:16][Command][haddock_push] 167 |   addCS $
+[2024-09-25 08:14:16][Command][haddock_push]     |   ^^^^^
+[2024-09-25 08:14:16][Command][haddock_push] 
+[2024-09-25 08:14:16][Command][haddock_push] bench/common/PathSize/Bench/Common.hs:200:14: warning: [GHC-68441] [-Wdeprecations]
+[2024-09-25 08:14:16][Command][haddock_push]     In the use of ‘addCS’ (imported from Effects.Exception):
+[2024-09-25 08:14:16][Command][haddock_push]     Deprecated: "The legacy CallStack exception annotations are deprecated as
+[2024-09-25 08:14:16][Command][haddock_push]                  the functionality is subsumed in base 4.20 (GHC 9.10)."
+[2024-09-25 08:14:16][Command][haddock_push]     |
+[2024-09-25 08:14:16][Command][haddock_push] 200 |   \(p, c) -> addCS $ writeBinaryFile p c
+[2024-09-25 08:14:16][Command][haddock_push]     |              ^^^^^
+[2024-09-25 08:14:39][Command][haddock_push] Haddock coverage:
+[2024-09-25 08:14:39][Command][haddock_push]  100% (  8 /  8) in 'PathSize.Bench.Common'
+[2024-09-25 08:14:39][Command][haddock_push] Documentation created:
+[2024-09-25 08:14:39][Command][haddock_push] /home/tommy/Dev/tommy/github/path-size/dist-newstyle/build/x86_64-linux/ghc-9.8.2/path-size-0.1/l/bench-common/opt/doc/html/path-size/

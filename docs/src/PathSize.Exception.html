@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Provides exception types/functions for usage with path-size.</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">PathSize.Exception</span><span>
+</span><span id="line-5"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Exception.html#PathE"><span class="hs-identifier">PathE</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.DeepSeq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NFData</span></span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">displayException</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-utils-0.1-63291e697f80f5495c55c94c60ce67a5dc30f47d1074d2264475d78aa5752aa5/share/doc/html/src/Effects.FileSystem.OsPath.html"><span class="hs-identifier">Effects.FileSystem.OsPath</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">OsPath</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-utils-0.1-63291e697f80f5495c55c94c60ce67a5dc30f47d1074d2264475d78aa5752aa5/share/doc/html/src/Effects.FileSystem.OsPath.html#decodeLenient"><span class="hs-identifier">decodeLenient</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Generics</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Generic</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- | Exception for a path. The second param is the reason i.e. the exceptions'</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- displayException. The reason we convert to a string rather than leave it</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- as an exception is so we can have an NFData instance for benchmarking.</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">data</span><span> </span><span id="PathE"><span class="annot"><a href="PathSize.Exception.html#PathE"><span class="hs-identifier hs-var">PathE</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkPathE"><span class="annot"><a href="PathSize.Exception.html#MkPathE"><span class="hs-identifier hs-var">MkPathE</span></a></span></span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span> </span><span class="hs-glyph">!</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">stock</span></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-22"></span><span>      </span><span id="local-6989586621679122012"><span id="local-6989586621679122019"><span class="annot"><span class="annottext">PathE -&gt; PathE -&gt; Bool
+(PathE -&gt; PathE -&gt; Bool) -&gt; (PathE -&gt; PathE -&gt; Bool) -&gt; Eq PathE
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PathE -&gt; PathE -&gt; Bool
+== :: PathE -&gt; PathE -&gt; Bool
+$c/= :: PathE -&gt; PathE -&gt; Bool
+/= :: PathE -&gt; PathE -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-24"></span><span>      </span><span id="local-6989586621679122025"><span id="local-6989586621679122027"><span class="annot"><span class="annottext">(forall x. PathE -&gt; Rep PathE x)
+-&gt; (forall x. Rep PathE x -&gt; PathE) -&gt; Generic PathE
+forall x. Rep PathE x -&gt; PathE
+forall x. PathE -&gt; Rep PathE x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cfrom :: forall x. PathE -&gt; Rep PathE x
+from :: forall x. PathE -&gt; Rep PathE x
+$cto :: forall x. Rep PathE x -&gt; PathE
+to :: forall x. Rep PathE x -&gt; PathE
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Generic</span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-26"></span><span>      </span><span id="local-6989586621679122033"><span id="local-6989586621679122040"><span id="local-6989586621679122045"><span id="local-6989586621679122049"><span id="local-6989586621679122052"><span id="local-6989586621679122055"><span id="local-6989586621679122058"><span class="annot"><span class="annottext">Eq PathE
+Eq PathE =&gt;
+(PathE -&gt; PathE -&gt; Ordering)
+-&gt; (PathE -&gt; PathE -&gt; Bool)
+-&gt; (PathE -&gt; PathE -&gt; Bool)
+-&gt; (PathE -&gt; PathE -&gt; Bool)
+-&gt; (PathE -&gt; PathE -&gt; Bool)
+-&gt; (PathE -&gt; PathE -&gt; PathE)
+-&gt; (PathE -&gt; PathE -&gt; PathE)
+-&gt; Ord PathE
+PathE -&gt; PathE -&gt; Bool
+PathE -&gt; PathE -&gt; Ordering
+PathE -&gt; PathE -&gt; PathE
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: PathE -&gt; PathE -&gt; Ordering
+compare :: PathE -&gt; PathE -&gt; Ordering
+$c&lt; :: PathE -&gt; PathE -&gt; Bool
+&lt; :: PathE -&gt; PathE -&gt; Bool
+$c&lt;= :: PathE -&gt; PathE -&gt; Bool
+&lt;= :: PathE -&gt; PathE -&gt; Bool
+$c&gt; :: PathE -&gt; PathE -&gt; Bool
+&gt; :: PathE -&gt; PathE -&gt; Bool
+$c&gt;= :: PathE -&gt; PathE -&gt; Bool
+&gt;= :: PathE -&gt; PathE -&gt; Bool
+$cmax :: PathE -&gt; PathE -&gt; PathE
+max :: PathE -&gt; PathE -&gt; PathE
+$cmin :: PathE -&gt; PathE -&gt; PathE
+min :: PathE -&gt; PathE -&gt; PathE
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>      </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-28"></span><span>      </span><span id="local-6989586621679122063"><span id="local-6989586621679122072"><span id="local-6989586621679122076"><span class="annot"><span class="annottext">Int -&gt; PathE -&gt; ShowS
+[PathE] -&gt; ShowS
+PathE -&gt; String
+(Int -&gt; PathE -&gt; ShowS)
+-&gt; (PathE -&gt; String) -&gt; ([PathE] -&gt; ShowS) -&gt; Show PathE
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PathE -&gt; ShowS
+showsPrec :: Int -&gt; PathE -&gt; ShowS
+$cshow :: PathE -&gt; String
+show :: PathE -&gt; String
+$cshowList :: [PathE] -&gt; ShowS
+showList :: [PathE] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="annot"><span class="hs-keyword">anyclass</span></span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-32"></span><span>      </span><span id="local-6989586621679122081"><span class="annot"><span class="annottext">PathE -&gt; ()
+(PathE -&gt; ()) -&gt; NFData PathE
+forall a. (a -&gt; ()) -&gt; NFData a
+$crnf :: PathE -&gt; ()
+rnf :: PathE -&gt; ()
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">NFData</span></span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="annot"><span class="hs-comment">-- | @since 0.1</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679122108"><span id="local-6989586621679122112"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="PathSize.Exception.html#PathE"><span class="hs-identifier hs-type">PathE</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-37"></span><span>  </span><span id="local-6989586621679122122"><span class="annot"><span class="annottext">displayException :: PathE -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">displayException</span></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Exception.html#MkPathE"><span class="hs-identifier hs-type">MkPathE</span></a></span><span> </span><span id="local-6989586621679122123"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679122123"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679122124"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679122124"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error for path '&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>        </span><span class="annot"><span class="annottext">OsPath -&gt; String
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-utils-0.1-63291e697f80f5495c55c94c60ce67a5dc30f47d1074d2264475d78aa5752aa5/share/doc/html/src/Effects.FileSystem.OsPath.html#decodeLenient"><span class="hs-identifier hs-var">decodeLenient</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679122123"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;': &quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679122124"><span class="hs-identifier hs-var">e</span></a></span><span>
+</span><span id="line-43"></span><span>      </span><span class="hs-special">]</span><span>
+</span><span id="line-44"></span></pre></body></html>

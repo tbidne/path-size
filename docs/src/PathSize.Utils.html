@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Provides utilities.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">PathSize.Utils</span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Windows / Unix compat</span></span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="PathSize.Utils.html#MonadPosixC"><span class="hs-identifier">MonadPosixC</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="PathSize.Utils.html#hidden"><span class="hs-identifier">hidden</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="PathSize.Utils.html#getFileStatus"><span class="hs-identifier">getFileStatus</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Misc</span></span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="PathSize.Utils.html#unzipResultSeq"><span class="hs-identifier">unzipResultSeq</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">where</span><span class="hs-cpp">
+
+#if !MIN_VERSION_base(4, 20, 0)
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">foldl'</span></span><span class="hs-special">)</span><span class="hs-cpp">
+#endif
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Sequence</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Seq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Empty</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-operator">(:&lt;|)</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.html"><span class="hs-identifier">Data.Sequence.NonEmpty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#NESeq"><span class="hs-identifier">NESeq</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator">(:&lt;||)</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-fs-utils-0.1-63291e697f80f5495c55c94c60ce67a5dc30f47d1074d2264475d78aa5752aa5/share/doc/html/src/Effects.FileSystem.OsPath.html"><span class="hs-identifier">Effects.FileSystem.OsPath</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">OsPath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html"><span class="hs-identifier">PathSize.Data.PathSizeResult</span></a></span><span>
+</span><span id="line-24"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizeResult"><span class="hs-identifier">PathSizeResult</span></a></span><span>
+</span><span id="line-25"></span><span>      </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizeFailure"><span class="hs-identifier">PathSizeFailure</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizePartial"><span class="hs-identifier">PathSizePartial</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizeSuccess"><span class="hs-identifier">PathSizeSuccess</span></a></span><span>
+</span><span id="line-28"></span><span>      </span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="PathSize.Data.PathTree.html"><span class="hs-identifier">PathSize.Data.PathTree</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.PathTree.html#PathTree"><span class="hs-identifier">PathTree</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="PathSize.Exception.html"><span class="hs-identifier">PathSize.Exception</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Exception.html#PathE"><span class="hs-identifier">PathE</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/jlmwgk83z11alki6v8pn6mmrx07ic0cr-unix-compat-0.7.1-doc/share/doc/unix-compat-0.7.1/html/src/System.PosixCompat.Files.html"><span class="hs-identifier">System.PosixCompat.Files</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">FileStatus</span></span><span class="hs-special">)</span><span class="hs-cpp">
+
+#if POSIX
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-exceptions-0.1-23ea7294de4bda7acf284749bdd90667bb21829c9af09afffa78e75cdeeabb46/share/doc/html/src/Effects.Exception.html"><span class="hs-identifier">Effects.Exception</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">HasCallStack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-unix-0.1-a44aaae2c1271d622afd0a812aa83729f392cdd2a3ad70ea98cc5dac5ebca6c6/share/doc/html/src/Effects.System.Posix.html"><span class="hs-identifier">Effects.System.Posix</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-unix-0.1-a44aaae2c1271d622afd0a812aa83729f392cdd2a3ad70ea98cc5dac5ebca6c6/share/doc/html/src/Effects.System.Posix.html#MonadPosix"><span class="hs-identifier">MonadPosix</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-unix-0.1-a44aaae2c1271d622afd0a812aa83729f392cdd2a3ad70ea98cc5dac5ebca6c6/share/doc/html/src/Effects.System.Posix.html"><span class="hs-identifier">Effects.System.Posix</span></a></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Posix</span></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="file:///nix/store/kgk37a3arx78azgn6a90772a5p13ncha-os-string-2.0.2.2-doc/share/doc/os-string-2.0.2.2/html/src/System.OsString.Internal.Types.html"><span class="hs-identifier">System.OsString.Internal.Types</span></a></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">OsString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">getOsString</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="hs-identifier">PosixString</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">getPosixString</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-special">)</span><span class="hs-cpp">
+#if OS_STRING
+</span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System.OsString.Data.ByteString.Short</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">Short</span><span class="hs-cpp">
+#else
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.OsPath.Data.ByteString.Short</span></span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Short</span></span><span class="hs-cpp">
+#endif
+</span><span class="hs-cpp">#else
+</span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Effects.Exception</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">HasCallStack</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">MonadThrow</span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Effects.FileSystem.OsPath</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">FS.OsPath</span><span>
+</span><span id="line-50"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Effects.System.PosixCompat</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">MonadPosixCompat</span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Effects.System.PosixCompat</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">PosixCompat</span><span class="hs-cpp">
+#endif
+</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | Unzips a sequence of results.</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-57"></span><span class="annot"><a href="PathSize.Utils.html#unzipResultSeq"><span class="hs-identifier hs-type">unzipResultSeq</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizeResult"><span class="hs-identifier hs-type">PathSizeResult</span></a></span><span> </span><span class="annot"><a href="PathSize.Data.PathTree.html#PathTree"><span class="hs-identifier hs-type">PathTree</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="PathSize.Exception.html#PathE"><span class="hs-identifier hs-type">PathE</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="PathSize.Data.PathTree.html#PathTree"><span class="hs-identifier hs-type">PathTree</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span id="unzipResultSeq"><span class="annot"><span class="annottext">unzipResultSeq :: Seq (PathSizeResult PathTree) -&gt; (Seq PathE, Seq PathTree)
+</span><a href="PathSize.Utils.html#unzipResultSeq"><span class="hs-identifier hs-var hs-var">unzipResultSeq</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">((Seq PathE, Seq PathTree)
+ -&gt; PathSizeResult PathTree -&gt; (Seq PathE, Seq PathTree))
+-&gt; (Seq PathE, Seq PathTree)
+-&gt; Seq (PathSizeResult PathTree)
+-&gt; (Seq PathE, Seq PathTree)
+forall b a. (b -&gt; a -&gt; b) -&gt; b -&gt; Seq a -&gt; b
+forall (t :: * -&gt; *) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldl'</span></span><span> </span><span class="annot"><span class="annottext">(Seq PathE, Seq PathTree)
+-&gt; PathSizeResult PathTree -&gt; (Seq PathE, Seq PathTree)
+forall {a}.
+(Seq PathE, Seq a) -&gt; PathSizeResult a -&gt; (Seq PathE, Seq a)
+</span><a href="#local-6989586621679122357"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Seq PathE
+forall a. Seq a
+</span><span class="hs-identifier hs-var">Empty</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Seq PathTree
+forall a. Seq a
+</span><span class="hs-identifier hs-var">Empty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-60"></span><span>    </span><span id="local-6989586621679122357"><span class="annot"><span class="annottext">f :: (Seq PathE, Seq a) -&gt; PathSizeResult a -&gt; (Seq PathE, Seq a)
+</span><a href="#local-6989586621679122357"><span class="hs-identifier hs-var hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679122361"><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122361"><span class="hs-identifier hs-var">errs</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679122362"><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679122362"><span class="hs-identifier hs-var">trees</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span class="hs-glyph">case</span><span>
+</span><span id="line-61"></span><span>      </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizeSuccess"><span class="hs-identifier hs-type">PathSizeSuccess</span></a></span><span> </span><span id="local-6989586621679122363"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679122363"><span class="hs-identifier hs-var">tree</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122361"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679122363"><span class="hs-identifier hs-var">tree</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; Seq a -&gt; Seq a
+forall a. a -&gt; Seq a -&gt; Seq a
+</span><span class="hs-operator hs-var">:&lt;|</span></span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679122362"><span class="hs-identifier hs-var">trees</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-62"></span><span>      </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizePartial"><span class="hs-identifier hs-type">PathSizePartial</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679122364"><span class="annot"><span class="annottext">PathE
+</span><a href="#local-6989586621679122364"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-type">:&lt;||</span></a></span><span> </span><span id="local-6989586621679122365"><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122365"><span class="hs-identifier hs-var">es</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679122366"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679122366"><span class="hs-identifier hs-var">tree</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PathE
+</span><a href="#local-6989586621679122364"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="annot"><span class="annottext">PathE -&gt; Seq PathE -&gt; Seq PathE
+forall a. a -&gt; Seq a -&gt; Seq a
+</span><span class="hs-operator hs-var">:&lt;|</span></span><span> </span><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122365"><span class="hs-identifier hs-var">es</span></a></span><span> </span><span class="annot"><span class="annottext">Seq PathE -&gt; Seq PathE -&gt; Seq PathE
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122361"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679122366"><span class="hs-identifier hs-var">tree</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; Seq a -&gt; Seq a
+forall a. a -&gt; Seq a -&gt; Seq a
+</span><span class="hs-operator hs-var">:&lt;|</span></span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679122362"><span class="hs-identifier hs-var">trees</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>      </span><span class="annot"><a href="PathSize.Data.PathSizeResult.html#PathSizeFailure"><span class="hs-identifier hs-type">PathSizeFailure</span></a></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679122367"><span class="annot"><span class="annottext">PathE
+</span><a href="#local-6989586621679122367"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="annot"><a href="file:///nix/store/4bf730174cbfvs5m062mx2wsg1d3picz-nonempty-containers-0.3.4.5-doc/share/doc/nonempty-containers-0.3.4.5/html/src/Data.Sequence.NonEmpty.Internal.html#%3A%3C%7C%7C"><span class="hs-operator hs-type">:&lt;||</span></a></span><span> </span><span id="local-6989586621679122368"><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122368"><span class="hs-identifier hs-var">es</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PathE
+</span><a href="#local-6989586621679122367"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="annot"><span class="annottext">PathE -&gt; Seq PathE -&gt; Seq PathE
+forall a. a -&gt; Seq a -&gt; Seq a
+</span><span class="hs-operator hs-var">:&lt;|</span></span><span> </span><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122368"><span class="hs-identifier hs-var">es</span></a></span><span> </span><span class="annot"><span class="annottext">Seq PathE -&gt; Seq PathE -&gt; Seq PathE
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Seq PathE
+</span><a href="#local-6989586621679122361"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Seq a
+</span><a href="#local-6989586621679122362"><span class="hs-identifier hs-var">trees</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- | Detects hidden paths via a rather crude 'dot' check, with an</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- exception for the current directory ./.</span><span>
+</span><span id="line-67"></span><span class="hs-comment">--</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-69"></span><span class="annot"><a href="PathSize.Utils.html#hidden"><span class="hs-identifier hs-type">hidden</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-cpp">
+#if POSIX
+</span><span id="hidden"><span class="annot"><span class="annottext">hidden :: OsPath -&gt; Bool
+</span><a href="PathSize.Utils.html#hidden"><span class="hs-identifier hs-var hs-var">hidden</span></a></span></span><span> </span><span id="local-6989586621679122369"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679122369"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ShortByteString -&gt; Maybe (Word8, Word8, ShortByteString)
+</span><span class="hs-identifier hs-var">Short.uncons2</span></span><span> </span><span class="annot"><span class="annottext">ShortByteString
+</span><a href="#local-6989586621679122371"><span class="hs-identifier hs-var">sbs</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-72"></span><span>  </span><span class="annot"><span class="annottext">Maybe (Word8, Word8, ShortByteString)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-73"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">46</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">47</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ShortByteString
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-comment">-- &quot;./&quot;</span><span>
+</span><span id="line-74"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">46</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ShortByteString
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>   </span><span class="hs-comment">-- &quot;.&quot;</span><span>
+</span><span id="line-75"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">(Word8, Word8, ShortByteString)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-76"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-77"></span><span>    </span><span id="local-6989586621679122371"><span class="annot"><span class="annottext">sbs :: ShortByteString
+</span><a href="#local-6989586621679122371"><span class="hs-identifier hs-var hs-var">sbs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679122369"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">getOsString</span><span class="hs-operator">.</span><span class="hs-identifier">getPosixString</span><span class="hs-cpp">
+#else
+</span><span class="hs-identifier">hidden</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">const</span><span> </span><span class="hs-identifier">False</span><span class="hs-cpp">
+#endif
+</span><span>
+</span><span id="line-82"></span><span class="hs-comment">{- ORMOLU_DISABLE -}</span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- | Alias for MonadPosix* constraints. On Posix, this is MonadPosix (unix),</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- which allows for greater efficiency. On Windows, this is just</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- MonadPosixCompat (unix-compat).</span><span>
+</span><span id="line-87"></span><span class="hs-keyword">type</span><span> </span><span id="MonadPosixC"><span class="annot"><a href="PathSize.Utils.html#MonadPosixC"><span class="hs-identifier hs-var">MonadPosixC</span></a></span></span><span> </span><span id="local-6989586621679122372"><span class="annot"><a href="#local-6989586621679122372"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span class="hs-cpp">
+#if POSIX
+</span><span>  </span><span class="annot"><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-unix-0.1-a44aaae2c1271d622afd0a812aa83729f392cdd2a3ad70ea98cc5dac5ebca6c6/share/doc/html/src/Effects.System.Posix.html#MonadPosix"><span class="hs-identifier hs-type">MonadPosix</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122372"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-cpp">
+#else
+</span><span>  </span><span class="hs-identifier">MonadPosixCompat</span><span> </span><span class="hs-identifier">m</span><span class="hs-cpp">
+#endif
+</span><span>
+</span><span id="line-94"></span><span class="hs-comment">{- ORMOLU_ENABLE -}</span><span class="hs-cpp">
+
+#if POSIX
+</span><span class="hs-comment">-- | Retrieves the FileStatus for the given path.</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-100"></span><span class="annot"><a href="PathSize.Utils.html#getFileStatus"><span class="hs-identifier hs-type">getFileStatus</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-101"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679122325"><span class="annot"><a href="#local-6989586621679122325"><span class="hs-identifier hs-type">m</span></a></span></span><span class="hs-operator">.</span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">HasCallStack</span></span><span class="hs-special">,</span><span>
+</span><span id="line-103"></span><span>    </span><span class="annot"><a href="PathSize.Utils.html#MonadPosixC"><span class="hs-identifier hs-type">MonadPosixC</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679122325"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-104"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-105"></span><span>  </span><span class="annot"><span class="hs-identifier hs-type">OsPath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-106"></span><span>  </span><span class="annot"><a href="#local-6989586621679122325"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FileStatus</span></span><span>
+</span><span id="line-107"></span><span id="getFileStatus"><span class="annot"><span class="annottext">getFileStatus :: forall (m :: * -&gt; *).
+(HasCallStack, MonadPosixC m) =&gt;
+OsPath -&gt; m FileStatus
+</span><a href="PathSize.Utils.html#getFileStatus"><span class="hs-identifier hs-var hs-var">getFileStatus</span></a></span></span><span> </span><span id="local-6989586621679122379"><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679122379"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-108"></span><span>  </span><span class="hs-comment">-- NOTE: On posix, we can take advantage of the fact that we know OsPath</span><span>
+</span><span id="line-109"></span><span>  </span><span class="hs-comment">-- is a PosixString. This means we can call the unix library directly,</span><span>
+</span><span id="line-110"></span><span>  </span><span class="hs-comment">-- saving expensive @OsPath -&gt; FilePath (unix-compat)@ and</span><span>
+</span><span id="line-111"></span><span>  </span><span class="hs-comment">-- @FilePath -&gt; PosixString (unix)@ conversions.</span><span>
+</span><span id="line-112"></span><span>  </span><span class="hs-comment">--</span><span>
+</span><span id="line-113"></span><span>  </span><span class="hs-comment">-- Because we are getting the FileStatus directly, we also have more</span><span>
+</span><span id="line-114"></span><span>  </span><span class="hs-comment">-- freedom to change the underlying size type for more potential</span><span>
+</span><span id="line-115"></span><span>  </span><span class="hs-comment">-- efficiency gains, as we have one fewer fromIntegral call. The normal</span><span>
+</span><span id="line-116"></span><span>  </span><span class="hs-comment">-- getFileSize already converts the stats to Integer, which is wasted if</span><span>
+</span><span id="line-117"></span><span>  </span><span class="hs-comment">-- that's not the type we want.</span><span>
+</span><span id="line-118"></span><span>  </span><span class="annot"><span class="annottext">PlatformString -&gt; m FileStatus
+forall (m :: * -&gt; *).
+(MonadPosix m, HasCallStack) =&gt;
+PlatformString -&gt; m FileStatus
+</span><a href="file:///home/tommy/.local/state/cabal/store/ghc-9.8.2/effects-unix-0.1-a44aaae2c1271d622afd0a812aa83729f392cdd2a3ad70ea98cc5dac5ebca6c6/share/doc/html/src/Effects.System.Posix.html#getSymbolicLinkStatus"><span class="hs-identifier hs-var">Posix.getSymbolicLinkStatus</span></a></span><span> </span><span class="annot"><span class="annottext">OsPath
+</span><a href="#local-6989586621679122379"><span class="hs-identifier hs-var">path</span></a></span><span class="hs-operator">.</span><span class="hs-identifier">getOsString</span><span class="hs-cpp">
+#else
+</span><span class="hs-comment">-- | Retrieves the FileStatus for the given path.</span><span>
+</span><span id="line-121"></span><span class="hs-comment">--</span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- @since 0.1</span><span>
+</span><span id="line-123"></span><span class="hs-identifier">getFileStatus</span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-124"></span><span>  </span><span class="hs-keyword">forall</span><span> </span><span class="hs-identifier">m</span><span class="hs-operator">.</span><span>
+</span><span id="line-125"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="hs-identifier">HasCallStack</span><span class="hs-special">,</span><span>
+</span><span id="line-126"></span><span>    </span><span class="hs-identifier">MonadPosixC</span><span> </span><span class="hs-identifier">m</span><span class="hs-special">,</span><span>
+</span><span id="line-127"></span><span>    </span><span class="hs-identifier">MonadThrow</span><span> </span><span class="hs-identifier">m</span><span>
+</span><span id="line-128"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-129"></span><span>  </span><span class="hs-identifier">OsPath</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-130"></span><span>  </span><span class="hs-identifier">m</span><span> </span><span class="hs-identifier">FileStatus</span><span>
+</span><span id="line-131"></span><span class="hs-identifier">getFileStatus</span><span> </span><span class="hs-identifier">path</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-132"></span><span>  </span><span class="hs-comment">-- It would be nice if we could do something similar here i.e. take advantage</span><span>
+</span><span id="line-133"></span><span>  </span><span class="hs-comment">-- of the fact that we know OsPath is a WindowsString and call the relevant</span><span>
+</span><span id="line-134"></span><span>  </span><span class="hs-comment">-- function directly. Alas, the getSymbolicLinkStatus logic in PosixCompat</span><span>
+</span><span id="line-135"></span><span>  </span><span class="hs-comment">-- is bespoke, and there does not appear to be a drop-in replacement</span><span>
+</span><span id="line-136"></span><span>  </span><span class="hs-comment">-- @getSymbolicLinkStatus :: WindowsString -&gt; IO FileStatus@ in Wind32.</span><span>
+</span><span id="line-137"></span><span>  </span><span class="hs-identifier">fp</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-identifier">FS.OsPath.decodeThrowM</span><span> </span><span class="hs-identifier">path</span><span>
+</span><span id="line-138"></span><span>  </span><span class="hs-identifier">PosixCompat.getSymbolicLinkStatus</span><span> </span><span class="hs-identifier">fp</span><span class="hs-cpp">
+#endif
+</span></pre></body></html>
