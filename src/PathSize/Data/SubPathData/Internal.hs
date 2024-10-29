@@ -33,7 +33,7 @@ import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
-import Effects.FileSystem.OsPath (OsPath)
+import FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
@@ -55,9 +55,9 @@ import System.OsString.Internal.Types
   ( OsString (getOsString),
     PosixString(getPosixString),
   )
-import Effects.FileSystem.UTF8 qualified as FS.UTF8
+import FileSystem.UTF8 qualified as FS.UTF8
 #else
-import Effects.FileSystem.OsPath qualified as FS.OsPath
+import FileSystem.OsPath qualified as FS.OsPath
 #endif
 
 -- | A flattened and sorted representation of 'PathTree'. Contains at least

@@ -1,7 +1,7 @@
 module Main (main) where
 
+import Control.Exception (Exception (displayException), bracket)
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import Effects.Exception (Exception (displayException), bracket)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import PathSize.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
 import PathSize.Bench.Common qualified as Common

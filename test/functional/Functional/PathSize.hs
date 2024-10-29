@@ -9,6 +9,8 @@ module Functional.PathSize
 where
 
 import Control.Exception (Exception (displayException))
+import Control.Exception.Utils (trySync)
+import Control.Monad.Catch (MonadCatch, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (Foldable (toList))
 import Data.HashSet qualified as HSet
@@ -18,9 +20,6 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
-import Effects.Exception (MonadCatch, MonadThrow, throwM, tryAny)
-import Effects.FileSystem.OsPath (OsPath, osp, ospPathSep, (</>))
-import Effects.FileSystem.OsPath qualified as FS.OsPath
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
 #if POSIX
@@ -32,8 +31,10 @@ import Effects.System.PosixCompat (MonadPosixCompat (getSymbolicLinkStatus))
 import Data.Functor ((<&>))
 import Data.Maybe (fromMaybe)
 import Effects.FileSystem.FileWriter (ByteString)
-import Effects.FileSystem.IO qualified as FS.IO
-import Effects.FileSystem.UTF8 qualified as FS.UTF8
+import FileSystem.IO qualified as FS.IO
+import FileSystem.OsPath (OsPath, osp, ospPathSep, (</>))
+import FileSystem.OsPath qualified as FS.OsPath
+import FileSystem.UTF8 qualified as FS.UTF8
 import GoldenParams
   ( GoldenParams
       ( MkGoldenParams,
@@ -269,7 +270,7 @@ testGoldenParams goldenParams =
 
 runTest :: Config -> OsPath -> IO Text
 runTest cfg testDir = do
-  tryAny (runTestNoCatch cfg testDir) <&> \case
+  trySync (runTestNoCatch cfg testDir) <&> \case
     Right (PathSizeSuccess spd) -> display spd
     Right (PathSizePartial errs spd) -> fmtErrs errs <> "\n" <> display spd
     Right (PathSizeFailure errs) -> fmtErrs errs

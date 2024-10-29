@@ -4,7 +4,7 @@ module GoldenParams
 where
 
 import Data.Text (Text)
-import Effects.FileSystem.OsPath (OsPath)
+import FileSystem.OsPath (OsPath)
 import PathSize.Data.Config (Config)
 import Test.Tasty (TestName)
 

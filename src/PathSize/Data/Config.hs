@@ -23,7 +23,7 @@ where
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HSet
 import Data.Word (Word16)
-import Effects.FileSystem.OsPath (OsPath)
+import FileSystem.OsPath (OsPath)
 import Numeric.Data.Positive.Internal (Positive (UnsafePositive))
 import Optics.Core
   ( A_Lens,

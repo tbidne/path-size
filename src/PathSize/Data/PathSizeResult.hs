@@ -16,10 +16,10 @@ where
 
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception)
+import Control.Exception.Annotation.Utils qualified as AnnUtils
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Sequence.NonEmpty qualified as NESeq
-import Effects.Exception qualified as Ex
-import Effects.FileSystem.OsPath (OsPath)
+import FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 import Optics.Core (Prism', prism)
 import PathSize.Exception (PathE (MkPathE))
@@ -89,20 +89,9 @@ _PathSizeFailure =
     )
 {-# INLINE _PathSizeFailure #-}
 
-{- ORMOLU_DISABLE -}
-
 -- | @since 0.1
 mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
-mkPathE path = mkPathEString path . displayFn
-  where
-    displayFn =
-#if MIN_VERSION_base(4, 20, 0)
-      Ex.displayInner
-#else
-      Ex.displayNoCS
-#endif
-
-{- ORMOLU_ENABLE -}
+mkPathE path = mkPathEString path . AnnUtils.displayInner
 
 mkPathEString :: OsPath -> String -> PathSizeResult a
 mkPathEString path = PathSizeFailure . NESeq.singleton . MkPathE path
