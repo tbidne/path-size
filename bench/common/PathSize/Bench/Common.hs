@@ -19,21 +19,22 @@ where
 
 import Control.DeepSeq (NFData)
 import Control.Monad ((>=>))
+import Control.Monad.Catch (throwM)
 import Data.Foldable (for_, traverse_)
 import Data.HashSet qualified as HSet
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
-import Effects.Exception (HasCallStack, addCS, throwCS)
 import Effects.FileSystem.FileWriter (ByteString, writeBinaryFile)
-import Effects.FileSystem.OsPath (OsPath, osp, (</>), (</>!))
-import Effects.FileSystem.OsPath qualified as FS.OsPath
 import Effects.FileSystem.PathReader (getTemporaryDirectory)
 import Effects.FileSystem.PathWriter
   ( createDirectoryIfMissing,
     removePathForcibly,
   )
+import FileSystem.OsPath (OsPath, osp, (</>), (</>!))
+import FileSystem.OsPath qualified as FS.OsPath
+import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (mkPositive)
 import PathSize
   ( Config
@@ -135,8 +136,8 @@ benchDisplayPathSize MkBenchmarkSuite {..} strategies testDir =
         desc' = strategyDesc strategy
 
     displayResult (PathSizeSuccess sbd) = pure $ PathSize.display False sbd
-    displayResult (PathSizePartial (err :<|| _) _) = throwCS err
-    displayResult (PathSizeFailure (err :<|| _)) = throwCS err
+    displayResult (PathSizePartial (err :<|| _) _) = throwM err
+    displayResult (PathSizeFailure (err :<|| _)) = throwM err
 
 strategyDesc :: Strategy -> String
 strategyDesc Sync = "Sync"
@@ -164,8 +165,7 @@ setup base = do
 -- @since 0.1
 teardown :: (HasCallStack) => OsPath -> IO ()
 teardown rootDir =
-  addCS $
-    guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
+  guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
     cleanup = removePathForcibly rootDir
     doNothing =
@@ -196,8 +196,7 @@ createFileContents ::
   (HasCallStack) =>
   [(OsPath, ByteString)] ->
   IO ()
-createFileContents paths = for_ paths $
-  \(p, c) -> addCS $ writeBinaryFile p c
+createFileContents paths = for_ paths (uncurry writeBinaryFile)
 
 baseConfig :: Config
 baseConfig =

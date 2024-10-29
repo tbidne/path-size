@@ -1,10 +1,10 @@
 module Main (main) where
 
 import Control.Concurrent (getNumCapabilities)
+import Control.Exception (Exception (displayException), bracket)
 import Criterion qualified as Bench
 import Criterion.Main (Benchmark, Benchmarkable, defaultMain)
 import Data.List.NonEmpty (NonEmpty ((:|)))
-import Effects.Exception (Exception (displayException), bracket)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import PathSize.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
 import PathSize.Bench.Common qualified as Common

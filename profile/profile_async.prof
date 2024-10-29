@@ -1,142 +1,121 @@
-	Thu Aug 22 14:59 2024 Time and Allocation Profiling Report  (Final)
+	Wed Oct 30 12:22 2024 Time and Allocation Profiling Report  (Final)
 
 	   profile +RTS -p -RTS
 
-	total time  =       21.31 secs   (21314 ticks @ 1000 us, 1 processor)
-	total alloc = 19,225,531,432 bytes  (excludes profiling overheads)
+	total time  =       25.87 secs   (25870 ticks @ 1000 us, 1 processor)
+	total alloc = 18,850,679,136 bytes  (excludes profiling overheads)
 
 COST CENTRE      MODULE                             SRC                                                         %time %alloc
 
-guardOrElse      System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)      29.0    8.7
-openFile         System.File.Platform               posix/System/File/Platform.hs:(20,1)-(27,58)                 28.3    0.5
-fdToHandle_      System.File.Platform               posix/System/File/Platform.hs:(41,1)-(43,48)                 12.7   46.1
-formatBase       Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67                     6.7   11.1
+openFile         System.File.Platform               posix/System/File/Platform.hs:(20,1)-(27,58)                 32.5    0.5
+guardOrElse      System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)      23.1    8.8
+fdToHandle_      System.File.Platform               posix/System/File/Platform.hs:(41,1)-(43,48)                 13.8   47.0
+formatBase       Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67                     6.4   11.3
 getFileStatus    PathSize.Utils                     src/PathSize/Utils.hs:(107,1)-(118,46)                        5.0    1.0
-display          PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(187,1)-(214,25)    3.8    6.6
-withFile         System.File.OsPath                 System/File/OsPath.hs:(60,1)-(62,25)                          3.2    1.6
-catch            Control.Exception.Safe             src/Control/Exception/Safe.hs:(247,1)-(252,23)                2.9    2.7
-findLargestPaths PathSize                           src/PathSize.hs:(100,1)-(110,22)                              2.3    7.6
-setup            PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(150,1)-(160,64)        2.0    6.9
-formatSize       Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)            1.6    2.8
-mkSubPathData    PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(125,1)-(127,61)    0.6    1.0
+withFile         System.File.OsPath                 System/File/OsPath.hs:(60,1)-(62,25)                          3.9    1.7
+display          PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(182,1)-(209,25)    3.8    6.7
+setup            PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(151,1)-(161,64)        3.6    7.7
+findLargestPaths PathSize                           src/PathSize.hs:(98,1)-(108,22)                               2.3    7.7
+formatSize       Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)            1.7    2.9
+tryIf            Control.Exception.Utils            src/Control/Exception/Utils.hs:191:1-59                       1.6    1.2
+mkSubPathData    PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(125,1)-(127,63)    0.6    1.0
 
 
-                                                                                                                                                                   individual      inherited
-COST CENTRE                MODULE                                        SRC                                                                   no.      entries  %time %alloc   %time %alloc
+                                                                                                                                            individual      inherited
+COST CENTRE               MODULE                             SRC                                                        no.      entries  %time %alloc   %time %alloc
 
-MAIN                       MAIN                                          <built-in>                                                             519           0    0.0    0.1   100.0  100.0
- CAF                       GHC.Conc.Signal                               <entire-module>                                                        944           0    0.0    0.0     0.0    0.0
- CAF                       GHC.Conc.Sync                                 <entire-module>                                                        943           0    0.0    0.0     0.0    0.0
- CAF                       GHC.Float                                     <entire-module>                                                        921           0    0.0    0.0     0.0    0.0
- CAF                       GHC.IO.Encoding                               <entire-module>                                                        908           0    0.0    0.0     0.0    0.0
- CAF                       GHC.IO.Encoding.Iconv                         <entire-module>                                                        906           0    0.0    0.0     0.0    0.0
- CAF                       GHC.IO.Handle.FD                              <entire-module>                                                        897           0    0.0    0.0     0.0    0.0
- CAF                       GHC.Weak.Finalize                             <entire-module>                                                        861           0    0.0    0.0     0.0    0.0
- CAF                       Text.Printf                                   <entire-module>                                                        850           0    0.0    0.0     0.0    0.0
- CAF                       Data.ByteString.Short.Internal                <entire-module>                                                        819           0    0.0    0.0     0.0    0.0
- CAF                       System.Directory.Internal.Common              <entire-module>                                                        800           0    0.0    0.0     0.0    0.0
- CAF                       System.Directory.OsPath                       <entire-module>                                                        796           0    0.0    0.0     0.0    0.0
- CAF                       System.Environment.Guard                      <entire-module>                                                        792           0    0.0    0.0     0.0    0.0
-  guardOrElse'             System.Environment.Guard                      src/System/Environment/Guard.hs:117:1-34                              1115           1    0.0    0.0     0.0    0.0
- CAF                       System.OsPath.Posix.Internal                  <entire-module>                                                        784           0    0.0    0.0     0.0    0.0
- CAF                       Data.HashMap.Internal                         <entire-module>                                                        600           0    0.0    0.0     0.0    0.0
-  empty                    Data.HashMap.Internal                         Data/HashMap/Internal.hs:594:1-13                                     1063           1    0.0    0.0     0.0    0.0
- CAF                       Data.HashSet.Internal                         <entire-module>                                                        596           0    0.0    0.0     0.0    0.0
-  empty                    Data.HashSet.Internal                         Data/HashSet/Internal.hs:255:1-23                                     1062           1    0.0    0.0     0.0    0.0
- CAF                       Main                                          <entire-module>                                                        576           0    0.0    0.0     0.0    0.0
-  display                  PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(187,1)-(214,25)            1094           1    0.0    0.0     0.0    0.0
-  main                     Main                                          profile/Main.hs:(58,1)-(92,9)                                         1038           1    0.0    0.0     0.0    0.0
-   setup                   PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(150,1)-(160,64)                1040           1    0.0    0.0     0.0    0.0
- CAF                       PathSize.Bench.Common                         <entire-module>                                                        575           0    0.0    0.0     0.0    0.0
-  setup                    PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(150,1)-(160,64)                1050           0    0.0    0.0     0.0    0.0
- CAF                       PathSize.Data.PathTree                        <entire-module>                                                        570           0    0.0    0.0     0.0    0.0
-  sumTrees                 PathSize.Data.PathTree                        src/PathSize/Data/PathTree.hs:(60,1)-(63,55)                          1079           1    0.0    0.0     0.0    0.0
- CAF                       PathSize.Data.SubPathData.Internal            <entire-module>                                                        569           0    0.0    0.0     0.0    0.0
-  formatSized              Data.Bytes.Formatting                         src/Data/Bytes/Formatting.hs:(107,1)-(108,54)                         1100           0    0.0    0.0     0.0    0.0
-   formatBase              Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:63:1-67                             1101           1    0.0    0.0     0.0    0.0
- CAF                       PathSize.Utils                                <entire-module>                                                        567           0    0.0    0.0     0.0    0.0
-  unzipResultSeq           PathSize.Utils                                src/PathSize/Utils.hs:(58,1)-(63,62)                                  1081           1    0.0    0.0     0.0    0.0
- CAF                       Data.Bytes.Formatting.Base                    <entire-module>                                                        565           0    0.0    0.0     0.0    0.0
- CAF                       Data.Bytes.Formatting.Size                    <entire-module>                                                        563           0    0.0    0.0     0.0    0.0
-  sizedFormatterUnix       Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:152:1-75                            1098           1    0.0    0.0     0.0    0.0
- CAF                       Effects.FileSystem.IO                         <entire-module>                                                        532           0    0.0    0.0     0.0    0.0
-  writeBinaryFileIO        Effects.FileSystem.IO                         src/Effects/FileSystem/IO.hs:43:1-37                                  1051           1    0.0    0.0     0.0    0.0
- CAF                       Effects.FileSystem.OsPath                     <entire-module>                                                        531           0    0.0    0.0     0.0    0.0
-  encode                   Effects.FileSystem.OsPath                     src/Effects/FileSystem/OsPath.hs:(138,1)-(140,46)                     1048           1    0.0    0.0     0.0    0.0
- CAF                       Effects.FileSystem.UTF8                       <entire-module>                                                        529           0    0.0    0.0     0.0    0.0
-  decodeUtf8Lenient        Effects.FileSystem.UTF8                       src/Effects/FileSystem/UTF8.hs:43:1-63                                1096           1    0.0    0.0     0.0    0.0
- main                      Main                                          profile/Main.hs:(58,1)-(92,9)                                         1039           0    0.0    0.0   100.0   99.9
-  findLargestPaths         PathSize                                      src/PathSize.hs:(100,1)-(110,22)                                      1064           1    2.3    7.6    10.1   12.6
-   tryAny                  Control.Exception.Safe                        src/Control/Exception/Safe.hs:368:1-32                                1066      417692    0.1    0.1     6.7    2.5
-    try                    Control.Exception.Safe                        src/Control/Exception/Safe.hs:356:1-65                                1067      417692    0.1    0.4     6.6    2.4
-     catch                 Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1068      421788    1.5    1.0     6.5    2.0
-      hidden               PathSize.Utils                                src/PathSize/Utils.hs:(71,1)-(77,38)                                  1075      413595    0.0    0.0     0.0    0.0
-      addCS                Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1071        4096    0.0    0.0     0.0    0.0
-       addCS               Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1072        4096    0.0    0.0     0.0    0.0
-        addOuterCS         Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1073        4096    0.0    0.0     0.0    0.0
-      getFileStatus        PathSize.Utils                                src/PathSize/Utils.hs:(107,1)-(118,46)                                1070           0    5.0    1.0     5.0    1.0
-   getFileStatus           PathSize.Utils                                src/PathSize/Utils.hs:(107,1)-(118,46)                                1069      413596    0.0    0.0     0.0    0.0
-   singleton               PathSize.Data.PathTree                        src/PathSize/Data/PathTree.hs:56:1-27                                 1083      409500    0.0    0.0     0.0    0.0
-   asMap                   Data.HashSet.Internal                         Data/HashSet/Internal.hs:113:7-11                                     1077           1    0.0    0.0     0.0    0.0
-   exclude                 PathSize.Data.Config                          src/PathSize/Data/Config.hs:124:5-11                                  1078           1    0.0    0.0     0.0    0.0
-   filesOnly               PathSize.Data.Config                          src/PathSize/Data/Config.hs:128:5-13                                  1084           1    0.0    0.0     0.0    0.0
-   ignoreDirIntrinsicSize  PathSize.Data.Config                          src/PathSize/Data/Config.hs:133:5-26                                  1085           1    0.0    0.0     0.0    0.0
-   maxDepth                PathSize.Data.Config                          src/PathSize/Data/Config.hs:120:5-12                                  1086           1    0.0    0.0     0.0    0.0
-   mkSubPathData           PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(125,1)-(127,61)            1089           1    0.6    1.0     0.7    1.4
-    size                   PathSize.Data.PathData                        src/PathSize/Data/PathData.hs:72:5-8                                  1091      413596    0.0    0.0     0.0    0.0
-    pathTreeToSeq          PathSize.Data.PathTree                        src/PathSize/Data/PathTree.hs:(49,1)-(52,77)                          1090           1    0.1    0.4     0.1    0.4
-    spanl                  Data.Sequence.NonEmpty                        src/Data/Sequence/NonEmpty.hs:(506,1)-(514,29)                        1092           1    0.0    0.0     0.0    0.0
-     size                  PathSize.Data.PathData                        src/PathSize/Data/PathData.hs:72:5-8                                  1093           1    0.0    0.0     0.0    0.0
-   null                    Data.HashMap.Internal                         Data/HashMap/Internal.hs:(605,1)-(606,16)                             1076           1    0.0    0.0     0.0    0.0
-   numPaths                PathSize.Data.Config                          src/PathSize/Data/Config.hs:137:5-12                                  1087           1    0.0    0.0     0.0    0.0
-   searchAll               PathSize.Data.Config                          src/PathSize/Data/Config.hs:115:5-13                                  1074           1    0.0    0.0     0.0    0.0
-   stableSort              PathSize.Data.Config                          src/PathSize/Data/Config.hs:142:5-14                                  1088           1    0.0    0.0     0.0    0.0
-   strategy                PathSize.Data.Config                          src/PathSize/Data/Config.hs:146:5-12                                  1065           1    0.0    0.0     0.0    0.0
-   sumTrees                PathSize.Data.PathTree                        src/PathSize/Data/PathTree.hs:(60,1)-(63,55)                          1080           0    0.2    0.7     0.2    0.7
-   unzipResultSeq          PathSize.Utils                                src/PathSize/Utils.hs:(58,1)-(63,62)                                  1082           0    0.2    0.4     0.2    0.4
-  teardown                 PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(166,1)-(172,64)                1110           1    0.0    0.0    29.0    8.7
-   addCS                   Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1111           2    0.0    0.0    29.0    8.7
-    addCS                  Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1112           2    0.0    0.0    29.0    8.7
-     addOuterCS            Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1113           2    0.0    0.0    29.0    8.7
-      catch                Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1114           2    0.0    0.0    29.0    8.7
-       guardOrElse'        System.Environment.Guard                      src/System/Environment/Guard.hs:117:1-34                              1118           0    0.0    0.0    29.0    8.7
-        guardOrElse'       System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:158:1-74                       1119           0    0.0    0.0    29.0    8.7
-         guardOrElse       System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)               1121           0   29.0    8.7    29.0    8.7
-          withGuard        System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(85,1)-(89,50)                 1125           0    0.0    0.0     0.0    0.0
-           guardSet        System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:180:1-46                       1126           0    0.0    0.0     0.0    0.0
-            guardPredicate System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(249,1)-(253,23)               1127           0    0.0    0.0     0.0    0.0
-   guardOrElse'            System.Environment.Guard                      src/System/Environment/Guard.hs:117:1-34                              1116           0    0.0    0.0     0.0    0.0
-    guardOrElse'           System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:158:1-74                       1117           1    0.0    0.0     0.0    0.0
-     guardOrElse           System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)               1120           1    0.0    0.0     0.0    0.0
-      withGuard            System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(85,1)-(89,50)                 1122           1    0.0    0.0     0.0    0.0
-       guardSet            System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:180:1-46                       1123           1    0.0    0.0     0.0    0.0
-        guardPredicate     System.Environment.Guard.Lifted               src/System/Environment/Guard/Lifted.hs:(249,1)-(253,23)               1124           1    0.0    0.0     0.0    0.0
-  display                  PathSize.Data.SubPathData.Internal            src/PathSize/Data/SubPathData/Internal.hs:(187,1)-(214,25)            1095           0    3.8    6.6    12.7   21.2
-   formatSized             Data.Bytes.Formatting                         src/Data/Bytes/Formatting.hs:(107,1)-(108,54)                         1099      413596    0.2    0.1     8.6   14.3
-    formatSize             Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)                    1103      413596    1.6    2.8     1.8    3.1
-     runForget             Data.Profunctor.Indexed                       src/Data/Profunctor/Indexed.hs:66:35-43                               1104     1240788    0.0    0.0     0.0    0.0
-     caseFormat            Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:100:5-14                            1106      413596    0.0    0.0     0.0    0.0
-     caseFormatToFn        Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:(141,1)-(143,42)                    1107      413596    0.2    0.3     0.2    0.3
-     leadingSpace          Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:101:5-16                            1105      413596    0.0    0.0     0.0    0.0
-     sizeFormat            Data.Bytes.Formatting.Size                    src/Data/Bytes/Formatting/Size.hs:102:5-14                            1108      413596    0.0    0.0     0.0    0.0
-     ssizeToSize           Data.Bytes.Size                               src/Data/Bytes/Size.hs:(244,1)-(252,18)                               1109      413596    0.0    0.0     0.0    0.0
-    formatBase             Data.Bytes.Formatting.Base                    src/Data/Bytes/Formatting/Base.hs:63:1-67                             1102           0    6.7   11.1     6.7   11.1
-   decodeUtf8Lenient       Effects.FileSystem.UTF8                       src/Effects/FileSystem/UTF8.hs:43:1-63                                1097           0    0.2    0.3     0.2    0.3
-  setup                    PathSize.Bench.Common                         bench/common/PathSize/Bench/Common.hs:(150,1)-(160,64)                1041           0    2.0    6.9    48.2   57.5
-   addCS                   Effects.Exception                             src/Effects/Exception.hs:386:1-30                                     1042      823097    0.0    0.0    46.1   50.5
-    addCS                  Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:311:1-48         1043      823097    0.2    0.3    46.0   50.5
-     addOuterCS            Effects.Exception.Annotation.CallStack.Legacy src/Effects/Exception/Annotation/CallStack/Legacy.hs:(319,1)-(326,70) 1044      823097    0.2    0.3    45.8   50.2
-      catch                Control.Exception.Safe                        src/Control/Exception/Safe.hs:(247,1)-(252,23)                        1045      823097    1.4    1.7    45.7   49.9
-       writeBinaryFileIO   Effects.FileSystem.IO                         src/Effects/FileSystem/IO.hs:43:1-37                                  1055           0    0.0    0.0    44.3   48.2
-        writeFile'         System.File.OsPath                            System/File/OsPath.hs:105:1-67                                        1056           0    0.0    0.0    44.3   48.2
-         withFile          System.File.OsPath                            System/File/OsPath.hs:(60,1)-(62,25)                                  1057           0    3.2    1.6    44.2   48.2
-          openFile         System.File.Platform                          posix/System/File/Platform.hs:(20,1)-(27,58)                          1058      409500   28.3    0.5    41.1   46.6
-           fdToHandle_     System.File.Platform                          posix/System/File/Platform.hs:(41,1)-(43,48)                          1061      409500   12.7   46.1    12.7   46.1
-   unsafeEncode            Effects.FileSystem.OsPath                     src/Effects/FileSystem/OsPath.hs:(210,1)-(213,14)                     1059         100    0.0    0.0     0.0    0.0
-    encode                 Effects.FileSystem.OsPath                     src/Effects/FileSystem/OsPath.hs:(138,1)-(140,46)                     1060           0    0.0    0.0     0.0    0.0
-   </>!                    Effects.FileSystem.OsPath                     src/Effects/FileSystem/OsPath.hs:366:1-33                             1046           1    0.0    0.0     0.0    0.0
-    unsafeEncode           Effects.FileSystem.OsPath                     src/Effects/FileSystem/OsPath.hs:(210,1)-(213,14)                     1047           1    0.0    0.0     0.0    0.0
-     encode                Effects.FileSystem.OsPath                     src/Effects/FileSystem/OsPath.hs:(138,1)-(140,46)                     1049           0    0.0    0.0     0.0    0.0
-   writeBinaryFileIO       Effects.FileSystem.IO                         src/Effects/FileSystem/IO.hs:43:1-37                                  1052           0    0.0    0.0     0.0    0.1
-    writeFile'             System.File.OsPath                            System/File/OsPath.hs:105:1-67                                        1053      409500    0.0    0.1     0.0    0.1
-     withFile              System.File.OsPath                            System/File/OsPath.hs:(60,1)-(62,25)                                  1054      409500    0.0    0.0     0.0    0.0
+MAIN                      MAIN                               <built-in>                                                  514           0    0.0    0.1   100.0  100.0
+ CAF                      GHC.Conc.Signal                    <entire-module>                                             935           0    0.0    0.0     0.0    0.0
+ CAF                      GHC.Conc.Sync                      <entire-module>                                             934           0    0.0    0.0     0.0    0.0
+ CAF                      GHC.Float                          <entire-module>                                             912           0    0.0    0.0     0.0    0.0
+ CAF                      GHC.IO.Encoding                    <entire-module>                                             899           0    0.0    0.0     0.0    0.0
+ CAF                      GHC.IO.Encoding.Iconv              <entire-module>                                             897           0    0.0    0.0     0.0    0.0
+ CAF                      GHC.IO.Handle.FD                   <entire-module>                                             888           0    0.0    0.0     0.0    0.0
+ CAF                      GHC.Weak.Finalize                  <entire-module>                                             852           0    0.0    0.0     0.0    0.0
+ CAF                      Text.Printf                        <entire-module>                                             841           0    0.0    0.0     0.0    0.0
+ CAF                      Data.ByteString.Short.Internal     <entire-module>                                             810           0    0.0    0.0     0.0    0.0
+ CAF                      System.Directory.Internal.Common   <entire-module>                                             791           0    0.0    0.0     0.0    0.0
+ CAF                      System.Directory.OsPath            <entire-module>                                             787           0    0.0    0.0     0.0    0.0
+ CAF                      System.Environment.Guard           <entire-module>                                             783           0    0.0    0.0     0.0    0.0
+  guardOrElse'            System.Environment.Guard           src/System/Environment/Guard.hs:117:1-34                   1090           1    0.0    0.0     0.0    0.0
+ CAF                      System.OsPath.Posix.Internal       <entire-module>                                             775           0    0.0    0.0     0.0    0.0
+ CAF                      Data.HashMap.Internal              <entire-module>                                             591           0    0.0    0.0     0.0    0.0
+  empty                   Data.HashMap.Internal              Data/HashMap/Internal.hs:594:1-13                          1046           1    0.0    0.0     0.0    0.0
+ CAF                      Data.HashSet.Internal              <entire-module>                                             587           0    0.0    0.0     0.0    0.0
+  empty                   Data.HashSet.Internal              Data/HashSet/Internal.hs:255:1-23                          1045           1    0.0    0.0     0.0    0.0
+ CAF                      Main                               <entire-module>                                             567           0    0.0    0.0     0.0    0.0
+  display                 PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(182,1)-(209,25) 1073           1    0.0    0.0     0.0    0.0
+  main                    Main                               profile/Main.hs:(35,1)-(69,9)                              1028           1    0.0    0.0     0.0    0.0
+   setup                  PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(151,1)-(161,64)     1030           1    0.0    0.0     0.0    0.0
+ CAF                      PathSize.Bench.Common              <entire-module>                                             566           0    0.0    0.0     0.0    0.0
+  setup                   PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(151,1)-(161,64)     1036           0    0.0    0.0     0.0    0.0
+ CAF                      PathSize.Data.PathTree             <entire-module>                                             561           0    0.0    0.0     0.0    0.0
+  sumTrees                PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:(60,1)-(63,55)               1058           1    0.0    0.0     0.0    0.0
+ CAF                      PathSize.Data.SubPathData.Internal <entire-module>                                             560           0    0.0    0.0     0.0    0.0
+  formatSized             Data.Bytes.Formatting              src/Data/Bytes/Formatting.hs:(107,1)-(108,54)              1079           0    0.0    0.0     0.0    0.0
+   formatBase             Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67                  1080           1    0.0    0.0     0.0    0.0
+ CAF                      PathSize.Utils                     <entire-module>                                             558           0    0.0    0.0     0.0    0.0
+  unzipResultSeq          PathSize.Utils                     src/PathSize/Utils.hs:(58,1)-(63,62)                       1060           1    0.0    0.0     0.0    0.0
+ CAF                      Data.Bytes.Formatting.Base         <entire-module>                                             556           0    0.0    0.0     0.0    0.0
+ CAF                      Data.Bytes.Formatting.Size         <entire-module>                                             554           0    0.0    0.0     0.0    0.0
+  sizedFormatterUnix      Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:152:1-75                 1077           1    0.0    0.0     0.0    0.0
+ CAF                      FileSystem.IO                      <entire-module>                                             526           0    0.0    0.0     0.0    0.0
+  writeBinaryFileIO       FileSystem.IO                      src/FileSystem/IO.hs:43:1-37                               1037           1    0.0    0.0     0.0    0.0
+ CAF                      FileSystem.OsPath                  <entire-module>                                             525           0    0.0    0.0     0.0    0.0
+  encode                  FileSystem.OsPath                  src/FileSystem/OsPath.hs:(138,1)-(140,46)                  1034           1    0.0    0.0     0.0    0.0
+ CAF                      FileSystem.UTF8                    <entire-module>                                             523           0    0.0    0.0     0.0    0.0
+  decodeUtf8Lenient       FileSystem.UTF8                    src/FileSystem/UTF8.hs:43:1-63                             1075           1    0.0    0.0     0.0    0.0
+ main                     Main                               profile/Main.hs:(35,1)-(69,9)                              1029           0    0.0    0.0   100.0   99.9
+  findLargestPaths        PathSize                           src/PathSize.hs:(98,1)-(108,22)                            1047           1    2.3    7.7    10.3   12.5
+   trySync                Control.Exception.Utils            src/Control/Exception/Utils.hs:180:1-49                    1049      417692    0.0    0.1     6.7    2.3
+    tryIf                 Control.Exception.Utils            src/Control/Exception/Utils.hs:191:1-59                    1050      417692    1.6    1.2     6.7    2.2
+     hidden               PathSize.Utils                     src/PathSize/Utils.hs:(71,1)-(77,38)                       1057      413595    0.0    0.0     0.0    0.0
+     getFileStatus        PathSize.Utils                     src/PathSize/Utils.hs:(107,1)-(118,46)                     1052           0    5.0    1.0     5.0    1.0
+   getFileStatus          PathSize.Utils                     src/PathSize/Utils.hs:(107,1)-(118,46)                     1051      413596    0.0    0.0     0.0    0.0
+   singleton              PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:56:1-27                      1062      409500    0.0    0.0     0.0    0.0
+   asMap                  Data.HashSet.Internal              Data/HashSet/Internal.hs:113:7-11                          1055           1    0.0    0.0     0.0    0.0
+   exclude                PathSize.Data.Config               src/PathSize/Data/Config.hs:124:5-11                       1056           1    0.0    0.0     0.0    0.0
+   filesOnly              PathSize.Data.Config               src/PathSize/Data/Config.hs:128:5-13                       1063           1    0.0    0.0     0.0    0.0
+   ignoreDirIntrinsicSize PathSize.Data.Config               src/PathSize/Data/Config.hs:133:5-26                       1064           1    0.0    0.0     0.0    0.0
+   maxDepth               PathSize.Data.Config               src/PathSize/Data/Config.hs:120:5-12                       1065           1    0.0    0.0     0.0    0.0
+   mkSubPathData          PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(125,1)-(127,63) 1068           1    0.6    1.0     0.8    1.4
+    size                  PathSize.Data.PathData             src/PathSize/Data/PathData.hs:72:5-8                       1070      413596    0.0    0.0     0.0    0.0
+    pathTreeToSeq         PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:(49,1)-(52,77)               1069           1    0.1    0.4     0.1    0.4
+    spanl                 Data.Sequence.NonEmpty             src/Data/Sequence/NonEmpty.hs:(506,1)-(514,29)             1071           1    0.0    0.0     0.0    0.0
+     size                 PathSize.Data.PathData             src/PathSize/Data/PathData.hs:72:5-8                       1072           1    0.0    0.0     0.0    0.0
+   null                   Data.HashMap.Internal              Data/HashMap/Internal.hs:(605,1)-(606,16)                  1054           1    0.0    0.0     0.0    0.0
+   numPaths               PathSize.Data.Config               src/PathSize/Data/Config.hs:137:5-12                       1066           1    0.0    0.0     0.0    0.0
+   searchAll              PathSize.Data.Config               src/PathSize/Data/Config.hs:115:5-13                       1053           1    0.0    0.0     0.0    0.0
+   stableSort             PathSize.Data.Config               src/PathSize/Data/Config.hs:142:5-14                       1067           1    0.0    0.0     0.0    0.0
+   strategy               PathSize.Data.Config               src/PathSize/Data/Config.hs:146:5-12                       1048           1    0.0    0.0     0.0    0.0
+   sumTrees               PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:(60,1)-(63,55)               1059           0    0.3    0.7     0.3    0.7
+   unzipResultSeq         PathSize.Utils                     src/PathSize/Utils.hs:(58,1)-(63,62)                       1061           0    0.2    0.4     0.2    0.4
+  teardown                PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(167,1)-(172,64)     1089           1    0.0    0.0    23.1    8.8
+   guardOrElse'           System.Environment.Guard           src/System/Environment/Guard.hs:117:1-34                   1091           0    0.0    0.0    23.1    8.8
+    guardOrElse'          System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:158:1-74            1092           1    0.0    0.0    23.1    8.8
+     guardOrElse          System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:(121,1)-(125,28)    1093           1   23.1    8.8    23.1    8.8
+      withGuard           System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:(85,1)-(89,50)      1094           1    0.0    0.0     0.0    0.0
+       guardSet           System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:180:1-46            1095           1    0.0    0.0     0.0    0.0
+        guardPredicate    System.Environment.Guard.Lifted    src/System/Environment/Guard/Lifted.hs:(249,1)-(253,23)    1096           1    0.0    0.0     0.0    0.0
+  display                 PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:(182,1)-(209,25) 1074           0    3.8    6.7    12.8   21.6
+   formatSized            Data.Bytes.Formatting              src/Data/Bytes/Formatting.hs:(107,1)-(108,54)              1078      413596    0.2    0.1     8.7   14.6
+    formatSize            Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)         1082      413596    1.7    2.9     2.1    3.2
+     runForget            Data.Profunctor.Indexed            src/Data/Profunctor/Indexed.hs:66:35-43                    1083     1240788    0.0    0.0     0.0    0.0
+     caseFormat           Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:100:5-14                 1085      413596    0.0    0.0     0.0    0.0
+     caseFormatToFn       Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:(141,1)-(143,42)         1086      413596    0.3    0.3     0.3    0.3
+     leadingSpace         Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:101:5-16                 1084      413596    0.0    0.0     0.0    0.0
+     sizeFormat           Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:102:5-14                 1087      413596    0.0    0.0     0.0    0.0
+     ssizeToSize          Data.Bytes.Size                    src/Data/Bytes/Size.hs:(244,1)-(252,18)                    1088      413596    0.0    0.0     0.0    0.0
+    formatBase            Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67                  1081           0    6.4   11.3     6.4   11.3
+   decodeUtf8Lenient      FileSystem.UTF8                    src/FileSystem/UTF8.hs:43:1-63                             1076           0    0.3    0.3     0.3    0.3
+  setup                   PathSize.Bench.Common              bench/common/PathSize/Bench/Common.hs:(151,1)-(161,64)     1031           0    3.6    7.7    53.9   57.0
+   unsafeEncode           FileSystem.OsPath                  src/FileSystem/OsPath.hs:(214,1)-(217,14)                  1042         100    0.0    0.0     0.0    0.0
+    encode                FileSystem.OsPath                  src/FileSystem/OsPath.hs:(138,1)-(140,46)                  1043           0    0.0    0.0     0.0    0.0
+   </>!                   FileSystem.OsPath                  src/FileSystem/OsPath.hs:372:1-33                          1032           1    0.0    0.0     0.0    0.0
+    unsafeEncode          FileSystem.OsPath                  src/FileSystem/OsPath.hs:(214,1)-(217,14)                  1033           1    0.0    0.0     0.0    0.0
+     encode               FileSystem.OsPath                  src/FileSystem/OsPath.hs:(138,1)-(140,46)                  1035           0    0.0    0.0     0.0    0.0
+   writeBinaryFileIO      FileSystem.IO                      src/FileSystem/IO.hs:43:1-37                               1038           0    0.0    0.0    50.3   49.3
+    writeFile'            System.File.OsPath                 System/File/OsPath.hs:105:1-67                             1039      409500    0.0    0.1    50.3   49.3
+     withFile             System.File.OsPath                 System/File/OsPath.hs:(60,1)-(62,25)                       1040      409500    3.9    1.7    50.2   49.2
+      openFile            System.File.Platform               posix/System/File/Platform.hs:(20,1)-(27,58)               1041      409500   32.5    0.5    46.3   47.5
+       fdToHandle_        System.File.Platform               posix/System/File/Platform.hs:(41,1)-(43,48)               1044      409500   13.8   47.0    13.8   47.0

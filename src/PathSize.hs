@@ -22,6 +22,8 @@ module PathSize
   )
 where
 
+import Control.Exception.Utils (trySync)
+import Control.Monad.Catch (MonadCatch)
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
@@ -29,14 +31,10 @@ import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word16)
 import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Async qualified as Async
-import Effects.Exception
-  ( HasCallStack,
-    MonadCatch,
-    tryAny,
-  )
-import Effects.FileSystem.OsPath (OsPath, (</>))
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
+import FileSystem.OsPath (OsPath, (</>))
+import GHC.Stack (HasCallStack)
 import PathSize.Data.Config
   ( Config
       ( MkConfig,
@@ -281,7 +279,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       OsPath ->
       m (PathSizeResult PathTree)
     tryGo !depth !path =
-      tryAny (Utils.getFileStatus path) >>= \case
+      trySync (Utils.getFileStatus path) >>= \case
         Left ex -> pure $ mkPathE path ex
         Right stats -> do
           -- see NOTE: [Efficient Int Type]
@@ -313,7 +311,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       Word16 ->
       m (PathSizeResult PathTree)
     tryCalcDir !dirSize !path !depth =
-      tryAny (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
+      trySync (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx
         Right subPaths -> do
           resultSubTrees <-

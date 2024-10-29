@@ -19,7 +19,8 @@ import Data.Foldable (foldl')
 #endif
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
-import Effects.FileSystem.OsPath (OsPath)
+import FileSystem.OsPath (OsPath)
+import GHC.Stack (HasCallStack)
 import PathSize.Data.PathSizeResult
   ( PathSizeResult
       ( PathSizeFailure,
@@ -32,7 +33,6 @@ import PathSize.Exception (PathE)
 import System.PosixCompat.Files (FileStatus)
 
 #if POSIX
-import Effects.Exception (HasCallStack)
 import Effects.System.Posix (MonadPosix)
 import Effects.System.Posix qualified as Posix
 import System.OsString.Internal.Types
@@ -45,10 +45,10 @@ import System.OsString.Data.ByteString.Short qualified as Short
 import System.OsPath.Data.ByteString.Short qualified as Short
 #endif
 #else
-import Effects.Exception (HasCallStack, MonadThrow)
-import Effects.FileSystem.OsPath qualified as FS.OsPath
+import Control.Monad.Catch (MonadThrow)
 import Effects.System.PosixCompat (MonadPosixCompat)
 import Effects.System.PosixCompat qualified as PosixCompat
+import FileSystem.OsPath qualified as FS.OsPath
 #endif
 
 -- | Unzips a sequence of results.
