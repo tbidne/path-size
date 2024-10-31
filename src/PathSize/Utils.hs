@@ -5,7 +5,10 @@
 -- @since 0.1
 module PathSize.Utils
   ( -- * Windows / Unix compat
-    MonadPosixC,
+    PosixC,
+    runPosixC,
+
+    -- * Functions
     hidden,
     getFileStatus,
 
@@ -17,10 +20,11 @@ where
 #if !MIN_VERSION_base(4, 20, 0)
 import Data.Foldable (foldl')
 #endif
+import Data.Kind (Type)
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
+import Effectful (Eff, IOE, (:>))
 import FileSystem.OsPath (OsPath)
-import GHC.Stack (HasCallStack)
 import PathSize.Data.PathSizeResult
   ( PathSizeResult
       ( PathSizeFailure,
@@ -33,8 +37,8 @@ import PathSize.Exception (PathE)
 import System.PosixCompat.Files (FileStatus)
 
 #if POSIX
-import Effects.System.Posix (MonadPosix)
-import Effects.System.Posix qualified as Posix
+import Effectful.Posix.Dynamic (Posix, runPosix)
+import Effectful.Posix.Dynamic qualified as Posix
 import System.OsString.Internal.Types
   ( OsString (getOsString),
     PosixString(getPosixString),
@@ -45,11 +49,18 @@ import System.OsString.Data.ByteString.Short qualified as Short
 import System.OsPath.Data.ByteString.Short qualified as Short
 #endif
 #else
-import Control.Monad.Catch (MonadThrow)
-import Effects.System.PosixCompat (MonadPosixCompat)
-import Effects.System.PosixCompat qualified as PosixCompat
+import Effectful.PosixCompat.Dynamic (PosixCompat, runPosixCompat)
+import Effectful.PosixCompat.Dynamic qualified as PosixCompat
 import FileSystem.OsPath qualified as FS.OsPath
+import GHC.Stack (HasCallStack)
 #endif
+
+-- We might expect PosixCompat.Static to be faster than PosixCompat.Dynamic,
+-- since it is used in a tight loop, but benchmarks do not show an
+-- improvement. Since we currently rely on dynamic dispatch in our
+-- function tests, we keep therefore keep the Dynamic effect.
+--
+-- See NOTE: [Functional test errors].
 
 -- | Unzips a sequence of results.
 --
@@ -67,6 +78,12 @@ unzipResultSeq = foldl' f (Empty, Empty)
 --
 -- @since 0.1
 hidden :: OsPath -> Bool
+
+-- | Handles posix effect.
+runPosixC :: (IOE :> es) => Eff (PosixC : es) a -> Eff es a
+
+type PosixC :: (Type -> Type) -> Type -> Type
+
 #if POSIX
 hidden p = case Short.uncons2 sbs of
   Nothing -> False
@@ -75,35 +92,37 @@ hidden p = case Short.uncons2 sbs of
   Just _ -> False
   where
     sbs = p.getOsString.getPosixString
-#else
-hidden = const False
-#endif
 
-{- ORMOLU_DISABLE -}
-
--- | Alias for MonadPosix* constraints. On Posix, this is MonadPosix (unix),
+-- | Alias for Posix* constraints. On Posix, this is Posix (unix),
 -- which allows for greater efficiency. On Windows, this is just
--- MonadPosixCompat (unix-compat).
-type MonadPosixC m =
-#if POSIX
-  MonadPosix m
-#else
-  MonadPosixCompat m
-#endif
+-- PosixCompat (unix-compat).
+type PosixC = Posix
 
-{- ORMOLU_ENABLE -}
+runPosixC = runPosix
+
+#else
+
+hidden = const False
+
+-- | Alias for Posix* constraints. On Posix, this is Posix (unix),
+-- which allows for greater efficiency. On Windows, this is just
+-- PosixCompat (unix-compat).
+type PosixC = PosixCompat
+
+runPosixC = runPosixCompat
+
+#endif
 
 #if POSIX
 -- | Retrieves the FileStatus for the given path.
 --
 -- @since 0.1
 getFileStatus ::
-  forall m.
-  ( HasCallStack,
-    MonadPosixC m
+  forall es.
+  ( PosixC :> es
   ) =>
   OsPath ->
-  m FileStatus
+  Eff es FileStatus
 getFileStatus path =
   -- NOTE: On posix, we can take advantage of the fact that we know OsPath
   -- is a PosixString. This means we can call the unix library directly,
@@ -121,13 +140,12 @@ getFileStatus path =
 --
 -- @since 0.1
 getFileStatus ::
-  forall m.
+  forall es.
   ( HasCallStack,
-    MonadPosixC m,
-    MonadThrow m
+    PosixC :> es
   ) =>
   OsPath ->
-  m FileStatus
+  Eff es FileStatus
 getFileStatus path = do
   -- It would be nice if we could do something similar here i.e. take advantage
   -- of the fact that we know OsPath is a WindowsString and call the relevant

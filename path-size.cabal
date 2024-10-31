@@ -82,10 +82,9 @@ library
     , base                  >=4.16.0.0  && <4.21
     , containers            >=0.6.3.1   && <0.8
     , deepseq               >=1.4.4.0   && <1.6
-    , effects-async         ^>=0.1
-    , effects-fs            ^>=0.1
+    , effectful             >=2.5.0.0   && <2.6
     , exception-utils       ^>=0.1
-    , exceptions            ^>=0.10.4
+    , fs-effectful          ^>=0.1
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , si-bytes              ^>=0.1
@@ -98,21 +97,21 @@ library
     -- See TODO: [OsString upgrade]
     if flag(os-string)
       build-depends:
-        , bytestring    >=0.10.12.0 && <0.13
-        , effects-unix  ^>=0.1
-        , filepath      >=1.5.2.0   && <1.6
-        , os-string     ^>=2.0.0
+        , bytestring      >=0.10.12.0 && <0.13
+        , filepath        >=1.5.2.0   && <1.6
+        , os-string       ^>=2.0.0
+        , unix-effectful  ^>=0.1
 
     else
       build-depends:
-        , bytestring    >=0.10.12.0 && <0.13
-        , effects-unix  ^>=0.1
-        , filepath      >=1.4.2.1   && <1.5
+        , bytestring      >=0.10.12.0 && <0.13
+        , filepath        >=1.4.2.1   && <1.5
+        , unix-effectful  ^>=0.1
 
   else
     build-depends:
-      , effects-unix-compat  ^>=0.1
-      , filepath             >=1.4.2.1 && <1.6
+      , filepath               >=1.4.2.1 && <1.6
+      , unix-compat-effectful  ^>=0.1
 
   hs-source-dirs:  src
 
@@ -126,9 +125,11 @@ executable path-size
   autogen-modules: Paths_path_size
   build-depends:
     , base
-    , effects-optparse      ^>=0.1
+    , effectful
+    , fs-effectful
     , fs-utils              ^>=0.1
     , optparse-applicative  >=0.16.1.0 && <0.19
+    , optparse-effectful    ^>=0.1
     , path-size
     , smart-math
     , text
@@ -153,6 +154,8 @@ executable profile
   build-depends:
     , base
     , deepseq
+    , effectful
+    , fs-effectful
     , fs-utils
     , nonempty-containers
     , path-size
@@ -185,10 +188,9 @@ test-suite functional
 
   build-depends:
     , base
-    , effects-async
-    , effects-fs
+    , effectful
     , exception-utils
-    , exceptions
+    , fs-effectful
     , nonempty-containers
     , path-size
     , tasty
@@ -200,16 +202,16 @@ test-suite functional
     -- See TODO: [OsString upgrade]
     if flag(os-string)
       build-depends:
-        , effects-unix
         , os-string
+        , unix-effectful
 
     else
       build-depends:
-        , effects-unix
         , filepath
+        , unix-effectful
 
   else
-    build-depends: effects-unix-compat
+    build-depends: unix-compat-effectful
 
   hs-source-dirs: test/functional
   ghc-options:    -threaded -with-rtsopts=-N
@@ -220,9 +222,10 @@ library bench-common
   build-depends:
     , base
     , deepseq
-    , effects-fs
+    , effectful
     , env-guard             ^>=0.2
     , exceptions
+    , fs-effectful
     , nonempty-containers
     , path-size
     , smart-math

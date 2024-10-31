@@ -1,5 +1,7 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 -- | Provides common benchmarking functionality.
 --
@@ -26,11 +28,25 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word8)
-import Effects.FileSystem.FileWriter (ByteString, writeBinaryFile)
-import Effects.FileSystem.PathReader (getTemporaryDirectory)
-import Effects.FileSystem.PathWriter
-  ( createDirectoryIfMissing,
+import Effectful (Eff, IOE, runEff, (:>))
+import Effectful.Concurrent (Concurrent, runConcurrent)
+import Effectful.FileSystem.FileWriter.Dynamic qualified as FWD
+import Effectful.FileSystem.FileWriter.Static
+  ( ByteString,
+    FileWriter,
+    runFileWriter,
+    writeBinaryFile,
+  )
+import Effectful.FileSystem.PathReader.Static
+  ( getTemporaryDirectory,
+    runPathReader,
+  )
+import Effectful.FileSystem.PathReader.Static qualified as PRD
+import Effectful.FileSystem.PathWriter.Static
+  ( PathWriter,
+    createDirectoryIfMissing,
     removePathForcibly,
+    runPathWriter,
   )
 import FileSystem.OsPath (OsPath, osp, (</>))
 import FileSystem.OsPath qualified as FS.OsPath
@@ -51,6 +67,7 @@ import PathSize
     Strategy (Async, AsyncPool, Sync),
   )
 import PathSize qualified
+import PathSize.Utils (PosixC, runPosixC)
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 
 {- HLINT ignore module "Redundant bracket" -}
@@ -86,6 +103,7 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
     findLargest strategy =
       bench desc'
         . nfIO
+        . runPathSize
         . PathSize.findLargestPaths baseConfig {strategy}
       where
         desc' = strategyDesc strategy
@@ -111,6 +129,7 @@ benchLargest10 MkBenchmarkSuite {..} strategies testDir =
     runLargestN strategy numPaths =
       bench desc'
         . nfIO
+        . runPathSize
         . PathSize.findLargestPaths (baseConfig {numPaths, strategy})
       where
         desc' = strategyDesc strategy
@@ -131,6 +150,7 @@ benchDisplayPathSize MkBenchmarkSuite {..} strategies testDir =
     runDisplayPathSize strategy =
       bench desc'
         . nfIO
+        . runPathSize
         . (PathSize.findLargestPaths (baseConfig {strategy}) >=> displayResult)
       where
         desc' = strategyDesc strategy
@@ -150,10 +170,13 @@ strategyDesc AsyncPool = "AsyncPool"
 setup :: (HasCallStack) => OsPath -> IO OsPath
 setup base = do
   putStrLn "*** Starting setup ***"
-  rootDir <- (</> base) <$> getTemporaryDirectory
-  createDirectoryIfMissing False rootDir
+  rootDir <- runEff $ runFileWriter $ runPathWriter $ runPathReader $ do
+    rootDir <- (</> base) <$> getTemporaryDirectory
+    createDirectoryIfMissing False rootDir
 
-  createDenseDirs 11 (rootDir </> [osp|dense-11|]) files100
+    createDenseDirs 11 (rootDir </> [osp|dense-11|]) files100
+
+    pure rootDir
 
   putStrLn "*** Setup finished ***"
   pure rootDir
@@ -167,13 +190,21 @@ teardown :: (HasCallStack) => OsPath -> IO ()
 teardown rootDir =
   guardOrElse' "NO_CLEANUP" ExpectEnvSet doNothing cleanup
   where
-    cleanup = removePathForcibly rootDir
+    cleanup = runEff $ runPathWriter $ removePathForcibly rootDir
     doNothing =
       putStrLn $ "*** Not cleaning up tmp dir: " <> show rootDir
 
 -- | Creates a directory hierarchy of depth 2^n, where each directory contains
 -- the parameter files.
-createDenseDirs :: Word8 -> OsPath -> [OsPath] -> IO ()
+createDenseDirs ::
+  ( FileWriter :> es,
+    HasCallStack,
+    PathWriter :> es
+  ) =>
+  Word8 ->
+  OsPath ->
+  [OsPath] ->
+  Eff es ()
 createDenseDirs 0 root paths = createFlatDir root paths
 createDenseDirs w root paths = do
   createFlatDir root paths
@@ -182,20 +213,27 @@ createDenseDirs w root paths = do
     subDirs = [[osp|d1|], [osp|d2|]]
 
 -- | Creates a single directory with the parameter files.
-createFlatDir :: (HasCallStack) => OsPath -> [OsPath] -> IO ()
+createFlatDir ::
+  ( FileWriter :> es,
+    HasCallStack,
+    PathWriter :> es
+  ) =>
+  OsPath ->
+  [OsPath] ->
+  Eff es ()
 createFlatDir root paths = do
   createDirectoryIfMissing False root
   createFiles ((root </>) <$> paths)
 
 -- | Creates empty files at the specified paths.
-createFiles :: (HasCallStack) => [OsPath] -> IO ()
+createFiles :: (FileWriter :> es, HasCallStack) => [OsPath] -> Eff es ()
 createFiles = createFileContents . fmap (,"")
 
 -- | Creates files at the specified paths.
 createFileContents ::
-  (HasCallStack) =>
+  (FileWriter :> es, HasCallStack) =>
   [(OsPath, ByteString)] ->
-  IO ()
+  Eff es ()
 createFileContents paths = for_ paths (uncurry writeBinaryFile)
 
 baseConfig :: Config
@@ -212,3 +250,20 @@ baseConfig =
       stableSort = False,
       strategy = Sync
     }
+
+runPathSize ::
+  Eff
+    [ PRD.PathReader,
+      PosixC,
+      FWD.FileWriter,
+      Concurrent,
+      IOE
+    ]
+    a ->
+  IO a
+runPathSize =
+  runEff
+    . runConcurrent
+    . FWD.runFileWriter
+    . runPosixC
+    . PRD.runPathReader

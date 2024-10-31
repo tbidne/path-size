@@ -10,27 +10,30 @@ where
 
 import Control.Exception (Exception (displayException))
 import Control.Exception.Utils (trySync)
-import Control.Monad.Catch (MonadCatch, MonadThrow, throwM)
-import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (Foldable (toList))
+import Data.Functor ((<&>))
 import Data.HashSet qualified as HSet
 import Data.List qualified as L
+import Data.Maybe (fromMaybe)
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Word (Word16)
-import Effects.Concurrent.Async (MonadAsync)
-import Effects.FileSystem.PathReader (MonadPathReader)
-import Effects.FileSystem.PathReader qualified as RDir
+import Effectful (Eff, IOE, runEff, (:>))
+import Effectful.Concurrent (Concurrent, runConcurrent)
+import Effectful.Dispatch.Dynamic (reinterpret)
+import Effectful.Exception (throwIO)
+import Effectful.FileSystem.FileWriter.Static qualified as FW
+import Effectful.FileSystem.PathReader.Static qualified as PR
 #if POSIX
-import Effects.System.Posix (MonadPosix (getSymbolicLinkStatus))
+import Effectful.Posix.Dynamic (Posix (GetSymbolicLinkStatus))
+import Effectful.Posix.Dynamic qualified as PX.Dyn
 import System.OsString.Internal.Types (OsString (OsString))
 #else
-import Effects.System.PosixCompat (MonadPosixCompat (getSymbolicLinkStatus))
+import Effectful.PosixCompat.Dynamic (PosixCompat (GetSymbolicLinkStatus))
+import Effectful.PosixCompat.Dynamic qualified as PX.Dyn
 #endif
-import Data.Functor ((<&>))
-import Data.Maybe (fromMaybe)
-import Effects.FileSystem.FileWriter (ByteString)
+import Effectful.FileSystem.FileWriter.Static (ByteString)
 import FileSystem.IO qualified as FS.IO
 import FileSystem.OsPath (OsPath, osp, ospPathSep, (</>))
 import FileSystem.OsPath qualified as FS.OsPath
@@ -65,6 +68,8 @@ import PathSize.Data.Config
       ),
   )
 import PathSize.Data.SubPathData.Internal (SubPathData)
+import PathSize.Utils (PosixC)
+import PathSize.Utils qualified as Utils
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Golden (goldenVsFile)
 
@@ -196,33 +201,23 @@ testsFailure = testGoldenParams params
           runner = runTest
         }
 
-newtype FuncIO a = MkFuncIO (IO a)
-  deriving
-    ( Applicative,
-      Functor,
-      Monad,
-      MonadAsync,
-      MonadCatch,
-      MonadIO,
-      MonadThrow
-    )
-    via IO
+{- ORMOLU_DISABLE -}
 
+-- NOTE: [Functional test errors]
+--
+-- Custom handler so we can test error paths.
+runPosixC :: forall es a. (IOE :> es) => Eff (PosixC : es) a -> Eff es a
+runPosixC = reinterpret Utils.runPosixC $ \_ -> \case
 #if POSIX
-
-instance MonadPosix FuncIO where
-  getSymbolicLinkStatus path = case pathToErr (OsString path) of
-    Just err -> throwM err
-    Nothing -> liftIO $ getSymbolicLinkStatus path
-
+  GetSymbolicLinkStatus path -> case pathToErr (OsString path) of
 #else
-
-instance MonadPosixCompat FuncIO where
-  getSymbolicLinkStatus path = case pathToErr (FS.OsPath.unsafeEncode path) of
-    Just err -> throwM err
-    Nothing -> liftIO $ getSymbolicLinkStatus path
-
+  GetSymbolicLinkStatus path -> case pathToErr (FS.OsPath.unsafeEncode path) of
 #endif
+    Just err -> throwIO err
+    Nothing -> PX.Dyn.getSymbolicLinkStatus path
+  _other -> error "runPosixC: unimplemented"
+
+{- ORMOLU_ENABLE -}
 
 pathToErr :: OsPath -> Maybe E
 pathToErr path
@@ -240,11 +235,22 @@ newtype E = MkE String
 instance Exception E where
   displayException (MkE s) = s
 
-instance MonadPathReader FuncIO where
-  listDirectory = liftIO . RDir.listDirectory
-
-runFuncIO :: FuncIO a -> IO a
-runFuncIO (MkFuncIO io) = io
+runFuncIO ::
+  Eff
+    [ PR.PathReader,
+      PosixC,
+      FW.FileWriter,
+      Concurrent,
+      IOE
+    ]
+    a ->
+  IO a
+runFuncIO =
+  runEff
+    . runConcurrent
+    . FW.runFileWriter
+    . runPosixC
+    . PR.runPathReader
 
 testGoldenParams :: GoldenParams -> TestTree
 testGoldenParams goldenParams =

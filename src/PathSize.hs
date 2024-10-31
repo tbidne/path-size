@@ -23,16 +23,16 @@ module PathSize
 where
 
 import Control.Exception.Utils (trySync)
-import Control.Monad.Catch (MonadCatch)
 import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Word (Word16)
-import Effects.Concurrent.Async (MonadAsync)
-import Effects.Concurrent.Async qualified as Async
-import Effects.FileSystem.PathReader (MonadPathReader)
-import Effects.FileSystem.PathReader qualified as RDir
+import Effectful (Eff, (:>))
+import Effectful.Concurrent (Concurrent)
+import Effectful.Concurrent.Async qualified as Async
+import Effectful.FileSystem.PathReader.Static (PathReader)
+import Effectful.FileSystem.PathReader.Static qualified as RDir
 import FileSystem.OsPath (OsPath, (</>))
 import GHC.Stack (HasCallStack)
 import PathSize.Data.Config
@@ -72,7 +72,7 @@ import PathSize.Data.PathTree qualified as PathTree
 import PathSize.Data.SubPathData qualified as SPD
 import PathSize.Data.SubPathData.Internal (SubPathData (UnsafeSubPathData))
 import PathSize.Exception (PathE (MkPathE))
-import PathSize.Utils (MonadPosixC)
+import PathSize.Utils (PosixC)
 import PathSize.Utils qualified as Utils
 import System.OsPath qualified as FP
 import System.PosixCompat.Files qualified as PCompat.Files
@@ -84,17 +84,16 @@ import System.PosixCompat.Files qualified as PCompat.Files
 -- @since 0.1
 findLargestPaths ::
   ( HasCallStack,
-    MonadAsync m,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixC m
+    Concurrent :> es,
+    PathReader :> es,
+    PosixC :> es
   ) =>
   -- | Configuration.
   Config ->
   -- | OsPath to search.
   OsPath ->
   -- | The results.
-  m (PathSizeResult SubPathData)
+  Eff es (PathSizeResult SubPathData)
 findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
   where
     f = case cfg.strategy of
@@ -106,7 +105,6 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
         (SPD.mkSubPathData cfg.stableSort)
         (SPD.takeLargestN cfg.stableSort)
         (cfg.numPaths)
-{-# INLINEABLE findLargestPaths #-}
 
 -- | Returns the total path size in bytes. Calls 'pathSizeRecursiveConfig' with
 -- the following config:
@@ -127,13 +125,12 @@ findLargestPaths cfg = (fmap . fmap) takeLargestN . f cfg
 -- @since 0.1
 pathSizeRecursive ::
   ( HasCallStack,
-    MonadAsync m,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixC m
+    Concurrent :> es,
+    PathReader :> es,
+    PosixC :> es
   ) =>
   OsPath ->
-  m (PathSizeResult Integer)
+  Eff es (PathSizeResult Integer)
 pathSizeRecursive = pathSizeRecursiveConfig cfg
   where
     cfg =
@@ -147,25 +144,22 @@ pathSizeRecursive = pathSizeRecursiveConfig cfg
           stableSort = False,
           strategy = Async
         }
-{-# INLINEABLE pathSizeRecursive #-}
 
 -- | Returns the total path size in bytes.
 --
 -- @since 0.1
 pathSizeRecursiveConfig ::
   ( HasCallStack,
-    MonadAsync m,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixC m
+    Concurrent :> es,
+    PathReader :> es,
+    PosixC :> es
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult Integer)
+  Eff es (PathSizeResult Integer)
 pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
   where
     getSize (UnsafeSubPathData (pd :<|| _)) = pd.size
-{-# INLINEABLE pathSizeRecursiveConfig #-}
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed sequentially.
@@ -173,15 +167,13 @@ pathSizeRecursiveConfig cfg = (fmap . fmap) getSize . findLargestPaths cfg
 -- @since 0.1
 pathDataRecursiveSync ::
   ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixC m
+    PathReader :> es,
+    PosixC :> es
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  Eff es (PathSizeResult PathTree)
 pathDataRecursiveSync = pathDataRecursive traverse
-{-# INLINEABLE pathDataRecursiveSync #-}
 
 -- | Like 'pathDataRecursive', but each recursive call is run in its own
 -- thread.
@@ -189,52 +181,46 @@ pathDataRecursiveSync = pathDataRecursive traverse
 -- @since 0.1
 pathDataRecursiveAsync ::
   ( HasCallStack,
-    MonadAsync m,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixC m
+    Concurrent :> es,
+    PathReader :> es,
+    PosixC :> es
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  Eff es (PathSizeResult PathTree)
 pathDataRecursiveAsync = pathDataRecursive Async.mapConcurrently
-{-# INLINEABLE pathDataRecursiveAsync #-}
 
 -- | Like 'pathDataRecursiveAsync', but runs with a thread pool.
 --
 -- @since 0.1
 pathDataRecursiveAsyncPool ::
   ( HasCallStack,
-    MonadAsync m,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixC m
+    Concurrent :> es,
+    PathReader :> es,
+    PosixC :> es
   ) =>
   Config ->
   OsPath ->
-  m (PathSizeResult PathTree)
+  Eff es (PathSizeResult PathTree)
 pathDataRecursiveAsyncPool = pathDataRecursive Async.pooledMapConcurrently
-{-# INLINEABLE pathDataRecursiveAsyncPool #-}
 
 -- | Given a path, associates all subpaths to their size, recursively.
 -- The searching is performed via the parameter traversal.
 --
 -- @since 0.1
-{-# INLINEABLE pathDataRecursive #-}
 pathDataRecursive ::
-  forall m.
+  forall es.
   ( HasCallStack,
-    MonadCatch m,
-    MonadPathReader m,
-    MonadPosixC m
+    PathReader :> es,
+    PosixC :> es
   ) =>
   -- | Traversal function.
-  (forall a b t. (HasCallStack, Traversable t) => (a -> m b) -> t a -> m (t b)) ->
+  (forall a b t. (HasCallStack, Traversable t) => (a -> Eff es b) -> t a -> Eff es (t b)) ->
   -- | The config.
   Config ->
   -- | Start path.
   OsPath ->
-  m (PathSizeResult PathTree)
+  Eff es (PathSizeResult PathTree)
 pathDataRecursive traverseFn cfg = tryGo 0
   where
     excluded = cfg.exclude
@@ -277,7 +263,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       (HasCallStack) =>
       Word16 ->
       OsPath ->
-      m (PathSizeResult PathTree)
+      Eff es (PathSizeResult PathTree)
     tryGo !depth !path =
       trySync (Utils.getFileStatus path) >>= \case
         Left ex -> pure $ mkPathE path ex
@@ -308,7 +294,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
       Integer ->
       OsPath ->
       Word16 ->
-      m (PathSizeResult PathTree)
+      Eff es (PathSizeResult PathTree)
     tryCalcDir !dirSize !path !depth =
       trySync (filter (not . shouldSkip) <$> RDir.listDirectory path) >>= \case
         Left listDirEx -> pure $ mkPathE path listDirEx

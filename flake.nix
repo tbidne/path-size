@@ -32,8 +32,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-hs-utils.follows = "nix-hs-utils";
     };
-    monad-effects = {
-      url = "github:tbidne/monad-effects";
+    effectful-effects = {
+      url = "github:tbidne/effectful-effects";
       inputs.flake-parts.follows = "flake-parts";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.nix-hs-utils.follows = "nix-hs-utils";
@@ -42,7 +42,6 @@
       inputs.bounds.follows = "bounds";
       inputs.exception-utils.follows = "exception-utils";
       inputs.fs-utils.follows = "fs-utils";
-      inputs.smart-math.follows = "smart-math";
     };
     si-bytes = {
       url = "github:tbidne/si-bytes";
@@ -79,7 +78,29 @@
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides =
               final: prev:
-              { }
+              {
+                effectful-core = (
+                  final.callHackageDirect {
+                    pkg = "effectful-core";
+                    ver = "2.5.0.0";
+                    sha256 = "sha256-UCbMP8BfNfdIRTLzB4nBr17jxRp5Qmw3sTuORO06Npg=";
+                  } { }
+                );
+                effectful = (
+                  final.callHackageDirect {
+                    pkg = "effectful";
+                    ver = "2.5.0.0";
+                    sha256 = "sha256-lmM0kdM5PS45Jol5Y2Nw30VWWfDPiPJLrwVj+GmJSOQ=";
+                  } { }
+                );
+                strict-mutable-base = (
+                  final.callHackageDirect {
+                    pkg = "strict-mutable-base";
+                    ver = "1.1.0.0";
+                    sha256 = "sha256-cBSwoNGU/GZDW3eg7GI28t0HrrrxMW9hRapoOL2zU7Q=";
+                  } { }
+                );
+              }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
                 "bounds"
@@ -89,15 +110,12 @@
                 "smart-math"
                 "time-conv"
               ]
-              // nix-hs-utils.mkRelLibs "${inputs.monad-effects}/lib" final [
-                "effects-async"
-                "effects-fs"
-                "effects-ioref"
-                "effects-optparse"
-                "effects-stm"
-                "effects-thread"
-                "effects-unix"
-                "effects-unix-compat"
+              // nix-hs-utils.mkRelLibs "${inputs.effectful-effects}/lib" final [
+                "fs-effectful"
+                "ioref-effectful"
+                "optparse-effectful"
+                "unix-effectful"
+                "unix-compat-effectful"
               ];
           };
           hlib = pkgs.haskell.lib;
