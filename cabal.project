@@ -49,30 +49,24 @@ source-repository-package
 if !os(windows)
   source-repository-package
     type: git
-    location: https://github.com/tbidne/monad-effects.git
-    tag: 8021f9a0855e644d91b73e6b2bcf20406ebbebb8
+    location: https://github.com/tbidne/effectful-effects.git
+    tag: 7c00ac50d6f23dd3e0d2c0d57a77fe4f3f459897
     subdir:
-      lib/effects-async
-      lib/effects-fs
-      lib/effects-ioref
-      lib/effects-optparse
-      lib/effects-stm
-      lib/effects-thread
-      lib/effects-unix
-      lib/effects-unix-compat
+      lib/fs-effectful
+      lib/ioref-effectful
+      lib/optparse-effectful
+      lib/unix-effectful
+      lib/unix-compat-effectful
 else
   source-repository-package
     type: git
-    location: https://github.com/tbidne/monad-effects.git
-    tag: 8021f9a0855e644d91b73e6b2bcf20406ebbebb8
+    location: https://github.com/tbidne/effectful-effects.git
+    tag: 7c00ac50d6f23dd3e0d2c0d57a77fe4f3f459897
     subdir:
-      lib/effects-async
-      lib/effects-fs
-      lib/effects-ioref
-      lib/effects-optparse
-      lib/effects-stm
-      lib/effects-thread
-      lib/effects-unix-compat
+      lib/fs-effectful
+      lib/ioref-effectful
+      lib/optparse-effectful
+      lib/unix-compat-effectful
 
 source-repository-package
     type: git

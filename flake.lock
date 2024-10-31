@@ -52,6 +52,44 @@
         "type": "github"
       }
     },
+    "effectful-effects": {
+      "inputs": {
+        "algebra-simple": [
+          "algebra-simple"
+        ],
+        "bounds": [
+          "bounds"
+        ],
+        "exception-utils": [
+          "exception-utils"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "fs-utils": [
+          "fs-utils"
+        ],
+        "nix-hs-utils": [
+          "nix-hs-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1730197992,
+        "narHash": "sha256-m15aJ41BdoCuV5zaEKH0GrmxOOUy05yY909uZY6ntOI=",
+        "owner": "tbidne",
+        "repo": "effectful-effects",
+        "rev": "7c00ac50d6f23dd3e0d2c0d57a77fe4f3f459897",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tbidne",
+        "repo": "effectful-effects",
+        "type": "github"
+      }
+    },
     "exception-utils": {
       "inputs": {
         "flake-parts": [
@@ -122,47 +160,6 @@
         "type": "github"
       }
     },
-    "monad-effects": {
-      "inputs": {
-        "algebra-simple": [
-          "algebra-simple"
-        ],
-        "bounds": [
-          "bounds"
-        ],
-        "exception-utils": [
-          "exception-utils"
-        ],
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "fs-utils": [
-          "fs-utils"
-        ],
-        "nix-hs-utils": [
-          "nix-hs-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "smart-math": [
-          "smart-math"
-        ]
-      },
-      "locked": {
-        "lastModified": 1730241078,
-        "narHash": "sha256-zMWB/KJ7stYZ+fMAbEQkWnmW0ASzdBG44hjerYXOeA8=",
-        "owner": "tbidne",
-        "repo": "monad-effects",
-        "rev": "8021f9a0855e644d91b73e6b2bcf20406ebbebb8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "tbidne",
-        "repo": "monad-effects",
-        "type": "github"
-      }
-    },
     "nix-hs-utils": {
       "locked": {
         "lastModified": 1713310032,
@@ -210,10 +207,10 @@
       "inputs": {
         "algebra-simple": "algebra-simple",
         "bounds": "bounds",
+        "effectful-effects": "effectful-effects",
         "exception-utils": "exception-utils",
         "flake-parts": "flake-parts",
         "fs-utils": "fs-utils",
-        "monad-effects": "monad-effects",
         "nix-hs-utils": "nix-hs-utils",
         "nixpkgs": "nixpkgs",
         "si-bytes": "si-bytes",

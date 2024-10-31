@@ -4,6 +4,9 @@ import Control.DeepSeq (force)
 import Control.Exception (bracket, displayException, evaluate, throwIO)
 import Control.Monad (void)
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
+import Effectful (runEff)
+import Effectful.Concurrent (runConcurrent)
+import Effectful.FileSystem.PathReader.Static qualified as PR
 import GHC.Conc (setUncaughtExceptionHandler)
 import PathSize
   ( PathSizeResult
@@ -28,6 +31,7 @@ import PathSize.Data.Config
       ),
     Strategy (Async, AsyncPool, Sync),
   )
+import PathSize.Utils qualified as Utils
 import System.Environment (getArgs)
 import System.Exit (die)
 
@@ -46,7 +50,7 @@ main = do
 
     let config = baseConfig {strategy}
 
-    result <- PathSize.findLargestPaths config testDir
+    result <- run $ PathSize.findLargestPaths config testDir
     txt <- displayResult result
 
     void $ evaluate $ force txt
@@ -54,6 +58,12 @@ main = do
     displayResult (PathSizeSuccess sbd) = pure $ PathSize.display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwIO err
     displayResult (PathSizeFailure (err :<|| _)) = throwIO err
+
+    run =
+      runEff
+        . runConcurrent
+        . Utils.runPosixC
+        . PR.runPathReader
 
     baseConfig :: Config
     baseConfig =
