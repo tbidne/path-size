@@ -272,7 +272,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
     -- Base recursive function. If the path is determined to be a symlink or
     -- file, calculates the size. If it is a directory, we recursively call
     -- tryGo on all subpaths.
-    {-# INLINEABLE tryGo #-}
+
     tryGo ::
       (HasCallStack) =>
       Word16 ->
@@ -302,7 +302,6 @@ pathDataRecursive traverseFn cfg = tryGo 0
                         numDirectories = 0
                       }
 
-    {-# INLINEABLE tryCalcDir #-}
     tryCalcDir ::
       ( HasCallStack
       ) =>
