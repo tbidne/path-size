@@ -37,7 +37,6 @@ main = do
 
   (strategy, testPathStr) <-
     getArgs >>= \case
-      [fp] -> pure (Sync, fp)
       ["sync", fp] -> pure (Sync, fp)
       ["async", fp] -> pure (Async, fp)
       ["pool", fp] -> pure (AsyncPool, fp)
