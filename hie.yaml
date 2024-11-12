@@ -9,7 +9,10 @@ cradle:
     - path: "./app/Args.hs"
       component: "path-size:exe:path-size"
 
-    - path: "./profile/Main.hs"
+    - path: "./profiling/utils/Main.hs"
+      component: "path-size:exe:profile-utils"
+
+    - path: "./profiling/app/Main.hs"
       component: "path-size:exe:profile"
 
     - path: "./test/unit"

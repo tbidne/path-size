@@ -137,17 +137,27 @@ executable path-size
   hs-source-dirs:  app
   ghc-options:     -threaded -with-rtsopts=-N
 
-executable profile
+executable profile-utils
   import:         common-lang
   main-is:        Main.hs
   build-depends:
     , base
     , bench-common
+    , fs-utils
+
+  hs-source-dirs: profiling/utils
+
+executable profile
+  import:         common-lang
+  main-is:        Main.hs
+  build-depends:
+    , base
     , deepseq
+    , fs-utils
     , nonempty-containers
     , path-size
 
-  hs-source-dirs: profile
+  hs-source-dirs: profiling/app
 
 test-suite unit
   import:         common-lang
@@ -228,6 +238,7 @@ benchmark bench-criterion
     , base
     , bench-common
     , criterion     ^>=1.6.0.0
+    , fs-utils
     , path-size
 
   hs-source-dirs: bench/criterion
@@ -240,6 +251,7 @@ benchmark bench-tasty
   build-depends:
     , base
     , bench-common
+    , fs-utils
     , path-size
     , tasty-bench   ^>=0.3
 

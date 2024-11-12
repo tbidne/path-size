@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module Main (main) where
 
 import Control.Concurrent (getNumCapabilities)
@@ -5,6 +7,7 @@ import Control.Exception (Exception (displayException), bracket)
 import Criterion qualified as Bench
 import Criterion.Main (Benchmark, Benchmarkable, defaultMain)
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import FileSystem.OsPath (osp)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import PathSize.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
 import PathSize.Bench.Common qualified as Common
@@ -16,7 +19,7 @@ main = do
   numCap <- getNumCapabilities
   putStrLn $ "*** Running with " ++ show numCap ++ " capabilities ***"
 
-  bracket (Common.setup "criterion") Common.teardown runBenchmarks
+  bracket (Common.setup [osp|criterion|]) Common.teardown runBenchmarks
   where
     runBenchmarks testDir =
       defaultMain

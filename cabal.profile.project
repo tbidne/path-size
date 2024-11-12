@@ -1,3 +1,6 @@
 import: cabal.project
 
 profiling: True
+
+-- for best results, run w/ and w/o this
+profiling-detail: late

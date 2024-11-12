@@ -32,7 +32,7 @@ import Effects.FileSystem.PathWriter
   ( createDirectoryIfMissing,
     removePathForcibly,
   )
-import FileSystem.OsPath (OsPath, osp, (</>), (</>!))
+import FileSystem.OsPath (OsPath, osp, (</>))
 import FileSystem.OsPath qualified as FS.OsPath
 import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (mkPositive)
@@ -147,10 +147,10 @@ strategyDesc AsyncPool = "AsyncPool"
 -- | Setups directories for benchmarking.
 --
 -- @since 0.1
-setup :: (HasCallStack) => FilePath -> IO OsPath
+setup :: (HasCallStack) => OsPath -> IO OsPath
 setup base = do
   putStrLn "*** Starting setup ***"
-  rootDir <- (</>! base) <$> getTemporaryDirectory
+  rootDir <- (</> base) <$> getTemporaryDirectory
   createDirectoryIfMissing False rootDir
 
   createDenseDirs 11 (rootDir </> [osp|dense-11|]) files100

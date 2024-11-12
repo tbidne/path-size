@@ -1,7 +1,10 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 module Main (main) where
 
 import Control.Exception (Exception (displayException), bracket)
 import Data.List.NonEmpty (NonEmpty ((:|)))
+import FileSystem.OsPath (osp)
 import GHC.Conc.Sync (setUncaughtExceptionHandler)
 import PathSize.Bench.Common (BenchmarkSuite (MkBenchmarkSuite, bench, bgroup, nfIO))
 import PathSize.Bench.Common qualified as Common
@@ -13,7 +16,7 @@ main :: IO ()
 main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
 
-  bracket (Common.setup "tasty-bench") Common.teardown runBenchmarks
+  bracket (Common.setup [osp|tasty-bench|]) Common.teardown runBenchmarks
   where
     runBenchmarks testDir =
       defaultMain

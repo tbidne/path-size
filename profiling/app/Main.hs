@@ -1,9 +1,10 @@
 module Main (main) where
 
 import Control.DeepSeq (force)
-import Control.Exception (bracket, displayException, evaluate, throwIO)
+import Control.Exception (displayException, evaluate, throwIO)
 import Control.Monad (void)
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
+import FileSystem.OsPath (encodeValidThrowM)
 import GHC.Conc (setUncaughtExceptionHandler)
 import PathSize
   ( PathSizeResult
@@ -13,7 +14,6 @@ import PathSize
       ),
   )
 import PathSize qualified
-import PathSize.Bench.Common qualified as Common
 import PathSize.Data.Config
   ( Config
       ( MkConfig,
@@ -35,21 +35,22 @@ main :: IO ()
 main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
 
-  bracket (Common.setup "profile") Common.teardown $ \testDir -> do
-    strategy <-
-      getArgs >>= \case
-        [] -> pure Sync
-        ["sync"] -> pure Sync
-        ["async"] -> pure Async
-        ["pool"] -> pure AsyncPool
-        xs -> die $ "Unexpected args: " ++ show xs
+  (strategy, testPathStr) <-
+    getArgs >>= \case
+      [fp] -> pure (Sync, fp)
+      ["sync", fp] -> pure (Sync, fp)
+      ["async", fp] -> pure (Async, fp)
+      ["pool", fp] -> pure (AsyncPool, fp)
+      xs -> die $ "Unexpected args: " ++ show xs
 
-    let config = baseConfig {strategy}
+  testPath <- encodeValidThrowM testPathStr
 
-    result <- PathSize.findLargestPaths config testDir
-    txt <- displayResult result
+  let config = baseConfig {strategy}
 
-    void $ evaluate $ force txt
+  result <- PathSize.findLargestPaths config testPath
+  txt <- displayResult result
+
+  void $ evaluate $ force txt
   where
     displayResult (PathSizeSuccess sbd) = pure $ PathSize.display False sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwIO err

@@ -1,0 +1,201 @@
+	Wed Nov 13 11:28 2024 Time and Allocation Profiling Report  (Final)
+
+	   profile +RTS -p -RTS sync /tmp/nix-shell.qjoXS6/profile
+
+	total time  =        4.02 secs   (4017 ticks @ 1000 us, 1 processor)
+	total alloc = 6,407,226,344 bytes  (excludes profiling overheads)
+
+COST CENTRE                  MODULE                             SRC                                                 %time %alloc
+
+tryIf                        Control.Exception.Utils            src/Control/Exception/Utils.hs:191:1-59              30.1    6.5
+formatBase                   Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67            26.1   33.3
+$spathDataRecursiveSync1     Main                               <no location info>                                   11.2   22.4
+formatSize                   Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52)    5.5    8.4
+lvl28                        PathSize.Data.SubPathData.Internal <no location info>                                    5.3   10.2
+$wsortNESeq                  PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:145:1-9     4.5    3.0
+go1                          PathSize.Data.SubPathData.Internal <no location info>                                    3.0    3.2
+$wlvl3                       PathSize.Data.SubPathData.Internal <no location info>                                    2.0    0.5
+sumTrees_$sgo                PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:62:5-6                  1.5    2.1
+$w$j                         PathSize.Data.SubPathData.Internal <no location info>                                    1.4    1.9
+decodeUtf8Lenient            FileSystem.UTF8                    src/FileSystem/UTF8.hs:43:1-63                        1.1    0.8
+$wlvl2                       PathSize.Data.SubPathData.Internal <no location info>                                    1.0    0.5
+go10                         PathSize.Data.SubPathData.Internal <no location info>                                    0.8    1.5
+pathTreeToSeq_pathTreeToSeq' PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:52:5-18                 0.7    1.1
+$wunzipResultSeq             PathSize.Utils                     <no location info>                                    0.5    1.1
+
+
+                                                                                                                                                       individual      inherited
+COST CENTRE                                  MODULE                             SRC                                                no.      entries  %time %alloc   %time %alloc
+
+MAIN                                         MAIN                               <built-in>                                          510           0    0.0    0.0   100.0  100.0
+ main                                        Main                               profiling/app/Main.hs:35:1-4                       1020           1    0.0    0.0   100.0  100.0
+  main2                                      Main                               <no location info>                                 1021           1    0.0    0.0   100.0  100.0
+   main1                                     Main                               <no location info>                                 1022           1    0.0    0.0   100.0  100.0
+    $wmain                                   Main                               <no location info>                                 1023           1    0.0    0.0   100.0  100.0
+     $w$j                                    Main                               <no location info>                                 1027           1    0.0    0.0   100.0  100.0
+      $sfindLargestPaths                     Main                               <no location info>                                 1034           1    0.0    0.0    49.6   36.5
+       pathTreeToSeq_pathTreeToSeq'          PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:52:5-18              1058      413595    0.7    1.1     0.7    1.1
+       $spathDataRecursive                   Main                               <no location info>                                 1035           1    0.0    0.0    44.2   32.3
+        $spathDataRecursiveSync1             Main                               <no location info>                                 1038        4096   11.2   22.4    44.2   32.3
+         trySync                             Control.Exception.Utils            src/Control/Exception/Utils.hs:180:1-49            1042      417690    0.2    0.2    30.4    6.6
+          tryIf                              Control.Exception.Utils            src/Control/Exception/Utils.hs:191:1-59            1043      417690   30.1    6.5    30.1    6.5
+           lvl65                             Main                               <no location info>                                 1044      413594    0.0    0.0     0.0    0.0
+         sumTrees_$sgo                       PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:62:5-6               1053      417689    1.5    2.1     1.5    2.1
+         $wunzipResultSeq                    PathSize.Utils                     <no location info>                                 1045       20474    0.0    0.0     0.0    0.0
+         $sfoldlTree'1                       Main                               <no location info>                                 1046        4095    0.0    0.0     1.1    1.1
+          $wlvl                              Main                               <no location info>                                 1047       20475    0.0    0.0     0.1    0.1
+           $wunzipResultSeq                  PathSize.Utils                     <no location info>                                 1048       61425    0.1    0.1     0.1    0.1
+          foldlTree'1                        Main                               <no location info>                                 1049        8190    0.1    0.0     0.9    1.0
+           lvl36                             Main                               <no location info>                                 1050      110565    0.2    0.0     0.8    1.0
+            $wlvl                            Main                               <no location info>                                 1051      110565    0.2    0.0     0.6    0.9
+             $wunzipResultSeq                PathSize.Utils                     <no location info>                                 1052      331695    0.4    0.9     0.4    0.9
+        sumTrees_$sgo                        PathSize.Data.PathTree             src/PathSize/Data/PathTree.hs:62:5-6               1057           2    0.0    0.0     0.0    0.0
+        trySync                              Control.Exception.Utils            src/Control/Exception/Utils.hs:180:1-49            1036           2    0.0    0.0     0.0    0.0
+         tryIf                               Control.Exception.Utils            src/Control/Exception/Utils.hs:191:1-59            1037           2    0.0    0.0     0.0    0.0
+          lvl65                              Main                               <no location info>                                 1041           1    0.0    0.0     0.0    0.0
+        $wunzipResultSeq                     PathSize.Utils                     <no location info>                                 1056           1    0.0    0.0     0.0    0.0
+        asMap                                Data.HashSet.Internal              Data/HashSet/Internal.hs:113:7-11                  1040           1    0.0    0.0     0.0    0.0
+        null                                 Data.HashMap.Internal              Data/HashMap/Internal.hs:(605,1)-(606,16)          1039           1    0.0    0.0     0.0    0.0
+       $wsortNESeq                           PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:145:1-9  1059           1    4.5    3.0     4.7    3.1
+        size                                 PathSize.Data.PathData             src/PathSize/Data/PathData.hs:72:5-8               1060      413595    0.2    0.1     0.2    0.1
+        $bMkSubPathData_$s$winsertOn1        PathSize.Data.SubPathData.Internal <no location info>                                 1062           1    0.0    0.0     0.0    0.0
+         size                                PathSize.Data.PathData             src/PathSize/Data/PathData.hs:72:5-8               1063           1    0.0    0.0     0.0    0.0
+         spanl                               Data.Sequence.NonEmpty             src/Data/Sequence/NonEmpty.hs:(506,1)-(514,29)     1064           1    0.0    0.0     0.0    0.0
+          size                               PathSize.Data.PathData             src/PathSize/Data/PathData.hs:72:5-8               1065           1    0.0    0.0     0.0    0.0
+      $wdisplay                              PathSize.Data.SubPathData.Internal src/PathSize/Data/SubPathData/Internal.hs:182:1-7  1066           1    0.0    0.0    50.4   63.5
+       lvl28                                 PathSize.Data.SubPathData.Internal <no location info>                                 1067           7    3.1    5.7    44.6   54.5
+        $sgo1                                PathSize.Data.SubPathData.Internal <no location info>                                 1068      413596    0.3    0.4     8.3    5.7
+         go1                                 PathSize.Data.SubPathData.Internal <no location info>                                 1071     3722364    3.0    3.2     8.0    5.3
+          lvl5                               PathSize.Data.SubPathData.Internal <no location info>                                 1072      413593    0.2    0.0     0.9    0.5
+           $wlvl4                            PathSize.Data.SubPathData.Internal <no location info>                                 1073      413593    0.7    0.5     0.7    0.5
+            $s$fNormalizeBytes_$cnormalize   PathSize.Data.SubPathData.Internal <no location info>                                 1095           4    0.0    0.0     0.0    0.0
+             lvl27                           PathSize.Data.SubPathData.Internal <no location info>                                 1097           0    0.0    0.0     0.0    0.0
+            formatSized                      Data.Bytes.Formatting              src/Data/Bytes/Formatting.hs:(107,1)-(108,54)      1087           4    0.0    0.0     0.0    0.0
+             formatSize                      Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52) 1099           4    0.0    0.0     0.0    0.0
+              runForget                      Data.Profunctor.Indexed            src/Data/Profunctor/Indexed.hs:66:35-43            1100          12    0.0    0.0     0.0    0.0
+              caseFormat                     Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:100:5-14         1102           4    0.0    0.0     0.0    0.0
+              caseFormatToFn                 Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:(141,1)-(143,42) 1103           4    0.0    0.0     0.0    0.0
+              leadingSpace                   Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:101:5-16         1101           4    0.0    0.0     0.0    0.0
+              sizeFormat                     Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:102:5-14         1104           4    0.0    0.0     0.0    0.0
+              ssizeToSize                    Data.Bytes.Size                    src/Data/Bytes/Size.hs:(244,1)-(252,18)            1105           4    0.0    0.0     0.0    0.0
+             formatBase                      Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67          1092           0    0.0    0.0     0.0    0.0
+             lvl6                            PathSize.Data.SubPathData.Internal <no location info>                                 1091           0    0.0    0.0     0.0    0.0
+            lvl4                             PathSize.Data.SubPathData.Internal <no location info>                                 1077           4    0.0    0.0     0.0    0.0
+             $wlvl3                          PathSize.Data.SubPathData.Internal <no location info>                                 1078           4    0.0    0.0     0.0    0.0
+              lvl3                           PathSize.Data.SubPathData.Internal <no location info>                                 1080           4    0.0    0.0     0.0    0.0
+               $wlvl2                        PathSize.Data.SubPathData.Internal <no location info>                                 1081           4    0.0    0.0     0.0    0.0
+                lvl2                         PathSize.Data.SubPathData.Internal <no location info>                                 1083           4    0.0    0.0     0.0    0.0
+                 $wlvl1                      PathSize.Data.SubPathData.Internal <no location info>                                 1084           4    0.0    0.0     0.0    0.0
+                  $sfoldrTree                PathSize.Data.SubPathData.Internal <no location info>                                 1111           0    0.0    0.0     0.0    0.0
+                   lvl29                     PathSize.Data.SubPathData.Internal <no location info>                                 1112           0    0.0    0.0     0.0    0.0
+            $sfoldrTree                      PathSize.Data.SubPathData.Internal <no location info>                                 1114           0    0.0    0.0     0.0    0.0
+             foldrTree                       PathSize.Data.SubPathData.Internal <no location info>                                 1148           0    0.0    0.0     0.0    0.0
+              lvl29                          PathSize.Data.SubPathData.Internal <no location info>                                 1149           0    0.0    0.0     0.0    0.0
+             lvl29                           PathSize.Data.SubPathData.Internal <no location info>                                 1115           0    0.0    0.0     0.0    0.0
+          lvl2                               PathSize.Data.SubPathData.Internal <no location info>                                 1124      413592    0.2    0.0     0.7    0.5
+           $wlvl1                            PathSize.Data.SubPathData.Internal <no location info>                                 1125      413592    0.4    0.5     0.5    0.5
+            lvl5                             PathSize.Data.SubPathData.Internal <no location info>                                 1154           3    0.0    0.0     0.0    0.0
+             $wlvl4                          PathSize.Data.SubPathData.Internal <no location info>                                 1155           3    0.0    0.0     0.0    0.0
+              $s$fNormalizeBytes_$cnormalize PathSize.Data.SubPathData.Internal <no location info>                                 1163           3    0.0    0.0     0.0    0.0
+              formatSized                    Data.Bytes.Formatting              src/Data/Bytes/Formatting.hs:(107,1)-(108,54)      1160           3    0.0    0.0     0.0    0.0
+               formatSize                    Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52) 1164           3    0.0    0.0     0.0    0.0
+                runForget                    Data.Profunctor.Indexed            src/Data/Profunctor/Indexed.hs:66:35-43            1165           9    0.0    0.0     0.0    0.0
+                caseFormat                   Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:100:5-14         1167           3    0.0    0.0     0.0    0.0
+                caseFormatToFn               Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:(141,1)-(143,42) 1168           3    0.0    0.0     0.0    0.0
+                leadingSpace                 Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:101:5-16         1166           3    0.0    0.0     0.0    0.0
+                sizeFormat                   Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:102:5-14         1169           3    0.0    0.0     0.0    0.0
+                ssizeToSize                  Data.Bytes.Size                    src/Data/Bytes/Size.hs:(244,1)-(252,18)            1170           3    0.0    0.0     0.0    0.0
+               formatBase                    Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67          1162           0    0.0    0.0     0.0    0.0
+               lvl6                          PathSize.Data.SubPathData.Internal <no location info>                                 1161           0    0.0    0.0     0.0    0.0
+              lvl4                           PathSize.Data.SubPathData.Internal <no location info>                                 1156           3    0.0    0.0     0.0    0.0
+               $wlvl3                        PathSize.Data.SubPathData.Internal <no location info>                                 1157           3    0.0    0.0     0.0    0.0
+                lvl3                         PathSize.Data.SubPathData.Internal <no location info>                                 1158           3    0.0    0.0     0.0    0.0
+                 $wlvl2                      PathSize.Data.SubPathData.Internal <no location info>                                 1159           3    0.0    0.0     0.0    0.0
+            lvl                              PathSize.Data.SubPathData.Internal <no location info>                                 1171           1    0.1    0.0     0.1    0.0
+            $sfoldrTree                      PathSize.Data.SubPathData.Internal <no location info>                                 1126           0    0.0    0.0     0.0    0.0
+             foldrTree                       PathSize.Data.SubPathData.Internal <no location info>                                 1145           0    0.0    0.0     0.0    0.0
+              lvl29                          PathSize.Data.SubPathData.Internal <no location info>                                 1146           0    0.0    0.0     0.0    0.0
+             lvl29                           PathSize.Data.SubPathData.Internal <no location info>                                 1127           0    0.0    0.0     0.0    0.0
+          lvl3                               PathSize.Data.SubPathData.Internal <no location info>                                 1120      413589    0.2    0.0     1.2    0.5
+           $wlvl2                            PathSize.Data.SubPathData.Internal <no location info>                                 1121      413589    1.0    0.5     1.0    0.5
+            $sfoldrTree                      PathSize.Data.SubPathData.Internal <no location info>                                 1122           0    0.0    0.0     0.0    0.0
+             foldrTree                       PathSize.Data.SubPathData.Internal <no location info>                                 1152           0    0.0    0.0     0.0    0.0
+              lvl29                          PathSize.Data.SubPathData.Internal <no location info>                                 1153           0    0.0    0.0     0.0    0.0
+             lvl29                           PathSize.Data.SubPathData.Internal <no location info>                                 1123           0    0.0    0.0     0.0    0.0
+          lvl4                               PathSize.Data.SubPathData.Internal <no location info>                                 1116      413589    0.2    0.0     2.1    0.5
+           $wlvl3                            PathSize.Data.SubPathData.Internal <no location info>                                 1117      413589    2.0    0.5     2.0    0.5
+            $sfoldrTree                      PathSize.Data.SubPathData.Internal <no location info>                                 1118           0    0.0    0.0     0.0    0.0
+             foldrTree                       PathSize.Data.SubPathData.Internal <no location info>                                 1150           0    0.0    0.0     0.0    0.0
+              lvl29                          PathSize.Data.SubPathData.Internal <no location info>                                 1151           0    0.0    0.0     0.0    0.0
+             lvl29                           PathSize.Data.SubPathData.Internal <no location info>                                 1119           0    0.0    0.0     0.0    0.0
+          $sfoldrTree                        PathSize.Data.SubPathData.Internal <no location info>                                 1109           0    0.0    0.0     0.0    0.0
+           foldrTree                         PathSize.Data.SubPathData.Internal <no location info>                                 1143           0    0.0    0.0     0.0    0.0
+            lvl29                            PathSize.Data.SubPathData.Internal <no location info>                                 1144           0    0.0    0.0     0.0    0.0
+           lvl29                             PathSize.Data.SubPathData.Internal <no location info>                                 1110           0    0.0    0.0     0.0    0.0
+        $s$fNormalizeBytes_$cnormalize       PathSize.Data.SubPathData.Internal <no location info>                                 1131      413589    0.1    0.2     0.1    0.2
+         lvl27                               PathSize.Data.SubPathData.Internal <no location info>                                 1132           0    0.0    0.0     0.0    0.0
+        formatSized                          Data.Bytes.Formatting              src/Data/Bytes/Formatting.hs:(107,1)-(108,54)      1128      413589    0.6    0.3    33.1   43.0
+         formatSize                          Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:(182,1)-(185,52) 1133      413589    5.5    8.4     6.3    9.4
+          runForget                          Data.Profunctor.Indexed            src/Data/Profunctor/Indexed.hs:66:35-43            1134     1240767    0.0    0.0     0.0    0.0
+          caseFormat                         Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:100:5-14         1136      413589    0.0    0.0     0.0    0.0
+          caseFormatToFn                     Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:(141,1)-(143,42) 1137      413589    0.7    1.0     0.7    1.0
+          leadingSpace                       Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:101:5-16         1135      413589    0.0    0.0     0.0    0.0
+          sizeFormat                         Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:102:5-14         1138      413589    0.0    0.0     0.0    0.0
+          ssizeToSize                        Data.Bytes.Size                    src/Data/Bytes/Size.hs:(244,1)-(252,18)            1139      413589    0.1    0.0     0.1    0.0
+         formatBase                          Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67          1130           0   26.1   33.3    26.1   33.3
+         lvl6                                PathSize.Data.SubPathData.Internal <no location info>                                 1129           0    0.0    0.0     0.0    0.0
+        decodeUtf8Lenient                    FileSystem.UTF8                    src/FileSystem/UTF8.hs:43:1-63                     1070           0    0.0    0.0     0.0    0.0
+       $sfoldrTree                           PathSize.Data.SubPathData.Internal <no location info>                                 1106           1    0.0    0.0     3.6    5.5
+        foldrTree                            PathSize.Data.SubPathData.Internal <no location info>                                 1140          10    0.2    0.1     3.6    5.5
+         lvl29                               PathSize.Data.SubPathData.Internal <no location info>                                 1141      137859    0.1    0.2     3.4    5.4
+          lvl28                              PathSize.Data.SubPathData.Internal <no location info>                                 1142      413577    2.2    4.5     3.3    5.3
+           decodeUtf8Lenient                 FileSystem.UTF8                    src/FileSystem/UTF8.hs:43:1-63                     1147           0    1.1    0.8     1.1    0.8
+        lvl29                                PathSize.Data.SubPathData.Internal <no location info>                                 1107           4    0.0    0.0     0.0    0.0
+         lvl28                               PathSize.Data.SubPathData.Internal <no location info>                                 1108          12    0.0    0.0     0.0    0.0
+          decodeUtf8Lenient                  FileSystem.UTF8                    src/FileSystem/UTF8.hs:43:1-63                     1113           0    0.0    0.0     0.0    0.0
+       $w$j                                  PathSize.Data.SubPathData.Internal <no location info>                                 1075           1    1.4    1.9     2.2    3.5
+        go10                                 PathSize.Data.SubPathData.Internal <no location info>                                 1076     1240755    0.8    1.5     0.8    1.5
+      encodeValidThrowM                      FileSystem.OsPath                  src/FileSystem/OsPath.hs:(185,1)-(187,21)          1028           1    0.0    0.0     0.0    0.0
+       encodeValid                           FileSystem.OsPath                  src/FileSystem/OsPath.hs:(157,1)-(162,70)          1029           1    0.0    0.0     0.0    0.0
+        encode                               FileSystem.OsPath                  src/FileSystem/OsPath.hs:(138,1)-(140,46)          1031           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.Conc.Signal                    <entire-module>                                     927           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.Conc.Sync                      <entire-module>                                     926           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.Float                          <entire-module>                                     904           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding                    <entire-module>                                     891           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding.Iconv              <entire-module>                                     889           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.FD                   <entire-module>                                     880           0    0.0    0.0     0.0    0.0
+ CAF                                         Text.Printf                        <entire-module>                                     833           0    0.0    0.0     0.0    0.0
+ CAF                                         Data.ByteString.Short.Internal     <entire-module>                                     802           0    0.0    0.0     0.0    0.0
+ CAF                                         System.Directory.Internal.Common   <entire-module>                                     783           0    0.0    0.0     0.0    0.0
+ CAF                                         System.Directory.OsPath            <entire-module>                                     779           0    0.0    0.0     0.0    0.0
+ CAF                                         Data.HashMap.Internal              <entire-module>                                     585           0    0.0    0.0     0.0    0.0
+  empty                                      Data.HashMap.Internal              Data/HashMap/Internal.hs:594:1-13                  1033           1    0.0    0.0     0.0    0.0
+ CAF                                         Data.HashSet.Internal              <entire-module>                                     581           0    0.0    0.0     0.0    0.0
+  empty                                      Data.HashSet.Internal              Data/HashSet/Internal.hs:255:1-23                  1032           1    0.0    0.0     0.0    0.0
+ CAF                                         Main                               <entire-module>                                     561           0    0.0    0.0     0.0    0.0
+  lvl3                                       Main                               <no location info>                                 1024           1    0.0    0.0     0.0    0.0
+  lvl33                                      Main                               <no location info>                                 1055           1    0.0    0.0     0.0    0.0
+  lvl5                                       Main                               <no location info>                                 1025           1    0.0    0.0     0.0    0.0
+  lvl7                                       Main                               <no location info>                                 1026           1    0.0    0.0     0.0    0.0
+ CAF                                         PathSize.Data.PathTree             <entire-module>                                     556           0    0.0    0.0     0.0    0.0
+  sumTrees1                                  PathSize.Data.PathTree             <no location info>                                 1054           1    0.0    0.0     0.0    0.0
+ CAF                                         PathSize.Data.SubPathData.Internal <entire-module>                                     555           0    0.0    0.0     0.0    0.0
+  $bMkSubPathData5                           PathSize.Data.SubPathData.Internal <no location info>                                 1061           1    0.0    0.0     0.0    0.0
+  f                                          PathSize.Data.SubPathData.Internal <no location info>                                 1094           1    0.0    0.0     0.0    0.0
+  f1                                         PathSize.Data.SubPathData.Internal <no location info>                                 1093           1    0.0    0.0     0.0    0.0
+  lvl27                                      PathSize.Data.SubPathData.Internal <no location info>                                 1096           1    0.0    0.0     0.0    0.0
+   $dNormalize                               PathSize.Data.SubPathData.Internal <no location info>                                 1098           5    0.0    0.0     0.0    0.0
+  lvl6                                       PathSize.Data.SubPathData.Internal <no location info>                                 1088           1    0.0    0.0     0.0    0.0
+   formatSized                               Data.Bytes.Formatting              src/Data/Bytes/Formatting.hs:(107,1)-(108,54)      1089           0    0.0    0.0     0.0    0.0
+    formatBase                               Data.Bytes.Formatting.Base         src/Data/Bytes/Formatting/Base.hs:63:1-67          1090           1    0.0    0.0     0.0    0.0
+  str1                                       PathSize.Data.SubPathData.Internal <no location info>                                 1085           1    0.0    0.0     0.0    0.0
+  str3                                       PathSize.Data.SubPathData.Internal <no location info>                                 1082           1    0.0    0.0     0.0    0.0
+  str5                                       PathSize.Data.SubPathData.Internal <no location info>                                 1079           1    0.0    0.0     0.0    0.0
+  str7                                       PathSize.Data.SubPathData.Internal <no location info>                                 1074           1    0.0    0.0     0.0    0.0
+ CAF                                         Data.Bytes.Formatting.Base         <entire-module>                                     551           0    0.0    0.0     0.0    0.0
+ CAF                                         Data.Bytes.Formatting.Size         <entire-module>                                     549           0    0.0    0.0     0.0    0.0
+  sizedFormatterUnix                         Data.Bytes.Formatting.Size         src/Data/Bytes/Formatting/Size.hs:152:1-75         1086           1    0.0    0.0     0.0    0.0
+ CAF                                         FileSystem.OsPath                  <entire-module>                                     519           0    0.0    0.0     0.0    0.0
+  encode                                     FileSystem.OsPath                  src/FileSystem/OsPath.hs:(138,1)-(140,46)          1030           1    0.0    0.0     0.0    0.0
+ CAF                                         FileSystem.UTF8                    <entire-module>                                     517           0    0.0    0.0     0.0    0.0
+  decodeUtf8Lenient                          FileSystem.UTF8                    src/FileSystem/UTF8.hs:43:1-63                     1069           1    0.0    0.0     0.0    0.0
