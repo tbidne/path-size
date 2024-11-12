@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 export LANG="C.UTF-8"
 
 cleanup () {
@@ -26,7 +28,8 @@ rx="^.*test-dir: \|(.+)\|.*$"
 if [[ $cmd_output =~ $rx ]]; then
     test_path="${BASH_REMATCH[1]}"
 else
-    echo "$cmd_output doesn't match" >&2
+    echo "Regex did not match: $cmd_output" >&2
+    exit 1
 fi
 
 echo "*** Test dir: $test_path ***"
