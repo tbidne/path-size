@@ -47,7 +47,7 @@ jobs:
         id: functional
         run: cabal test functional
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         name: CLI Tests Upload
         if: ${{ failure() && steps.functional.conclusion == 'failure' }}
         with:
@@ -83,7 +83,7 @@ jobs:
             --csv bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             --output bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.html'
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: ${{ failure() && (steps.bench-tasty.conclusion == 'failure' || steps.bench-criterion.conclusion == 'failure' ) }}
         with:
           name: build-artifacts
@@ -104,7 +104,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup nix
-        uses: cachix/install-nix-action@v25
+        uses: cachix/install-nix-action@v30
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           nix_path: nixpkgs=channel:nixos-unstable
@@ -117,7 +117,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup nix
-        uses: cachix/install-nix-action@v25
+        uses: cachix/install-nix-action@v30
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           nix_path: nixpkgs=channel:nixos-unstable
