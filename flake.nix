@@ -75,11 +75,13 @@
       perSystem =
         { pkgs, ... }:
         let
-          ghc-version = "ghc982";
+          ghc-version = "ghc9101";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides =
               final: prev:
-              { }
+              {
+                path = hlib.dontCheck prev.path_0_9_6;
+              }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
                 "bounds"
@@ -107,6 +109,14 @@
               inherit compiler pkgs returnShellEnv;
               name = "path-size";
               root = ./.;
+
+              # TODO: Once hlint is back to working with our GHC we can
+              # use nix-hs-utils.mkDevTools ++ otherDeps.
+              devTools = [
+                (hlib.dontCheck compiler.cabal-fmt)
+                (hlib.dontCheck compiler.haskell-language-server)
+                pkgs.nixfmt-rfc-style
+              ];
             };
           compilerPkgs = {
             inherit compiler pkgs;
@@ -118,8 +128,8 @@
 
           apps = {
             format = nix-hs-utils.format compilerPkgs;
-            lint = nix-hs-utils.lint compilerPkgs;
-            lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
+            #lint = nix-hs-utils.lint compilerPkgs;
+            #lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
           };
         };
       systems = [

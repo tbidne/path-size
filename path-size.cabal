@@ -4,7 +4,12 @@ version:            0.1
 license:            MIT
 license-file:       LICENSE
 tested-with:
-  GHC ==9.2.8 || ==9.4.8 || ==9.6.5 || ==9.8.2 || ==9.10.1
+  GHC ==9.2.8
+   || ==9.4.8
+   || ==9.6.5
+   || ==9.8.2
+   || ==9.10.1
+   || ==9.12.1
 
 copyright:          2022-2025 Thomas Bidne
 author:             Thomas Bidne
@@ -20,16 +25,6 @@ extra-doc-files:    CHANGELOG.md
 source-repository head
   type:     git
   location: https://github.com/tbidne/path-size
-
--- TODO: [OsString upgrade]
---
--- Once we can build with nix and filepath >= 1.5 (GHC 9.10+), unconditionally
--- require filepath >= 1.5. Remove the os-string flag and corresponding cpp.
-
-flag os-string
-  description: Use the new os-string package
-  default:     False
-  manual:      False
 
 common common-lang
   default-extensions:
@@ -59,9 +54,6 @@ common common-lang
   else
     cpp-options: -DLINUX -DPOSIX
 
-  if flag(os-string)
-    cpp-options: -DOS_STRING
-
   default-language:   GHC2021
 
 library
@@ -78,7 +70,7 @@ library
     PathSize.Utils
 
   build-depends:
-    , base                  >=4.16.0.0  && <4.21
+    , base                  >=4.16.0.0  && <4.22
     , containers            >=0.6.3.1   && <0.8
     , deepseq               >=1.4.4.0   && <1.6
     , effects-async         ^>=0.1
@@ -94,19 +86,11 @@ library
     , unordered-containers  ^>=0.2.14.0
 
   if !os(windows)
-    -- See TODO: [OsString upgrade]
-    if flag(os-string)
-      build-depends:
-        , bytestring    >=0.10.12.0 && <0.13
-        , effects-unix  ^>=0.1
-        , filepath      >=1.5.2.0   && <1.6
-        , os-string     ^>=2.0.0
-
-    else
-      build-depends:
-        , bytestring    >=0.10.12.0 && <0.13
-        , effects-unix  ^>=0.1
-        , filepath      >=1.4.2.1   && <1.5
+    build-depends:
+      , bytestring    >=0.10.12.0 && <0.13
+      , effects-unix  ^>=0.1
+      , filepath      >=1.5.2.0   && <1.6
+      , os-string     ^>=2.0.0
 
   else
     build-depends:
@@ -166,7 +150,7 @@ test-suite unit
   build-depends:
     , base
     , fs-utils
-    , hedgehog        >=1.0.2   && <1.5
+    , hedgehog        >=1.0.2   && <1.6
     , path-size
     , tasty           >=1.1.0.3 && <1.6
     , tasty-hedgehog  >=1.2.0.0 && <1.5
@@ -196,16 +180,9 @@ test-suite functional
     , unordered-containers
 
   if !os(windows)
-    -- See TODO: [OsString upgrade]
-    if flag(os-string)
-      build-depends:
-        , effects-unix
-        , os-string
-
-    else
-      build-depends:
-        , effects-unix
-        , filepath
+    build-depends:
+      , effects-unix
+      , os-string
 
   else
     build-depends: effects-unix-compat
@@ -252,6 +229,6 @@ benchmark bench-tasty
     , bench-common
     , fs-utils
     , path-size
-    , tasty-bench   ^>=0.3
+    , tasty-bench   >=0.3 && <0.5
 
   hs-source-dirs: bench/tasty

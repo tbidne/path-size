@@ -16,7 +16,7 @@ where
 
 import Control.DeepSeq (NFData)
 import Control.Exception (Exception)
-import Control.Exception.Annotation.Utils qualified as AnnUtils
+import Control.Exception qualified as E
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Sequence.NonEmpty qualified as NESeq
 import FileSystem.OsPath (OsPath)
@@ -91,7 +91,19 @@ _PathSizeFailure =
 
 -- | @since 0.1
 mkPathE :: (Exception e) => OsPath -> e -> PathSizeResult a
-mkPathE path = mkPathEString path . AnnUtils.displayInner
+
+-- NOTE: For base 4.20 (GHC 9.10), there is a callstack on the SomeException
+-- itself. We don't really want this as it clutters the output (and fails
+-- a functional test). So in this case we walk the SomeException to avoid
+-- the callstack.
+--
+-- In later base versions, the callstack is separate, so we have no problems.
+#if MIN_VERSION_base(4, 20, 0) && !MIN_VERSION_base(4, 21, 0)
+mkPathE path ex = case E.toException ex of
+  E.SomeException e -> mkPathEString path . E.displayException $ e
+#else
+mkPathE path = mkPathEString path . E.displayException
+#endif
 
 mkPathEString :: OsPath -> String -> PathSizeResult a
 mkPathEString path = PathSizeFailure . NESeq.singleton . MkPathE path

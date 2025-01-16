@@ -37,7 +37,7 @@ import FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
-import Numeric.Data.Positive (Positive (MkPositive))
+import Numeric.Data.Positive.Algebra (Positive (MkPositive))
 import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
 import PathSize.Data.PathData
   ( PathData

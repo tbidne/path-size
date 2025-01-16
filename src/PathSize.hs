@@ -303,8 +303,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
                       }
 
     tryCalcDir ::
-      ( HasCallStack
-      ) =>
+      (HasCallStack) =>
       Integer ->
       OsPath ->
       Word16 ->

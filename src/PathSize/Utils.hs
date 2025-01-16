@@ -39,11 +39,7 @@ import System.OsString.Internal.Types
   ( OsString (getOsString),
     PosixString(getPosixString),
   )
-#if OS_STRING
 import System.OsString.Data.ByteString.Short qualified as Short
-#else
-import System.OsPath.Data.ByteString.Short qualified as Short
-#endif
 #else
 import Control.Monad.Catch (MonadThrow)
 import Effects.System.PosixCompat (MonadPosixCompat)
