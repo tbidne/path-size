@@ -12,11 +12,10 @@ maintainer:         tbidne@protonmail.com
 homepage:           https://github.com/tbidne/path-size/
 bug-reports:        https://github.com/tbidne/path-size/issues
 synopsis:           Utility for reporting file-system sizes.
-description:        Utility for reporting file-system sizes.
+description:        Path-size finds large files on the file-system.
 category:           CLI
-extra-source-files:
-  CHANGELOG.md
-  README.md
+extra-source-files: README.md
+extra-doc-files:    CHANGELOG.md
 
 source-repository head
   type:     git
