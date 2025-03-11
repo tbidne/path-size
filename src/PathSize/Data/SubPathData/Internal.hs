@@ -144,15 +144,12 @@ subPathDataToSeq (UnsafeSubPathData (pd :<|| xs)) = pd <| xs
 sortNESeq :: Bool -> NESeq PathData -> NESeq PathData
 sortNESeq False = NESeq.sortOn pathDataSizeOrd
 sortNESeq True = NESeq.sortOn pathDataSizePathOrd
-{-# INLINEABLE sortNESeq #-}
 
 pathDataSizeOrd :: PathData -> Down Integer
 pathDataSizeOrd = Down . (.size)
-{-# INLINEABLE pathDataSizeOrd #-}
 
 pathDataSizePathOrd :: PathData -> Down (Integer, OsPath)
 pathDataSizePathOrd = Down . \(MkPathData p s _ _) -> (s, p)
-{-# INLINEABLE pathDataSizePathOrd #-}
 
 {- HLINT ignore takeLargestN "Redundant bracket" -}
 
