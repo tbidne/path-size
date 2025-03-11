@@ -52,7 +52,7 @@ jobs:
         name: CLI Tests Upload
         if: ${{ failure() && steps.functional.conclusion == 'failure' }}
         with:
-          name: functional-tests-artifacts
+          name: functional-tests-artifacts_${{ matrix.os }}_${{ matrix.ghc }}
           path: |
             test/functional/goldens/*
 
@@ -68,8 +68,8 @@ jobs:
             --csv bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             --svg bench/tasty/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.svg
             --baseline bench/tasty/baseline_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
-            --fail-if-slower 30
-            --fail-if-faster 30'
+            --fail-if-slower 20
+            --fail-if-faster 20'
 
       # Only run criterion benchmarks when bench-tasty fails. We need the
       # failure() condition to override the implicit success() condition, that
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: ${{ failure() && (steps.bench-tasty.conclusion == 'failure' || steps.bench-criterion.conclusion == 'failure' ) }}
         with:
-          name: build-artifacts
+          name: build-artifacts_${{ matrix.os }}_${{ matrix.ghc }}
           path: |
             bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.csv
             bench/criterion/bench_${{ matrix.os }}_${{ matrix.ghc }}_ci.html

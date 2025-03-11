@@ -31,8 +31,8 @@ import Data.Sequence (Seq ((:<|)), (<|))
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
-import Data.Text.Lazy qualified as TL
-import Data.Text.Lazy.Builder qualified as TLB
+import Data.Text qualified as T
+import Data.Text.Builder.Linear qualified as TBLinear
 import FileSystem.OsPath (OsPath)
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
@@ -182,16 +182,18 @@ display :: Bool -> SubPathData -> Text
 display revSort = showList' . subPathDataToSeq
   where
     showList' :: Seq PathData -> Text
-    showList' = TL.toStrict . TLB.toLazyText . foldSeq go ""
+    showList' = TBLinear.runBuilder . foldSeq go ""
+
+    go :: PathData -> TBLinear.Builder -> TBLinear.Builder
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
         [ pathToBuilder path,
           ": ",
-          TLB.fromLazyText $ TL.fromStrict $ formatSize size,
+          TBLinear.fromText $ formatSize size,
           ", Directories: ",
-          TLB.fromString $ show numDirectories,
+          TBLinear.fromText $ T.pack $ show numDirectories,
           ", Files: ",
-          TLB.fromString $ show numFiles,
+          TBLinear.fromText $ T.pack $ show numFiles,
           "\n",
           acc
         ]
@@ -204,18 +206,19 @@ display revSort = showList' . subPathDataToSeq
         . normalize
         . MkBytes @B
         . fromIntegral @_ @Double
+
     foldSeq
       | revSort = foldl' . flip
       | otherwise = foldr
 
-pathToBuilder :: OsPath -> TLB.Builder
+pathToBuilder :: OsPath -> TBLinear.Builder
 
 #if POSIX
 pathToBuilder =
-  TLB.fromText
+  TBLinear.fromText
     . FS.UTF8.decodeUtf8Lenient
     . BS.Short.fromShort
     . (\p -> p.getOsString.getPosixString)
 #else
-pathToBuilder = TLB.fromString . FS.OsPath.decodeLenient
+pathToBuilder = TBLinear.fromText . T.pack . FS.OsPath.decodeLenient
 #endif
