@@ -17,7 +17,7 @@ import Data.Version (Version (versionBranch))
 import Data.Word (Word16)
 import Effects.Optparse (osPath)
 import FileSystem.OsPath (OsPath)
-import Numeric.Data.Positive.Algebra (Positive, mkPositive)
+import Numeric.Data.Positive (Positive, mkPositive)
 import Options.Applicative
   ( Parser,
     ParserInfo

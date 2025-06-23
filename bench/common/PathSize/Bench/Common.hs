@@ -35,7 +35,7 @@ import Effects.FileSystem.PathWriter
 import FileSystem.OsPath (OsPath, osp, (</>))
 import FileSystem.OsPath qualified as FS.OsPath
 import GHC.Stack (HasCallStack)
-import Numeric.Data.Positive.Algebra (mkPositive)
+import Numeric.Data.Positive (mkPositive)
 import PathSize
   ( Config
       ( MkConfig,
