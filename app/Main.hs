@@ -3,7 +3,7 @@
 -- @since 0.1
 module Main (main) where
 
-import Args (Args (path, reverseSort), argsToConfig, getArgs)
+import Args (Args (path), argsToConfig, argsToDisplayConfig, getArgs)
 import Control.Exception (Exception (displayException))
 import Data.Foldable (for_)
 import Data.Text qualified as T
@@ -22,8 +22,10 @@ main = do
   setUncaughtExceptionHandler (putStrLn . displayException)
 
   args <- getArgs
+
   let config = argsToConfig args
-      printResults = putStrLn . T.unpack . display args.reverseSort
+      displayConfig = argsToDisplayConfig args
+      printResults = putStrLn . T.unpack . display displayConfig
 
   findLargestPaths config args.path >>= \case
     PathSizeSuccess sbd -> printResults sbd

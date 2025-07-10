@@ -1,0 +1,16 @@
+Size   | Dirs | Files | Path
+----------------------------------------------------------------
+60.00B | 7    | 6     | test\functional\data\success
+18.00B | 4    | 2     | test\functional\data\success\d2
+18.00B | 0    | 1     | test\functional\data\success\.hidden\f1
+18.00B | 1    | 1     | test\functional\data\success\.hidden
+15.00B | 0    | 1     | test\functional\data\success\d2\d2\d1\f1
+15.00B | 1    | 1     | test\functional\data\success\d2\d2\d1
+15.00B | 2    | 1     | test\functional\data\success\d2\d2
+13.00B | 0    | 1     | test\functional\data\success\.h1
+11.00B | 1    | 2     | test\functional\data\success\d1
+6.00B  | 0    | 1     | test\functional\data\success\d1\f2
+5.00B  | 0    | 1     | test\functional\data\success\d1\f1
+3.00B  | 0    | 1     | test\functional\data\success\d2\d1\f1
+3.00B  | 1    | 1     | test\functional\data\success\d2\d1
+

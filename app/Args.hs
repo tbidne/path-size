@@ -5,6 +5,7 @@ module Args
   ( Args (..),
     getArgs,
     argsToConfig,
+    argsToDisplayConfig,
   )
 where
 
@@ -19,7 +20,8 @@ import Effects.Optparse (osPath)
 import FileSystem.OsPath (OsPath)
 import Numeric.Data.Positive (Positive, mkPositive)
 import Options.Applicative
-  ( Parser,
+  ( Mod,
+    Parser,
     ParserInfo
       ( ParserInfo,
         infoFailureCode,
@@ -33,10 +35,15 @@ import Options.Applicative
     (<**>),
   )
 import Options.Applicative qualified as OA
+import Options.Applicative.Help (Doc)
 import Options.Applicative.Help.Chunk (Chunk (Chunk))
 import Options.Applicative.Help.Chunk qualified as Chunk
 import Options.Applicative.Help.Pretty qualified as Pretty
 import Options.Applicative.Types (ArgPolicy (Intersperse))
+import PathSize
+  ( DisplayConfig (MkDisplayConfig, color, format, reverseSort),
+    DisplayFormat (DisplayFormatSingle, DisplayFormatTabular),
+  )
 import PathSize.Data.Config
   ( Config
       ( MkConfig,
@@ -63,7 +70,9 @@ data Args = MkArgs
     maxDepth :: !(Maybe Word16),
     exclude :: !(HashSet OsPath),
     filesOnly :: !Bool,
+    format :: !DisplayFormat,
     ignoreDirIntrinsicSize :: !Bool,
+    noColor :: !Bool,
     numPaths :: !(Maybe (Positive Int)),
     reverseSort :: !Bool,
     stableSort :: !Bool,
@@ -88,6 +97,14 @@ argsToConfig args =
       numPaths = args.numPaths,
       stableSort = args.stableSort,
       strategy = args.strategy
+    }
+
+argsToDisplayConfig :: Args -> DisplayConfig
+argsToDisplayConfig args =
+  MkDisplayConfig
+    { color = not args.noColor,
+      format = args.format,
+      reverseSort = args.reverseSort
     }
 
 -- | Retrieves CLI args.
@@ -121,23 +138,39 @@ parserInfoArgs =
           ]
 
 argsParser :: Parser Args
-argsParser =
-  MkArgs
-    <$> allParser
-    <*> depthParser
-    <*> excludeParser
-    <*> filesOnlyParser
-    <*> ignoreDirIntrinsicSizeParser
-    <*> numPathsParser
-    <*> reverseSortParser
-    <*> stableSortParser
-    <*> strategyParser
-      <**> OA.helper
-      <**> version
-    <*> pathParser
+argsParser = p <**> version <**> OA.helper
+  where
+    p = do
+      searchAll <- allParser
+      maxDepth <- depthParser
+      exclude <- excludeParser
+      filesOnly <- filesOnlyParser
+      format <- formatParser
+      ignoreDirIntrinsicSize <- ignoreDirIntrinsicSizeParser
+      noColor <- noColorParser
+      numPaths <- numPathsParser
+      reverseSort <- reverseSortParser
+      stableSort <- stableSortParser
+      strategy <- strategyParser
+      path <- pathParser
+      pure $
+        MkArgs
+          { searchAll,
+            maxDepth,
+            exclude,
+            filesOnly,
+            format,
+            ignoreDirIntrinsicSize,
+            noColor,
+            numPaths,
+            reverseSort,
+            stableSort,
+            strategy,
+            path
+          }
 
 version :: Parser (a -> a)
-version = OA.infoOption versNum (OA.long "version" <> OA.short 'v')
+version = OA.infoOption versNum (OA.long "version" <> OA.short 'v' <> OA.hidden)
 
 versNum :: String
 versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
@@ -198,7 +231,7 @@ allParser =
   where
     helpTxt =
       mconcat
-        [ "If enabled, searches hidden files/directories. We only consider ",
+        [ "Searches hidden files/directories. We only consider ",
           "hidden files per the unix dot convention (e.g. .hidden_path). ",
           "All files are considered unhidden on windows."
         ]
@@ -214,7 +247,7 @@ filesOnlyParser =
   where
     helpTxt =
       mconcat
-        [ "If enabled, only sizes for files are calculated. All directories ",
+        [ "Only sizes for files are calculated. All directories ",
           "are given size 0. Note this effectively implies --ignore-dir-size."
         ]
 
@@ -228,7 +261,7 @@ ignoreDirIntrinsicSizeParser =
   where
     helpTxt =
       mconcat
-        [ "If enabled, ignores the size of the directories themselves i.e. ",
+        [ "Ignores the size of the directories themselves i.e. ",
           "a directory's size is determined by the sum of all of its subfiles, ",
           "only. The size of the directory itself (e.g. 4096 bytes on a ",
           "typical ext4 filesystem) is ignored."
@@ -259,6 +292,60 @@ depthParser =
           "not directly reported themselves."
         ]
 
+noColorParser :: Parser Bool
+noColorParser =
+  OA.switch $
+    mconcat
+      [ OA.long "no-color",
+        mkHelp "Disables output colors."
+      ]
+
+formatParser :: Parser DisplayFormat
+formatParser =
+  OA.option
+    readFormat
+    $ mconcat
+      [ OA.value DisplayFormatTabular,
+        OA.long "format",
+        OA.metavar "FMT",
+        OA.helpDoc helpTxt
+      ]
+  where
+    readFormat =
+      OA.str >>= \case
+        "s" -> pure DisplayFormatSingle
+        "single" -> pure DisplayFormatSingle
+        "t" -> pure DisplayFormatTabular
+        "tabular" -> pure DisplayFormatTabular
+        other -> fail $ "Unrecognized format: " ++ other
+
+    helpTxt =
+      mconcat
+        [ intro,
+          Just Pretty.hardline,
+          single,
+          tabular,
+          Just Pretty.hardline
+        ]
+
+    intro = toMDoc "Formatting options."
+    single =
+      mconcat
+        [ Just Pretty.hardline,
+          toMDoc $
+            mconcat
+              [ "- (s|single): Simply, single-line format."
+              ]
+        ]
+    tabular =
+      mconcat
+        [ Just Pretty.hardline,
+          toMDoc $
+            mconcat
+              [ "- (t|tabular): The default. Prints a table."
+              ]
+        ]
+
 reverseSortParser :: Parser Bool
 reverseSortParser =
   OA.switch $
@@ -268,7 +355,7 @@ reverseSortParser =
         mkHelp helpTxt
       ]
   where
-    helpTxt = "If enabled, paths are sorted in reverse (ascending) order."
+    helpTxt = "Paths are sorted in reverse (ascending) order."
 
 stableSortParser :: Parser Bool
 stableSortParser =
@@ -280,7 +367,7 @@ stableSortParser =
   where
     helpTxt =
       mconcat
-        [ "If enabled, an additional sorting filter is applied to sort by path ",
+        [ "An additional sorting filter is applied to sort by path ",
           "name. This allows the sorted order to be deterministic (as paths are ",
           "unique), at the cost of performance."
         ]
@@ -320,9 +407,12 @@ strategyParser =
 pathParser :: Parser OsPath
 pathParser = OA.argument osPath (OA.metavar "PATH")
 
-mkHelp :: String -> OA.Mod f a
+mkHelp :: String -> Mod f a
 mkHelp =
   OA.helpDoc
     . fmap (<> Pretty.hardline)
     . Chunk.unChunk
     . Chunk.paragraph
+
+toMDoc :: String -> Maybe Doc
+toMDoc = Chunk.unChunk . Chunk.paragraph

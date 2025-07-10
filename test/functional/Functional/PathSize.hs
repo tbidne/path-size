@@ -39,6 +39,7 @@ import GoldenParams
   ( GoldenParams
       ( MkGoldenParams,
         mConfig,
+        mDisplayConfig,
         runner,
         testDesc,
         testName,
@@ -46,9 +47,12 @@ import GoldenParams
       ),
   )
 import PathSize
-  ( PathE,
+  ( DisplayConfig (color, format),
+    DisplayFormat (DisplayFormatSingle),
+    PathE,
     PathSizeResult (PathSizeFailure, PathSizePartial, PathSizeSuccess),
     Strategy (Sync),
+    defaultDisplayConfig,
   )
 import PathSize qualified
 import PathSize.Data.Config
@@ -64,15 +68,19 @@ import PathSize.Data.Config
         strategy
       ),
   )
-import PathSize.Data.SubPathData.Internal (SubPathData)
-import Test.Tasty (TestTree, testGroup)
-import Test.Tasty.Golden (goldenVsFile)
+import PathSize.Data.SubPathData.Internal
+  ( DisplayFormat (DisplayFormatTabular),
+    SubPathData,
+  )
+import Test.Tasty (TestName, TestTree, testGroup)
+import Test.Tasty.Golden (goldenVsFileDiff)
 
 tests :: TestTree
 tests =
   testGroup
     "FsSize.PathSize"
     [ calculatesSizes,
+      testDisplaysTabular,
       calculatesAll,
       calculatesExcluded,
       calculatesFilesOnly,
@@ -89,8 +97,22 @@ calculatesSizes = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Nothing,
+          mDisplayConfig = Nothing,
           testDesc = "Calculates sizes correctly",
           testName = [osp|calculatesSizes|],
+          testPath = successTestDir,
+          runner = runTest
+        }
+
+testDisplaysTabular :: TestTree
+testDisplaysTabular = testGoldenParams params
+  where
+    params =
+      MkGoldenParams
+        { mConfig = Nothing,
+          mDisplayConfig = Just $ displayConfig {format = DisplayFormatTabular},
+          testDesc = "Displays tabular format",
+          testName = [osp|testDisplaysTabular|],
           testPath = successTestDir,
           runner = runTest
         }
@@ -101,6 +123,7 @@ calculatesAll = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Just cfg,
+          mDisplayConfig = Nothing,
           testDesc = "Includes hidden files",
           testName = [osp|calculatesAll|],
           testPath = successTestDir,
@@ -115,6 +138,7 @@ calculatesExcluded = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Just cfg,
+          mDisplayConfig = Nothing,
           testDesc = "Excludes paths",
           testName = [osp|calculatesExcluded|],
           testPath = successTestDir,
@@ -129,6 +153,7 @@ calculatesFilesOnly = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Just cfg,
+          mDisplayConfig = Nothing,
           testDesc = "Includes only files",
           testName = [osp|calculatesFilesOnly|],
           testPath = successTestDir,
@@ -142,6 +167,7 @@ calculatesIgnoreDirIntrinsicSize = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Just cfg,
+          mDisplayConfig = Nothing,
           testDesc = "Ignores dir intrinsic size",
           testName = [osp|calculatesIgnoreDirIntrinsicSize|],
           testPath = successTestDir,
@@ -156,6 +182,7 @@ calculatesDepthN n = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Just cfg,
+          mDisplayConfig = Nothing,
           testDesc = "Calculates depth = " <> show n,
           testName = [osp|calculatesDepth_|] <> FS.OsPath.unsafeEncode (show n),
           testPath = successTestDir,
@@ -178,6 +205,7 @@ testsPartial = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Nothing,
+          mDisplayConfig = Nothing,
           testDesc = "Partial success",
           testName = [osp|testsPartial|],
           testPath = partialTestDir,
@@ -190,6 +218,7 @@ testsFailure = testGoldenParams params
     params =
       MkGoldenParams
         { mConfig = Nothing,
+          mDisplayConfig = Nothing,
           testDesc = "Failure",
           testName = [osp|testsFailure|],
           testPath = failureTestDir,
@@ -248,10 +277,11 @@ runFuncIO (MkFuncIO io) = io
 
 testGoldenParams :: GoldenParams -> TestTree
 testGoldenParams goldenParams =
-  goldenVsFile goldenParams.testDesc goldenPath actualPath $ do
+  goldenDiffCustom goldenParams.testDesc goldenPath actualPath $ do
     let config = fromMaybe baseConfig goldenParams.mConfig
+        dispConfig = fromMaybe displayConfig goldenParams.mDisplayConfig
 
-    result <- goldenParams.runner config goldenParams.testPath
+    result <- goldenParams.runner config dispConfig goldenParams.testPath
     writeActualFile result
   where
     outputPathStart =
@@ -268,15 +298,15 @@ testGoldenParams goldenParams =
     writeActualFile result =
       FS.IO.writeBinaryFileIO (FS.OsPath.unsafeEncode actualPath) (toBS result)
 
-runTest :: Config -> OsPath -> IO Text
-runTest cfg testDir = do
+runTest :: Config -> DisplayConfig -> OsPath -> IO Text
+runTest cfg dispCfg testDir = do
   trySync (runTestNoCatch cfg testDir) <&> \case
     Right (PathSizeSuccess spd) -> display spd
     Right (PathSizePartial errs spd) -> fmtErrs errs <> "\n" <> display spd
     Right (PathSizeFailure errs) -> fmtErrs errs
     Left ex -> T.pack $ displayException ex
   where
-    display = PathSize.display False
+    display = PathSize.display dispCfg
 
     fmtErrs :: NESeq PathE -> Text
     fmtErrs =
@@ -313,6 +343,13 @@ baseConfig =
       strategy = Sync
     }
 
+displayConfig :: DisplayConfig
+displayConfig =
+  defaultDisplayConfig
+    { color = False,
+      format = DisplayFormatSingle
+    }
+
 {- ORMOLU_DISABLE -}
 
 ext :: FilePath
@@ -326,3 +363,23 @@ ext =
 #endif
 
 {- ORMOLU_ENABLE -}
+
+-- | We use a custom diff as this will print the actual diff to stdout,
+-- whereas ordinary goldenVsFile will merely print something like
+-- 'files are different'. The former is especially useful when we do not have
+-- easy access to the diff files e.g. CI.
+goldenDiffCustom :: TestName -> FilePath -> FilePath -> IO () -> TestTree
+goldenDiffCustom x = goldenVsFileDiff x diffArgs
+  where
+    -- Apparently, the 'diff' program exists for windows and unix on CI. Thus
+    -- the arguments ["diff", "-u" "--color=always", ref, new] also seem fine.
+    -- Nevertheless, we use git as it is possibly more portable.
+    diffArgs ref new =
+      [ "git",
+        "diff",
+        "--exit-code",
+        "--color=always",
+        "--no-index",
+        ref,
+        new
+      ]

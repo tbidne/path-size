@@ -13,13 +13,14 @@
 ### Table of Contents
 
 - [Introduction](#introduction)
-  - [Usage](#usage)
 - [Options](#options)
   - [All](#all)
   - [Depth](#depth)
   - [Exclude](#exclude)
   - [Files only](#files-only)
+  - [Format](#format)
   - [Ignore dir size](#ignore-dir-size)
+  - [No color](#no-color)
   - [Number of paths](#number-of-paths)
   - [Reverse](#reverse)
   - [Stable](#stable)
@@ -32,72 +33,20 @@
 
 `path-size` is a CLI tool for calculating the (recursive) size of a given file-system path, and sorting subpaths by size. It is like the unix tool `du`, geared towards finding large files.
 
-## Usage
-
 ```
-path-size: A utility for reporting the recursive size of a directory.
-
-Usage: path-size [-a|--all] [-d|--depth NAT] [-e|--exclude PATHS...]
-                 [-f|--files-only] [--ignore-dir-size]
-                 [-n|--num-paths (NAT | all)] [-r|--reverse] [--stable]
-                 [-s|--strategy (async | sync | pool)] [-v|--version] PATH
-
-  path-size allows one to find large paths on the file-system. In particular,
-  the command will recursively associate a given path and all of its subpaths to
-  their respective sizes.
-
-Available options:
-  -a,--all                 If enabled, searches hidden files/directories. We
-                           only consider hidden files per the unix dot
-                           convention (e.g. .hidden_path). All files are
-                           considered unhidden on windows.
-
-  -d,--depth NAT           The depth limit of our search. Note that we still
-                           need to fully traverse the file system to get
-                           accurate data; this argument merely affects what is
-                           reported i.e. any depths > d are implicitly included
-                           in parent directories via their size, but are not
-                           directly reported themselves.
-
-  -e,--exclude PATHS...    Paths to skip. These must match the desired
-                           directory/file name e.g. to skip /path/to/dir you
-                           would pass '-e dir'. Note that this will exclude
-                           _all_ subpaths that match 'dir'.
-
-  -f,--files-only          If enabled, only sizes for files are calculated. All
-                           directories are given size 0. Note this effectively
-                           implies --ignore-dir-size.
-
-  --ignore-dir-size        If enabled, ignores the size of the directories
-                           themselves i.e. a directory's size is determined by
-                           the sum of all of its subfiles, only. The size of the
-                           directory itself (e.g. 4096 bytes on a typical ext4
-                           filesystem) is ignored.
-
-  -n,--num-paths (NAT | all)
-                           The number of paths to display. If unspecified,
-                           defaults to 10. The option 'all' returns everything.
-
-  -r,--reverse             If enabled, paths are sorted in reverse (ascending)
-                           order.
-
-  --stable                 If enabled, an additional sorting filter is applied
-                           to sort by path name. This allows the sorted order to
-                           be deterministic (as paths are unique), at the cost
-                           of performance.
-
-  -s,--strategy (async | sync | pool)
-                           The search strategy is intended to improve
-                           performance. The default is 'async', which uses
-                           lightweight threads. The 'sync' option is a
-                           sequential search and likely the slowest. Finally,
-                           'pool' uses an explicit thread pool for concurrency.
-                           This is potentially the fastest, though
-                           experimentation is recommended.
-
-  -h,--help                Show this help text
-
-Version: 0.1
+$ path-size ./src
+Size   | Dirs | Files | Path
+-------------------------------------------------------------------
+62.37K | 4    | 9     | ./src
+48.29K | 3    | 8     | ./src/PathSize
+39.43K | 2    | 6     | ./src/PathSize/Data
+16.11K | 1    | 1     | ./src/PathSize/Data/SubPathData
+12.01K | 0    | 1     | ./src/PathSize/Data/SubPathData/Internal.hs
+9.99K  | 0    | 1     | ./src/PathSize.hs
+9.68K  | 0    | 1     | ./src/PathSize/Data/Config.hs
+4.15K  | 0    | 1     | ./src/PathSize/Data/PathData.hs
+3.77K  | 0    | 1     | ./src/PathSize/Utils.hs
+2.76K  | 0    | 1     | ./src/PathSize/Data/PathSizeResult.hs
 ```
 
 # Options
@@ -106,7 +55,7 @@ Version: 0.1
 
 **Arg:** `-a, --all`
 
-**Description:** If enabled, searches hidden files/directories. We only consider hidden files per the unix dot convention (e.g. `.hidden_path`). All files are considered unhidden on windows.
+**Description:** Searches hidden files/directories. We only consider hidden files per the unix dot convention (e.g. `.hidden_path`). All files are considered unhidden on windows.
 
 **Examples:**
 
@@ -142,7 +91,7 @@ $ path-size -e bar -e foo ./
 
 **Arg:** `-f,--files-only`
 
-**Description:** If enabled, only sizes for files are calculated. All directories are given size 0. Note this effectively implies `--ignore-dir-size`.
+**Description:** Only sizes for files are calculated. All directories are given size 0. Note this effectively implies `--ignore-dir-size`.
 
 **Examples:**
 
@@ -150,17 +99,48 @@ $ path-size -e bar -e foo ./
 $ path-size -f ./
 ```
 
+## Format
+
+**Arg:** `--format`
+
+**Description:** Formatting options.
+
+  - `(s|single)`: Simply, single-line format.
+  - `(t|tabular)`: The default. Prints a table.
+
+**Examples:**
+
+```
+$ path-size --format tabular test/functional/data/success
+Size   | Dirs | Files | Path
+----------------------------------------------------------
+24.60K | 6    | 4     | test/functional/data/success
+16.40K | 4    | 2     | test/functional/data/success/d2
+8.21K  | 2    | 1     | test/functional/data/success/d2/d2
+
+$ path-size --format single test/functional/data/success
+test/functional/data/success: 24.60K, Directories: 6, Files: 4
+test/functional/data/success/d2: 16.40K, Directories: 4, Files: 2
+test/functional/data/success/d2/d2: 8.21K, Directories: 2, Files: 1
+```
+
 ## Ignore dir size
 
 **Arg:** `--ignore-dir-size`
 
-**Description:** If enabled, ignores the size of the directories themselves i.e. a directory's size is determined by the sum of all of its subfiles, only. The size of the directory itself (e.g. 4096 bytes on a typical ext4 filesystem) is ignored.
+**Description:** Ignores the size of the directories themselves i.e. a directory's size is determined by the sum of all of its subfiles, only. The size of the directory itself (e.g. 4096 bytes on a typical ext4 filesystem) is ignored.
 
 **Examples:**
 
 ```
 $ path-size --ignore-dir-size ./
 ```
+
+## No color
+
+**Arg:** `--no-color`
+
+**Description:** Disables output colors.
 
 ## Number of paths
 
@@ -182,7 +162,7 @@ $ path-size -n all ./
 
 **Arg:** `-r,--reverse`
 
-**Description:** If enabled, paths are sorted in reverse (ascending) order.
+**Description:** Paths are sorted in reverse (ascending) order.
 
 **Examples:**
 
@@ -194,7 +174,7 @@ $ path-size -r ./
 
 **Arg:** `--stable`
 
-**Description:** If enabled, an additional sorting filter is applied to sort by path name. This allows the sorted order to be deterministic (as paths are unique), at the cost of performance.
+**Description:** An additional sorting filter is applied to sort by path name. This allows the sorted order to be deterministic (as paths are unique), at the cost of performance.
 
 **Examples:**
 
@@ -222,16 +202,10 @@ If you have never built a haskell program before, [Cabal](#cabal) is probably th
 
 ### Prerequisites
 
-* [`ghcup`](https://www.haskell.org/ghcup/)
+* [`cabal 2.4+`](https://www.haskell.org/cabal/download.html)
+* [`ghc 9.2 - 9.12`](https://gitlab.haskell.org/ghc/ghc/-/wikis/GHC%20Status)
 
-Using `ghcup`, install `cabal 2.4+` and one of:
-
-- `ghc 9.2`
-- `ghc 9.4`
-- `ghc 9.6`
-- `ghc 9.8`
-- `ghc 9.10`
-- `ghc 9.12`
+The easiest way to install these is generally [`ghcup`](https://www.haskell.org/ghcup/).
 
 ### Build path-size
 

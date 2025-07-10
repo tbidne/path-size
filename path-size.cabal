@@ -28,6 +28,7 @@ source-repository head
 
 common common-lang
   default-extensions:
+    ApplicativeDo
     DataKinds
     DeriveAnyClass
     DerivingStrategies
@@ -77,12 +78,14 @@ library
     , effects-fs            ^>=0.1
     , exception-utils       ^>=0.1
     , exceptions            ^>=0.10.4
+    , filepath              >=1.5.2.0   && <1.6
     , nonempty-containers   >=0.3.4.2   && <0.4
     , optics-core           ^>=0.4
     , si-bytes              ^>=0.1
     , smart-math            ^>=0.1
     , text                  >=1.2.3.2   && <2.2
     , text-builder-linear   ^>=0.1
+    , unicode-transforms    ^>=0.4.0
     , unix-compat           >=0.6       && <0.8
     , unordered-containers  ^>=0.2.14.0
 
@@ -90,13 +93,10 @@ library
     build-depends:
       , bytestring    >=0.10.12.0 && <0.13
       , effects-unix  ^>=0.1
-      , filepath      >=1.5.2.0   && <1.6
       , os-string     ^>=2.0.0
 
   else
-    build-depends:
-      , effects-unix-compat  ^>=0.1
-      , filepath             >=1.4.2.1 && <1.6
+    build-depends: effects-unix-compat ^>=0.1
 
   hs-source-dirs:  src
 

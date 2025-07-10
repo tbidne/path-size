@@ -110,6 +110,15 @@
               name = "path-size";
               root = ./.;
 
+              modifier =
+                drv:
+                drv.overrideAttrs (oldAttrs: {
+                  # Git is needed to run the tests (git diff).
+                  nativeBuildInputs = oldAttrs.nativeBuildInputs or [ ] ++ [
+                    pkgs.git
+                  ];
+                });
+
               # TODO: Once hlint is back to working with our GHC we can
               # use nix-hs-utils.mkDevTools ++ otherDeps.
               devTools = [
