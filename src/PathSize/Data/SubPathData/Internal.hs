@@ -11,7 +11,16 @@ module PathSize.Data.SubPathData.Internal
     unSubPathData,
     mkSubPathData,
     takeLargestN,
+
+    -- * Display
+    DisplayConfig (..),
+    defaultDisplayConfig,
+    DisplayFormat (..),
     display,
+
+    -- ** Optics
+    _DisplayFormatSingle,
+    _DisplayFormatTabular,
   )
 where
 
@@ -26,19 +35,32 @@ import Data.Bytes qualified as Bytes
 #if !MIN_VERSION_base(4, 20, 0)
 import Data.Foldable (Foldable (foldl'))
 #endif
+import Data.List qualified as L
 import Data.Ord (Down (Down))
 import Data.Sequence (Seq ((:<|)), (<|))
+import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import Data.Sequence.NonEmpty qualified as NESeq
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.Builder.Linear (Builder)
 import Data.Text.Builder.Linear qualified as TBLinear
-import FileSystem.OsPath (OsPath)
+import Data.Text.Normalize (NormalizationMode (NFC))
+import Data.Text.Normalize qualified as TNormalize
+import FileSystem.OsPath (OsPath, decodeLenient)
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
 import Numeric.Data.Positive (Positive (MkPositive))
-import Optics.Core (A_Getter, LabelOptic (labelOptic), to)
+import Optics.Core
+  ( A_Getter,
+    A_Lens,
+    LabelOptic (labelOptic),
+    Prism',
+    lensVL,
+    prism,
+    to,
+  )
 import PathSize.Data.PathData
   ( PathData
       ( MkPathData,
@@ -172,16 +194,133 @@ takeLargestN stableSort (MkPositive n) tree = case NESeq.take n sorted of
   where
     sorted = sortNESeq stableSort (pathTreeToSeq tree)
 
+-- | @since 0.1
+data DisplayFormat
+  = DisplayFormatSingle
+  | DisplayFormatTabular
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Generic,
+      -- | @since 0.1
+      Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1
+      NFData
+    )
+
+-- | @since 0.1
+_DisplayFormatSingle :: Prism' DisplayFormat ()
+_DisplayFormatSingle =
+  prism
+    (const DisplayFormatSingle)
+    ( \case
+        DisplayFormatSingle -> Right ()
+        x -> Left x
+    )
+{-# INLINE _DisplayFormatSingle #-}
+
+-- | @since 0.1
+_DisplayFormatTabular :: Prism' DisplayFormat ()
+_DisplayFormatTabular =
+  prism
+    (const DisplayFormatTabular)
+    ( \case
+        DisplayFormatTabular -> Right ()
+        x -> Left x
+    )
+{-# INLINE _DisplayFormatTabular #-}
+
+-- | @since 0.1
+data DisplayConfig = MkDisplayConfig
+  { -- | @since 0.1
+    color :: Bool,
+    -- | @since 0.1
+    format :: DisplayFormat,
+    -- | @since 0.1
+    reverseSort :: Bool
+  }
+  deriving stock
+    ( -- | @since 0.1
+      Eq,
+      -- | @since 0.1
+      Generic,
+      -- | @since 0.1
+      Show
+    )
+  deriving anyclass
+    ( -- | @since 0.1
+      NFData
+    )
+
+defaultDisplayConfig :: DisplayConfig
+defaultDisplayConfig =
+  MkDisplayConfig
+    { color = True,
+      format = DisplayFormatTabular,
+      reverseSort = False
+    }
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "color" k DisplayConfig DisplayConfig a b
+  where
+  labelOptic =
+    lensVL $
+      \f (MkDisplayConfig x1 x2 x3) ->
+        fmap (\b -> MkDisplayConfig b x2 x3) (f x1)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ DisplayFormat, b ~ DisplayFormat) =>
+  LabelOptic "format" k DisplayConfig DisplayConfig a b
+  where
+  labelOptic =
+    lensVL $
+      \f (MkDisplayConfig x1 x2 x3) ->
+        fmap (\b -> MkDisplayConfig x1 b x3) (f x2)
+  {-# INLINE labelOptic #-}
+
+-- | @since 0.1
+instance
+  (k ~ A_Lens, a ~ Bool, b ~ Bool) =>
+  LabelOptic "reverseSort" k DisplayConfig DisplayConfig a b
+  where
+  labelOptic =
+    lensVL $
+      \f (MkDisplayConfig x1 x2 x3) ->
+        fmap (\b -> MkDisplayConfig x1 x2 b) (f x3)
+  {-# INLINE labelOptic #-}
+
 -- | Displays the data.
 --
 -- @since 0.1
-display :: Bool -> SubPathData -> Text
-display revSort = showList' . subPathDataToSeq
+display :: DisplayConfig -> SubPathData -> Text
+display (MkDisplayConfig {color, format, reverseSort}) spd =
+  TBLinear.runBuilder $ case format of
+    DisplayFormatSingle ->
+      if color
+        then
+          foldSeq goColor ""
+            . Seq.zip colorSeq
+            $ xs
+        else foldSeq go "" $ xs
+    DisplayFormatTabular ->
+      if color
+        then
+          (colorTxt green tableHeader <>)
+            . foldSeq goTableColor ""
+            . Seq.zip colorSeq
+            $ xs
+        else (tableHeader <>) . foldSeq goTable "" $ xs
   where
-    showList' :: Seq PathData -> Text
-    showList' = TBLinear.runBuilder . foldSeq go ""
+    xs = subPathDataToSeq $ spd
 
-    go :: PathData -> TBLinear.Builder -> TBLinear.Builder
+    go :: PathData -> Builder -> Builder
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
         [ pathToBuilder path,
@@ -195,6 +334,98 @@ display revSort = showList' . subPathDataToSeq
           acc
         ]
 
+    goColor :: (Builder, PathData) -> Builder -> Builder
+    goColor (lineColor, MkPathData {path, size, numFiles, numDirectories}) acc =
+      mconcat
+        [ lineColor,
+          pathToBuilder path,
+          ": ",
+          TBLinear.fromText $ formatSize size,
+          ", Directories: ",
+          TBLinear.fromText $ T.pack $ show numDirectories,
+          ", Files: ",
+          TBLinear.fromText $ T.pack $ show numFiles,
+          endColor,
+          "\n",
+          acc
+        ]
+
+    tableHeader =
+      mconcat
+        [ "Size  ",
+          sep,
+          TBLinear.fromText $ padN maxDirLen "Dirs",
+          sep,
+          TBLinear.fromText $ padN maxFileLen "Files",
+          sep,
+          "Path\n",
+          TBLinear.fromText $ hyphens,
+          "\n"
+        ]
+
+    -- Sep x 3 == 3 x 3 == 9
+    hyphens = T.replicate (9 + padSize + padDir + padFile + padPath) "-"
+
+    goTable :: PathData -> Builder -> Builder
+    goTable (MkPathData {path, size, numFiles, numDirectories}) acc =
+      mconcat
+        [ TBLinear.fromText $ padN padSize $ formatSize size,
+          sep,
+          TBLinear.fromText $ padN padDir $ T.pack $ show numDirectories,
+          sep,
+          TBLinear.fromText $ padN padFile $ T.pack $ show numFiles,
+          sep,
+          pathToBuilder path,
+          "\n",
+          acc
+        ]
+
+    goTableColor :: (Builder, PathData) -> Builder -> Builder
+    goTableColor (lineColor, MkPathData {path, size, numFiles, numDirectories}) acc =
+      mconcat
+        [ lineColor,
+          TBLinear.fromText $ padN padSize $ formatSize size,
+          sep,
+          TBLinear.fromText $ padN padDir $ T.pack $ show numDirectories,
+          sep,
+          TBLinear.fromText $ padN padFile $ T.pack $ show numFiles,
+          sep,
+          pathToBuilder path,
+          endColor,
+          "\n",
+          acc
+        ]
+
+    padSize = max maxSize 6
+    padDir = max maxDirLen 4
+    padFile = max maxFileLen 5
+    padPath = max 4 maxPathLen
+
+    (maxSize, maxDirLen, maxFileLen, maxPathLen) =
+      let k :: (Integer, Integer, Integer, Int) -> PathData -> (Integer, Integer, Integer, Int)
+          k (!s, !d, !f, !p) (MkPathData {size, path, numFiles, numDirectories}) =
+            ( max s size,
+              max d numDirectories,
+              max f numFiles,
+              max p (pathLength path)
+            )
+          (maxSz, maxDs, maxFs, maxPs) = foldl' k (0, 0, 0, 0) xs
+       in ( T.length $ formatSize maxSz,
+            length $ show maxDs,
+            length $ show maxFs,
+            maxPs
+          )
+
+    sep = " | "
+
+    padN :: Int -> Text -> Text
+    padN n s
+      | d < 0 = s
+      | otherwise = s <> ws
+      where
+        d = n - T.length s
+        ws = T.replicate d " "
+
     formatSize :: Integer -> Text
     formatSize =
       Bytes.formatSized
@@ -204,11 +435,43 @@ display revSort = showList' . subPathDataToSeq
         . MkBytes @B
         . fromIntegral @_ @Double
 
+    foldSeq :: forall a. (a -> Builder -> Builder) -> Builder -> Seq a -> Builder
     foldSeq
-      | revSort = foldl' . flip
+      | reverseSort = foldl' . flip
       | otherwise = foldr
 
-pathToBuilder :: OsPath -> TBLinear.Builder
+    blue = "\ESC[34m"
+
+    green = "\ESC[32m"
+
+    magenta = "\ESC[35m"
+
+    endColor = "\ESC[0m"
+
+    colorTxt c m = c <> m <> endColor
+
+    colorSeq = Seq.fromList (L.take (length xs) colorStream)
+    colorStream = blue : magenta : colorStream
+
+-- We use the length for visual alignment, hence want displayed characters.
+-- Thus we normalize it first to account for grapheme clusters.
+--
+-- E.g. we want the string ['\x4F', '\x308'] ("Ö") to have length 1.
+--
+-- Note that there is a separate issue where Windows + GHC 9.10
+-- (os-string < 2.0.3) counts number of bytes, rather than number of word16
+-- byte boundaries. Therefore a simpler solution (that ignores grapheme
+-- clusters) could use os-string length but would need to guard the GHC and
+-- os-string version. Simpler still (and probably decent) would be to just
+-- count text length.
+pathLength :: OsPath -> Int
+pathLength =
+  T.length
+    . TNormalize.normalize NFC
+    . T.pack
+    . decodeLenient
+
+pathToBuilder :: OsPath -> Builder
 
 #if POSIX
 pathToBuilder =

@@ -7,11 +7,14 @@ import Data.Sequence.NonEmpty (NESeq ((:<||)))
 import FileSystem.OsPath (encodeValidThrowM)
 import GHC.Conc (setUncaughtExceptionHandler)
 import PathSize
-  ( PathSizeResult
+  ( DisplayConfig (color, format),
+    DisplayFormat (DisplayFormatSingle),
+    PathSizeResult
       ( PathSizeFailure,
         PathSizePartial,
         PathSizeSuccess
       ),
+    defaultDisplayConfig,
   )
 import PathSize qualified
 import PathSize.Data.Config
@@ -51,7 +54,7 @@ main = do
 
   void $ evaluate $ force txt
   where
-    displayResult (PathSizeSuccess sbd) = pure $ PathSize.display False sbd
+    displayResult (PathSizeSuccess sbd) = pure $ PathSize.display displayConfig sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwIO err
     displayResult (PathSizeFailure (err :<|| _)) = throwIO err
 
@@ -66,4 +69,11 @@ main = do
           numPaths = Nothing,
           stableSort = False,
           strategy = Sync
+        }
+
+    displayConfig :: DisplayConfig
+    displayConfig =
+      defaultDisplayConfig
+        { color = False,
+          format = DisplayFormatSingle
         }

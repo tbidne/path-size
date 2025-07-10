@@ -1,0 +1,13 @@
+Size   | Dirs | Files | Path
+----------------------------------------------------------------
+24.60K | 6    | 4     | test/functional/data/success
+16.40K | 4    | 2     | test/functional/data/success/d2
+8.21K  | 2    | 1     | test/functional/data/success/d2/d2
+4.11K  | 1    | 1     | test/functional/data/success/d2/d2/d1
+4.10K  | 1    | 2     | test/functional/data/success/d1
+4.10K  | 1    | 1     | test/functional/data/success/d2/d1
+14.00B | 0    | 1     | test/functional/data/success/d2/d2/d1/f1
+5.00B  | 0    | 1     | test/functional/data/success/d1/f2
+4.00B  | 0    | 1     | test/functional/data/success/d1/f1
+2.00B  | 0    | 1     | test/functional/data/success/d2/d1/f1
+

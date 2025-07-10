@@ -47,8 +47,11 @@ import PathSize
         stableSort,
         strategy
       ),
+    DisplayConfig (color, format),
+    DisplayFormat (DisplayFormatSingle),
     PathSizeResult (PathSizeFailure, PathSizePartial, PathSizeSuccess),
     Strategy (Async, AsyncPool, Sync),
+    defaultDisplayConfig,
   )
 import PathSize qualified
 import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
@@ -135,7 +138,7 @@ benchDisplayPathSize MkBenchmarkSuite {..} strategies testDir =
       where
         desc' = strategyDesc strategy
 
-    displayResult (PathSizeSuccess sbd) = pure $ PathSize.display False sbd
+    displayResult (PathSizeSuccess sbd) = pure $ PathSize.display displayConfig sbd
     displayResult (PathSizePartial (err :<|| _) _) = throwM err
     displayResult (PathSizeFailure (err :<|| _)) = throwM err
 
@@ -211,4 +214,11 @@ baseConfig =
       numPaths = Nothing,
       stableSort = False,
       strategy = Sync
+    }
+
+displayConfig :: DisplayConfig
+displayConfig =
+  defaultDisplayConfig
+    { color = False,
+      format = DisplayFormatSingle
     }

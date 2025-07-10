@@ -15,6 +15,11 @@ module PathSize
     findLargestPaths,
     pathSizeRecursive,
     pathSizeRecursiveConfig,
+
+    -- ** Display
+    DisplayConfig (..),
+    SPD.defaultDisplayConfig,
+    DisplayFormat (..),
     SPD.display,
 
     -- * Errors
@@ -70,7 +75,11 @@ import PathSize.Data.PathSizeResult
 import PathSize.Data.PathTree (PathTree ((:^|)))
 import PathSize.Data.PathTree qualified as PathTree
 import PathSize.Data.SubPathData qualified as SPD
-import PathSize.Data.SubPathData.Internal (SubPathData (UnsafeSubPathData))
+import PathSize.Data.SubPathData.Internal
+  ( DisplayConfig (MkDisplayConfig, color, format, reverseSort),
+    DisplayFormat (DisplayFormatSingle, DisplayFormatTabular),
+    SubPathData (UnsafeSubPathData),
+  )
 import PathSize.Exception (PathE (MkPathE))
 import PathSize.Utils (MonadPosixC)
 import PathSize.Utils qualified as Utils
