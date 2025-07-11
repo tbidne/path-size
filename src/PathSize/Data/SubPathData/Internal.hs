@@ -323,13 +323,13 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
     go :: PathData -> Builder -> Builder
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
-        [ pathToBuilder path,
+        [ TBLinear.fromText $ pathToText path,
           ": ",
           TBLinear.fromText $ formatSize size,
           ", Directories: ",
-          TBLinear.fromText $ T.pack $ show numDirectories,
+          TBLinear.fromText $ formatInt numDirectories,
           ", Files: ",
-          TBLinear.fromText $ T.pack $ show numFiles,
+          TBLinear.fromText $ formatInt numFiles,
           "\n",
           acc
         ]
@@ -338,13 +338,13 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
     goColor (lineColor, MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
         [ lineColor,
-          pathToBuilder path,
+          TBLinear.fromText $ pathToText path,
           ": ",
           TBLinear.fromText $ formatSize size,
           ", Directories: ",
-          TBLinear.fromText $ T.pack $ show numDirectories,
+          TBLinear.fromText $ formatInt numDirectories,
           ", Files: ",
-          TBLinear.fromText $ T.pack $ show numFiles,
+          TBLinear.fromText $ formatInt numFiles,
           endColor,
           "\n",
           acc
@@ -352,13 +352,14 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
 
     tableHeader =
       mconcat
-        [ "Size  ",
+        [ TBLinear.fromText $ lpadN maxPathLen "Path",
           sep,
-          TBLinear.fromText $ padN maxDirLen "Dirs",
+          TBLinear.fromText $ rpadN maxSizeLen "Size",
           sep,
-          TBLinear.fromText $ padN maxFileLen "Files",
+          TBLinear.fromText $ rpadN maxDirLen "Dirs",
           sep,
-          "Path\n",
+          TBLinear.fromText $ rpadN maxFileLen "Files",
+          "\n",
           TBLinear.fromText $ hyphens,
           "\n"
         ]
@@ -369,13 +370,13 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
     goTable :: PathData -> Builder -> Builder
     goTable (MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
-        [ TBLinear.fromText $ padN padSize $ formatSize size,
+        [ TBLinear.fromText $ lpadN padPath $ pathToText path,
           sep,
-          TBLinear.fromText $ padN padDir $ T.pack $ show numDirectories,
+          TBLinear.fromText $ rpadN padSize $ formatSize size,
           sep,
-          TBLinear.fromText $ padN padFile $ T.pack $ show numFiles,
+          TBLinear.fromText $ rpadN padDir $ formatInt numDirectories,
           sep,
-          pathToBuilder path,
+          TBLinear.fromText $ rpadN padFile $ formatInt numFiles,
           "\n",
           acc
         ]
@@ -384,44 +385,61 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
     goTableColor (lineColor, MkPathData {path, size, numFiles, numDirectories}) acc =
       mconcat
         [ lineColor,
-          TBLinear.fromText $ padN padSize $ formatSize size,
+          TBLinear.fromText $ lpadN padPath $ pathToText path,
           sep,
-          TBLinear.fromText $ padN padDir $ T.pack $ show numDirectories,
+          TBLinear.fromText $ rpadN padSize $ formatSize size,
           sep,
-          TBLinear.fromText $ padN padFile $ T.pack $ show numFiles,
+          TBLinear.fromText $ rpadN padDir $ formatInt numDirectories,
           sep,
-          pathToBuilder path,
+          TBLinear.fromText $ rpadN padFile $ formatInt numFiles,
           endColor,
           "\n",
           acc
         ]
 
-    padSize = max maxSize 6
+    padSize = max maxSizeLen 4
     padDir = max maxDirLen 4
     padFile = max maxFileLen 5
     padPath = max 4 maxPathLen
 
-    (maxSize, maxDirLen, maxFileLen, maxPathLen) =
-      let k :: (Integer, Integer, Integer, Int) -> PathData -> (Integer, Integer, Integer, Int)
+    -- We want the max size of the _displayed text_, not necessarily the
+    -- number itself. For dir and file len, the maxium number will also have
+    -- the maximum text length, so we can just take the largest number and
+    -- convert after, which is more efficient. With size and path length,
+    -- however, we cannot do this:
+    --
+    --   - For size, we may have e.g. 36.28G > 994.72M, but the latter is
+    --     syntactically longer. Hence we must convert first.
+    --
+    --   - For paths, we have some complexity regarding unicode, hence it
+    --     is simplest to just compare the final conversions.
+    (maxSizeLen, maxDirLen, maxFileLen, maxPathLen) =
+      let k :: (Int, Integer, Integer, Int) -> PathData -> (Int, Integer, Integer, Int)
           k (!s, !d, !f, !p) (MkPathData {size, path, numFiles, numDirectories}) =
-            ( max s size,
+            ( max s (T.length $ formatSize size),
               max d numDirectories,
               max f numFiles,
               max p (pathLength path)
             )
           (maxSz, maxDs, maxFs, maxPs) = foldl' k (0, 0, 0, 0) xs
-       in ( T.length $ formatSize maxSz,
-            length $ show maxDs,
-            length $ show maxFs,
+       in ( maxSz,
+            T.length $ formatInt maxDs,
+            T.length $ formatInt maxFs,
             maxPs
           )
 
     sep = " | "
 
-    padN :: Int -> Text -> Text
-    padN n s
+    lpadN = padN (flip (<>))
+
+    -- Right pad. Left pad would be 'flip (<>)'.
+    rpadN :: Int -> Text -> Text
+    rpadN = padN (<>)
+
+    padN :: (Text -> Text -> Text) -> Int -> Text -> Text
+    padN padFn n s
       | d < 0 = s
-      | otherwise = s <> ws
+      | otherwise = ws `padFn` s
       where
         d = n - T.length s
         ws = T.replicate d " "
@@ -471,14 +489,22 @@ pathLength =
     . T.pack
     . decodeLenient
 
-pathToBuilder :: OsPath -> Builder
+formatInt :: Integer -> Text
+formatInt =
+  T.reverse
+    . T.intercalate "_"
+    . T.chunksOf 3
+    . T.reverse
+    . T.pack
+    . show
+
+pathToText :: OsPath -> Text
 
 #if POSIX
-pathToBuilder =
-  TBLinear.fromText
-    . FS.UTF8.decodeUtf8Lenient
+pathToText =
+    FS.UTF8.decodeUtf8Lenient
     . BS.Short.fromShort
     . (\p -> p.getOsString.getPosixString)
 #else
-pathToBuilder = TBLinear.fromText . T.pack . FS.OsPath.decodeLenient
+pathToText = T.pack . FS.OsPath.decodeLenient
 #endif

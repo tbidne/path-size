@@ -35,18 +35,18 @@
 
 ```
 $ path-size ./src
-Size   | Dirs | Files | Path
+Path                                        |   Size | Dirs | Files
 -------------------------------------------------------------------
-62.37K | 4    | 9     | ./src
-48.29K | 3    | 8     | ./src/PathSize
-39.43K | 2    | 6     | ./src/PathSize/Data
-16.11K | 1    | 1     | ./src/PathSize/Data/SubPathData
-12.01K | 0    | 1     | ./src/PathSize/Data/SubPathData/Internal.hs
-9.99K  | 0    | 1     | ./src/PathSize.hs
-9.68K  | 0    | 1     | ./src/PathSize/Data/Config.hs
-4.15K  | 0    | 1     | ./src/PathSize/Data/PathData.hs
-3.77K  | 0    | 1     | ./src/PathSize/Utils.hs
-2.76K  | 0    | 1     | ./src/PathSize/Data/PathSizeResult.hs
+./src                                       | 64.24K |    4 |     9
+./src/PathSize                              | 50.16K |    3 |     8
+./src/PathSize/Data                         | 41.30K |    2 |     6
+./src/PathSize/Data/SubPathData             | 17.98K |    1 |     1
+./src/PathSize/Data/SubPathData/Internal.hs | 13.88K |    0 |     1
+./src/PathSize.hs                           |  9.99K |    0 |     1
+./src/PathSize/Data/Config.hs               |  9.68K |    0 |     1
+./src/PathSize/Data/PathData.hs             |  4.15K |    0 |     1
+./src/PathSize/Utils.hs                     |  3.77K |    0 |     1
+./src/PathSize/Data/PathSizeResult.hs       |  2.76K |    0 |     1
 ```
 
 # Options
@@ -112,11 +112,11 @@ $ path-size -f ./
 
 ```
 $ path-size --format tabular test/functional/data/success
-Size   | Dirs | Files | Path
-----------------------------------------------------------
-24.60K | 6    | 4     | test/functional/data/success
-16.40K | 4    | 2     | test/functional/data/success/d2
-8.21K  | 2    | 1     | test/functional/data/success/d2/d2
+Path                                     |   Size | Dirs | Files
+----------------------------------------------------------------
+test/functional/data/success/            | 24.60K |    6 |     4
+test/functional/data/success/d2          | 16.40K |    4 |     2
+test/functional/data/success/d2/d2       |  8.21K |    2 |     1
 
 $ path-size --format single test/functional/data/success
 test/functional/data/success: 24.60K, Directories: 6, Files: 4
