@@ -29,7 +29,6 @@ where
 
 import Control.Exception.Utils (trySync)
 import Control.Monad.Catch (MonadCatch)
-import Data.HashSet qualified as HSet
 import Data.Sequence (Seq (Empty, (:<|)))
 import Data.Sequence qualified as Seq
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
@@ -38,7 +37,7 @@ import Effects.Concurrent.Async (MonadAsync)
 import Effects.Concurrent.Async qualified as Async
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
-import FileSystem.OsPath (OsPath, (</>))
+import FileSystem.OsPath (OsPath, decodeLenient, (</>))
 import GHC.Stack (HasCallStack)
 import PathSize.Data.Config
   ( Config
@@ -83,6 +82,7 @@ import PathSize.Data.SubPathData.Internal
 import PathSize.Exception (PathE (MkPathE))
 import PathSize.Utils (MonadPosixC)
 import PathSize.Utils qualified as Utils
+import System.FilePath.Glob qualified as Glob
 import System.OsPath qualified as FP
 import System.PosixCompat.Files qualified as PCompat.Files
 
@@ -249,7 +249,7 @@ pathDataRecursive traverseFn cfg = tryGo 0
     excluded = cfg.exclude
 
     skipExcluded :: OsPath -> Bool
-    skipExcluded = (`HSet.member` excluded)
+    skipExcluded p = any (\pat -> Glob.match pat (decodeLenient p)) excluded
 
     -- NOTE: [Directory sizes]
     dirSizeFn
@@ -268,15 +268,15 @@ pathDataRecursive traverseFn cfg = tryGo 0
       Nothing -> const False
       Just d -> (>= d)
 
-    shouldSkip = case (cfg.searchAll, HSet.null excluded) of
+    shouldSkip = case (cfg.searchAll, null excluded) of
       -- 1. Search all and no excluded paths: no checks
       (True, True) -> const False
       -- 2. No search all: check hidden
       (False, True) -> Utils.hidden . FP.takeFileName
       -- 3. Some excluded paths: check excluded
-      (True, False) -> skipExcluded . FP.takeFileName
+      (True, False) -> skipExcluded
       -- 4. No search all and some excluded paths: check hidden and excluded
-      (False, False) -> (\p -> Utils.hidden p || skipExcluded p) . FP.takeFileName
+      (False, False) -> (\p -> Utils.hidden (FP.takeFileName p) || skipExcluded p)
 
     -- Base recursive function. If the path is determined to be a symlink or
     -- file, calculates the size. If it is a directory, we recursively call

@@ -8,6 +8,7 @@ module PathSize.Bench.Common
   ( -- Benchmarks
     BenchmarkSuite (..),
     benchPathSizeRecursive,
+    benchExclude,
     benchLargest10,
     benchDisplayPathSize,
 
@@ -21,7 +22,6 @@ import Control.DeepSeq (NFData)
 import Control.Monad ((>=>))
 import Control.Monad.Catch (throwM)
 import Data.Foldable (for_, traverse_)
-import Data.HashSet qualified as HSet
 import Data.List.NonEmpty (NonEmpty)
 import Data.List.NonEmpty qualified as NE
 import Data.Sequence.NonEmpty (NESeq ((:<||)))
@@ -92,6 +92,34 @@ benchPathSizeRecursive MkBenchmarkSuite {..} strategies testDir =
         . PathSize.findLargestPaths baseConfig {strategy}
       where
         desc' = strategyDesc strategy
+
+-- | Benchmark for exclusion.
+--
+-- @since 0.1
+benchExclude ::
+  forall f b.
+  -- | Benchmark functions to use.
+  BenchmarkSuite f b ->
+  -- | Benchmark strategies.
+  NonEmpty Strategy ->
+  -- | Test directory home.
+  OsPath ->
+  b
+benchExclude MkBenchmarkSuite {..} strategies testDir =
+  bgroup
+    "exclude"
+    [findLargest s (testDir </> [osp|dense-11|]) | s <- NE.toList strategies]
+  where
+    findLargest :: Strategy -> OsPath -> b
+    findLargest strategy =
+      bench desc'
+        . nfIO
+        . PathSize.findLargestPaths cfg {strategy}
+      where
+        desc' = strategyDesc strategy
+
+        -- matches about half of our subpaths
+        cfg = baseConfig {exclude = ["[0-5][0-9]"]}
 
 -- | Benchmark for finding the largest N files in a dense directory tree.
 --
@@ -208,7 +236,7 @@ baseConfig =
       -- benchmark the cost.
       searchAll = True,
       maxDepth = Nothing,
-      exclude = HSet.empty,
+      exclude = [],
       filesOnly = False,
       ignoreDirIntrinsicSize = False,
       numPaths = Nothing,

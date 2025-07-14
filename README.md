@@ -77,9 +77,9 @@ $ path-size -d 1 ./
 
 ## Exclude
 
-**Arg:** `-e,--exclude PATHS...`
+**Arg:** `-e,--exclude Patterns...`
 
-**Description:** Paths to skip. These must match the desired directory/file name exactly e.g. to skip `/path/to/dir` you would pass `-e dir`. Note that this will exclude _all_ subpaths that match `dir`.
+**Description:** Glob patterns to skip
 
 **Examples:**
 

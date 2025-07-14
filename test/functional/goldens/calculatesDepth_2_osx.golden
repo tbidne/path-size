@@ -5,4 +5,3 @@ test/functional/data/success/d1: 137.00B, Directories: 1, Files: 2
 test/functional/data/success/d2/d1: 98.00B, Directories: 1, Files: 1
 test/functional/data/success/d1/f2: 5.00B, Directories: 0, Files: 1
 test/functional/data/success/d1/f1: 4.00B, Directories: 0, Files: 1
-

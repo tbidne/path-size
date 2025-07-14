@@ -10,8 +10,6 @@ module Args
 where
 
 import Control.Monad ((>=>))
-import Data.HashSet (HashSet)
-import Data.HashSet qualified as HSet
 import Data.List qualified as L
 import Data.String (IsString (fromString))
 import Data.Version (Version (versionBranch))
@@ -60,6 +58,8 @@ import PathSize.Data.Config
     defaultNumPaths,
   )
 import Paths_path_size qualified as Paths
+import System.FilePath.Glob (Pattern)
+import System.FilePath.Glob qualified as Glob
 import Text.Read qualified as TR
 
 -- | CLI args.
@@ -68,7 +68,7 @@ import Text.Read qualified as TR
 data Args = MkArgs
   { searchAll :: !Bool,
     maxDepth :: !(Maybe Word16),
-    exclude :: !(HashSet OsPath),
+    exclude :: ![Pattern],
     filesOnly :: !Bool,
     format :: !DisplayFormat,
     ignoreDirIntrinsicSize :: !Bool,
@@ -199,26 +199,21 @@ numPathsParser =
           "The option 'all' returns everything."
         ]
 
-excludeParser :: Parser (HashSet OsPath)
+excludeParser :: Parser [Pattern]
 excludeParser =
-  HSet.fromList
+  fmap Glob.compile
     <$> OA.many
       ( OA.option
-          osPath
+          OA.str
           $ mconcat
             [ OA.long "exclude",
               OA.short 'e',
-              OA.metavar "PATHS...",
+              OA.metavar "Patterns...",
               mkHelp helpTxt
             ]
       )
   where
-    helpTxt =
-      mconcat
-        [ "Paths to skip. These must match the desired directory/file name ",
-          "e.g. to skip /path/to/dir you would pass '-e dir'. Note that this ",
-          "will exclude _all_ subpaths that match 'dir'."
-        ]
+    helpTxt = "Glob patterns to skip."
 
 allParser :: Parser Bool
 allParser =

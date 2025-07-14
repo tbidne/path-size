@@ -1,39 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="172" width="960.0" font-size="16" font-family="sans-serif" stroke-width="2">
+<svg xmlns="http://www.w3.org/2000/svg" height="227" width="960.0" font-size="16" font-family="sans-serif" stroke-width="2">
 <g transform="translate(10.0 0)">
 <g fill="hsl(0, 100%, 40%)">
 <text y="22">findLargestPaths.Sync</text>
-<text y="22" x="566.421346914612" text-anchor="end">1.936 s</text>
+<text y="22" x="553.8756275324382" text-anchor="end">1.974 s</text>
 </g>
 <g>
-<title>1.936 s ± 9.7 ms</title>
-<rect y="28" rx="5" height="22" width="566.421346914612" fill="hsl(0, 100%, 80%)" stroke="hsl(0, 100%, 55%)" />
-<g stroke="hsl(0, 100%, 40%)"><line x1="563.5979545416407" x2="569.2447392875832" y1="39" y2="39" />
-<line x1="563.5979545416407" x2="563.5979545416407" y1="33" y2="45" />
-<line x1="569.2447392875832" x2="569.2447392875832" y1="33" y2="45" />
+<title>1.974 s ± 8.3 ms</title>
+<rect y="28" rx="5" height="22" width="553.8756275324382" fill="hsl(0, 100%, 80%)" stroke="hsl(0, 100%, 55%)" />
+<g stroke="hsl(0, 100%, 40%)"><line x1="551.5426571799715" x2="556.208597884905" y1="39" y2="39" />
+<line x1="551.5426571799715" x2="551.5426571799715" y1="33" y2="45" />
+<line x1="556.208597884905" x2="556.208597884905" y1="33" y2="45" />
 </g>
 </g>
-<g fill="hsl(120, 100%, 40%)">
-<text y="77">takeLargest10.Sync</text>
-<text y="77" x="575.9495196439841" text-anchor="end">1.969 s</text>
-</g>
-<g>
-<title>1.969 s ± 145 ms</title>
-<rect y="83" rx="5" height="22" width="575.9495196439841" fill="hsl(120, 100%, 80%)" stroke="hsl(120, 100%, 55%)" />
-<g stroke="hsl(120, 100%, 40%)"><line x1="533.5388926675637" x2="618.3601466204045" y1="94" y2="94" />
-<line x1="533.5388926675637" x2="533.5388926675637" y1="88" y2="100" />
-<line x1="618.3601466204045" x2="618.3601466204045" y1="88" y2="100" />
-</g>
-</g>
-<g fill="hsl(240, 100%, 40%)">
-<text y="132">displayPathSize.Sync</text>
-<text y="132" x="895.3503552923672" text-anchor="end">3.061 s</text>
+<g fill="hsl(90, 100%, 40%)">
+<text y="77">exclude.Sync</text>
+<text y="77" x="342.8697343914166" text-anchor="end">1.222 s</text>
 </g>
 <g>
-<title>3.061 s ± 153 ms</title>
-<rect y="138" rx="5" height="22" width="895.3503552923672" fill="hsl(240, 100%, 80%)" stroke="hsl(240, 100%, 55%)" />
-<g stroke="hsl(240, 100%, 40%)"><line x1="850.7007105847345" x2="940.0" y1="149" y2="149" />
-<line x1="850.7007105847345" x2="850.7007105847345" y1="143" y2="155" />
-<line x1="940.0" x2="940.0" y1="143" y2="155" />
+<title>1.222 s ±  58 ms</title>
+<rect y="83" rx="5" height="22" width="342.8697343914166" fill="hsl(90, 100%, 80%)" stroke="hsl(90, 100%, 55%)" />
+<g stroke="hsl(90, 100%, 40%)"><line x1="326.6992307583039" x2="359.04023802452934" y1="94" y2="94" />
+<line x1="326.6992307583039" x2="326.6992307583039" y1="88" y2="100" />
+<line x1="359.04023802452934" x2="359.04023802452934" y1="88" y2="100" />
+</g>
+</g>
+<g fill="hsl(180, 100%, 40%)">
+<text y="132">takeLargest10.Sync</text>
+<text y="132" x="560.4539560434818" text-anchor="end">1.998 s</text>
+</g>
+<g>
+<title>1.998 s ± 148 ms</title>
+<rect y="138" rx="5" height="22" width="560.4539560434818" fill="hsl(180, 100%, 80%)" stroke="hsl(180, 100%, 55%)" />
+<g stroke="hsl(180, 100%, 40%)"><line x1="518.8466277478167" x2="602.0612843391468" y1="149" y2="149" />
+<line x1="518.8466277478167" x2="518.8466277478167" y1="143" y2="155" />
+<line x1="602.0612843391468" x2="602.0612843391468" y1="143" y2="155" />
+</g>
+</g>
+<g fill="hsl(270, 100%, 40%)">
+<text y="187">displayPathSize.Sync</text>
+<text y="187" x="902.028863522484" text-anchor="end">3.215 s</text>
+</g>
+<g>
+<title>3.215 s ± 135 ms</title>
+<rect y="193" rx="5" height="22" width="902.028863522484" fill="hsl(270, 100%, 80%)" stroke="hsl(270, 100%, 55%)" />
+<g stroke="hsl(270, 100%, 40%)"><line x1="864.057727044968" x2="940.0" y1="204" y2="204" />
+<line x1="864.057727044968" x2="864.057727044968" y1="198" y2="210" />
+<line x1="940.0" x2="940.0" y1="198" y2="210" />
 </g>
 </g>
 </g>

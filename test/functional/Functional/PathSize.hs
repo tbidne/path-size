@@ -13,7 +13,6 @@ import Control.Exception.Utils (trySync)
 import Control.Monad.Catch (MonadCatch, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Foldable (Foldable (toList))
-import Data.HashSet qualified as HSet
 import Data.List qualified as L
 import Data.Sequence.NonEmpty (NESeq)
 import Data.Text (Text)
@@ -72,6 +71,7 @@ import PathSize.Data.SubPathData.Internal
   ( DisplayFormat (DisplayFormatTabular),
     SubPathData,
   )
+import System.FilePath.Glob qualified as Glob
 import Test.Tasty (TestName, TestTree, testGroup)
 import Test.Tasty.Golden (goldenVsFileDiff)
 
@@ -83,6 +83,7 @@ tests =
       testDisplaysTabular,
       calculatesAll,
       calculatesExcluded,
+      calculatesExcluded2,
       calculatesFilesOnly,
       calculatesIgnoreDirIntrinsicSize,
       calculatesDepthN 0,
@@ -145,7 +146,28 @@ calculatesExcluded = testGoldenParams params
           runner = runTest
         }
 
-    cfg = baseConfig {exclude = HSet.fromList [[osp|d2|], [osp|f2|]]}
+    cfg =
+      baseConfig
+        { exclude =
+            [ Glob.compile "d2",
+              Glob.compile "f2"
+            ]
+        }
+
+calculatesExcluded2 :: TestTree
+calculatesExcluded2 = testGoldenParams params
+  where
+    params =
+      MkGoldenParams
+        { mConfig = Just cfg,
+          mDisplayConfig = Nothing,
+          testDesc = "Excludes paths",
+          testName = [osp|calculatesExcluded2|],
+          testPath = successTestDir,
+          runner = runTest
+        }
+
+    cfg = baseConfig {exclude = [Glob.compile "*d2*"]}
 
 calculatesFilesOnly :: TestTree
 calculatesFilesOnly = testGoldenParams params
@@ -292,7 +314,7 @@ testGoldenParams goldenParams =
     goldenPath = outputPathStart <> ext <> ".golden"
 
     toBS :: Text -> ByteString
-    toBS = (<> "\n") . FS.UTF8.encodeUtf8
+    toBS = FS.UTF8.encodeUtf8
 
     writeActualFile :: Text -> IO ()
     writeActualFile result =
@@ -334,7 +356,7 @@ baseConfig =
   MkConfig
     { searchAll = False,
       maxDepth = Nothing,
-      exclude = HSet.empty,
+      exclude = [],
       filesOnly = False,
       ignoreDirIntrinsicSize = False,
       numPaths = Nothing,
