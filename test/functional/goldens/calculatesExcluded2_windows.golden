@@ -1,10 +1,8 @@
-test\functional\data\success: 60.00B, Directories: 7, Files: 6
-test\functional\data\success\d2: 18.00B, Directories: 4, Files: 2
+test\functional\data\success: 42.00B, Directories: 3, Files: 4
 test\functional\data\success\.hidden\f1: 18.00B, Directories: 0, Files: 1
 test\functional\data\success\.hidden: 18.00B, Directories: 1, Files: 1
-test\functional\data\success\d2\d2: 15.00B, Directories: 2, Files: 1
 test\functional\data\success\.h1: 13.00B, Directories: 0, Files: 1
 test\functional\data\success\d1: 11.00B, Directories: 1, Files: 2
 test\functional\data\success\d1\f2: 6.00B, Directories: 0, Files: 1
 test\functional\data\success\d1\f1: 5.00B, Directories: 0, Files: 1
-test\functional\data\success\d2\d1: 3.00B, Directories: 1, Files: 1
+

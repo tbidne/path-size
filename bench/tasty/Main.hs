@@ -21,6 +21,7 @@ main = do
     runBenchmarks testDir =
       defaultMain
         [ Common.benchPathSizeRecursive suite syncNE testDir,
+          Common.benchExclude suite syncNE testDir,
           Common.benchLargest10 suite syncNE testDir,
           Common.benchDisplayPathSize suite syncNE testDir
         ]

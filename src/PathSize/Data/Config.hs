@@ -20,10 +20,7 @@ module PathSize.Data.Config
   )
 where
 
-import Data.HashSet (HashSet)
-import Data.HashSet qualified as HSet
 import Data.Word (Word16)
-import FileSystem.OsPath (OsPath)
 import Numeric.Data.Positive.Internal (Positive (UnsafePositive))
 import Optics.Core
   ( A_Lens,
@@ -32,6 +29,7 @@ import Optics.Core
     lensVL,
     prism,
   )
+import System.FilePath.Glob (Pattern)
 
 -- | Describes the path search strategy.
 --
@@ -121,7 +119,7 @@ data Config = MkConfig
     -- | Paths to skip.
     --
     -- @since 0.1
-    exclude :: !(HashSet OsPath),
+    exclude :: ![Pattern],
     -- | Whether to limit our search to just files.
     --
     -- @since 0.1
@@ -220,7 +218,7 @@ instance
 
 -- | @since 0.1
 instance
-  (k ~ A_Lens, a ~ HashSet OsPath, b ~ HashSet OsPath) =>
+  (k ~ A_Lens, a ~ [Pattern], b ~ [Pattern]) =>
   LabelOptic "exclude" k Config Config a b
   where
   labelOptic =
@@ -424,6 +422,7 @@ instance
 --     filesOnly = False,
 --     ignoreDirIntrinsicSize = False,
 --     numPaths = Just 10,
+--     stableSort = False,
 --     strategy = Async
 --   }
 -- @
@@ -434,7 +433,7 @@ defaultConfig =
   MkConfig
     { searchAll = True,
       maxDepth = Nothing,
-      exclude = HSet.empty,
+      exclude = [],
       filesOnly = False,
       ignoreDirIntrinsicSize = False,
       numPaths = Just defaultNumPaths,

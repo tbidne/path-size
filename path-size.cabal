@@ -71,23 +71,23 @@ library
     PathSize.Utils
 
   build-depends:
-    , base                  >=4.16.0.0  && <4.22
-    , containers            >=0.6.3.1   && <0.8
-    , deepseq               >=1.4.4.0   && <1.6
-    , effects-async         ^>=0.1
-    , effects-fs            ^>=0.1
-    , exception-utils       ^>=0.1
-    , exceptions            ^>=0.10.4
-    , filepath              >=1.5.2.0   && <1.6
-    , nonempty-containers   >=0.3.4.2   && <0.4
-    , optics-core           ^>=0.4
-    , si-bytes              ^>=0.1
-    , smart-math            ^>=0.1
-    , text                  >=1.2.3.2   && <2.2
-    , text-builder-linear   ^>=0.1
-    , unicode-transforms    ^>=0.4.0
-    , unix-compat           >=0.6       && <0.8
-    , unordered-containers  ^>=0.2.14.0
+    , base                 >=4.16.0.0 && <4.22
+    , containers           >=0.6.3.1  && <0.8
+    , deepseq              >=1.4.4.0  && <1.6
+    , effects-async        ^>=0.1
+    , effects-fs           ^>=0.1
+    , exception-utils      ^>=0.1
+    , exceptions           ^>=0.10.4
+    , filepath             >=1.5.2.0  && <1.6
+    , Glob                 ^>=0.10.2
+    , nonempty-containers  >=0.3.4.2  && <0.4
+    , optics-core          ^>=0.4
+    , si-bytes             ^>=0.1
+    , smart-math           ^>=0.1
+    , text                 >=1.2.3.2  && <2.2
+    , text-builder-linear  ^>=0.1
+    , unicode-transforms   ^>=0.4.0
+    , unix-compat          >=0.6      && <0.8
 
   if !os(windows)
     build-depends:
@@ -112,11 +112,11 @@ executable path-size
     , base
     , effects-optparse      ^>=0.1
     , fs-utils              ^>=0.1
+    , Glob
     , optparse-applicative  >=0.16.1.0 && <0.19
     , path-size
     , smart-math
     , text
-    , unordered-containers
 
   hs-source-dirs:  app
   ghc-options:     -threaded -with-rtsopts=-N
@@ -173,12 +173,12 @@ test-suite functional
     , effects-fs
     , exception-utils
     , exceptions
+    , Glob
     , nonempty-containers
     , path-size
     , tasty
-    , tasty-golden          ^>=2.3.1.1
+    , tasty-golden         ^>=2.3.1.1
     , text
-    , unordered-containers
 
   if !os(windows)
     build-depends:
@@ -198,12 +198,11 @@ library bench-common
     , base
     , deepseq
     , effects-fs
-    , env-guard             ^>=0.2
+    , env-guard            ^>=0.2
     , exceptions
     , nonempty-containers
     , path-size
     , smart-math
-    , unordered-containers
 
   hs-source-dirs:  bench/common
 
