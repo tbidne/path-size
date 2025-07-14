@@ -81,6 +81,14 @@
               final: prev:
               {
                 path = hlib.dontCheck prev.path_0_9_6;
+
+                gitrev-typed = (
+                  final.callHackageDirect {
+                    pkg = "gitrev-typed";
+                    ver = "0.1";
+                    sha256 = "sha256-s7LEekR7NLe3CNhD/8uChnh50eGfaArrrtc5hoCtJ1A=";
+                  } { }
+                );
               }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
@@ -113,6 +121,10 @@
               modifier =
                 drv:
                 drv.overrideAttrs (oldAttrs: {
+                  PATH_SIZE_HASH = "${self.rev or self.dirtyRev}";
+                  PATH_SIZE_MODIFIED = "${builtins.toString self.lastModified}";
+                  PATH_SIZE_SHORT_HASH = "${self.shortRev or self.dirtyShortRev}";
+
                   # Git is needed to run the tests (git diff).
                   nativeBuildInputs = oldAttrs.nativeBuildInputs or [ ] ++ [
                     pkgs.git

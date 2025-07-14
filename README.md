@@ -211,6 +211,16 @@ The easiest way to install these is generally [`ghcup`](https://www.haskell.org/
 
 Once you have `cabal` and `ghc`, `path-size` can be built with `cabal build` or installed globally (i.e. `~/.cabal/bin/`) with `cabal install`.
 
+> [!IMPORTANT]
+>
+> Path-size requires git information to be available at build time, for the purposes of including some data in the binary (e.g. commit hash). Cabal's vanilla install method interfers with this, though we have a workaround that relies on passing the current directory as an environment variable:
+>
+> ```sh
+> $ export PATH_SIZE_HOME=$(pwd); cabal install exe:path-size
+> ```
+>
+> Nix does not require such a workaround.
+
 ## Nix
 
 ### Prerequisites

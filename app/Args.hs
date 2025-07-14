@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 -- | Provides CLI args functionality.
 --
 -- @since 0.1
@@ -9,13 +11,16 @@ module Args
   )
 where
 
+import Args.TH qualified as TH
 import Control.Monad ((>=>))
 import Data.List qualified as L
 import Data.String (IsString (fromString))
-import Data.Version (Version (versionBranch))
+import Data.Version (showVersion)
 import Data.Word (Word16)
 import Effects.Optparse (osPath)
 import FileSystem.OsPath (OsPath)
+import FileSystem.OsString (OsString)
+import FileSystem.OsString qualified as OsString
 import Numeric.Data.Positive (Positive, mkPositive)
 import Options.Applicative
   ( Mod,
@@ -60,6 +65,7 @@ import PathSize.Data.Config
 import Paths_path_size qualified as Paths
 import System.FilePath.Glob (Pattern)
 import System.FilePath.Glob qualified as Glob
+import System.Info qualified as Info
 import Text.Read qualified as TR
 
 -- | CLI args.
@@ -128,7 +134,7 @@ parserInfoArgs =
     headerTxt =
       Just
         "path-size: A utility for reporting the recursive size of a directory."
-    footerTxt = Just $ fromString versNum
+    footerTxt = Just $ fromString versShort
     desc =
       Chunk.paragraph $
         mconcat
@@ -170,10 +176,45 @@ argsParser = p <**> version <**> OA.helper
           }
 
 version :: Parser (a -> a)
-version = OA.infoOption versNum (OA.long "version" <> OA.short 'v' <> OA.hidden)
+version = OA.infoOption versLong (OA.long "version" <> OA.short 'v' <> OA.hidden)
 
-versNum :: String
-versNum = "Version: " <> L.intercalate "." (show <$> versionBranch Paths.version)
+versShort :: String
+versShort =
+  mconcat
+    [ "Version: ",
+      showVersion Paths.version,
+      " (",
+      OsString.decodeLenient $ versionInfo.gitShortHash,
+      ")"
+    ]
+
+versLong :: String
+versLong =
+  L.intercalate
+    "\n"
+    [ "Path-size: " <> showVersion Paths.version,
+      " - Git revision: " <> OsString.decodeLenient (versionInfo.gitHash),
+      " - Commit date:  " <> OsString.decodeLenient (versionInfo.gitCommitDate),
+      " - GHC version:  " <> versionInfo.ghc
+    ]
+
+data VersionInfo = MkVersionInfo
+  { gitCommitDate :: OsString,
+    ghc :: String,
+    gitHash :: OsString,
+    gitShortHash :: OsString
+  }
+
+versionInfo :: VersionInfo
+versionInfo =
+  MkVersionInfo
+    { gitCommitDate = d,
+      ghc = showVersion Info.compilerVersion,
+      gitHash = h,
+      gitShortHash = sh
+    }
+  where
+    (d, h, sh) = $$TH.gitData
 
 numPathsParser :: Parser (Maybe (Positive Int))
 numPathsParser =
