@@ -147,17 +147,10 @@ argsParser :: Parser Args
 argsParser = p <**> version <**> OA.helper
   where
     p = do
-      searchAll <- allParser
-      maxDepth <- depthParser
-      exclude <- excludeParser
-      filesOnly <- filesOnlyParser
-      format <- formatParser
-      ignoreDirIntrinsicSize <- ignoreDirIntrinsicSizeParser
-      noColor <- noColorParser
-      numPaths <- numPathsParser
-      reverseSort <- reverseSortParser
-      stableSort <- stableSortParser
-      strategy <- strategyParser
+      ~(filesOnly, ignoreDirIntrinsicSize) <- parseDirGroup
+      ~(format, noColor, numPaths, reverseSort, stableSort) <- parseFormattingGroup
+      ~strategy <- parseMiscGroup
+      ~(searchAll, maxDepth, exclude) <- parseSearchGroup
       path <- pathParser
       pure $
         MkArgs
@@ -174,6 +167,26 @@ argsParser = p <**> version <**> OA.helper
             strategy,
             path
           }
+
+    parseDirGroup =
+      OA.parserOptionGroup "Directory options:" $
+        (,) <$> filesOnlyParser <*> ignoreDirIntrinsicSizeParser
+
+    parseFormattingGroup =
+      OA.parserOptionGroup "Formatting options:" $
+        (,,,,)
+          <$> formatParser
+          <*> noColorParser
+          <*> numPathsParser
+          <*> reverseSortParser
+          <*> stableSortParser
+
+    parseMiscGroup =
+      OA.parserOptionGroup "Miscellaneous options:" strategyParser
+
+    parseSearchGroup =
+      OA.parserOptionGroup "Search options:" $
+        (,,) <$> allParser <*> depthParser <*> excludeParser
 
 version :: Parser (a -> a)
 version = OA.infoOption versLong (OA.long "version" <> OA.short 'v' <> OA.hidden)
@@ -250,7 +263,7 @@ excludeParser =
             [ OA.long "exclude",
               OA.short 'e',
               OA.metavar "Patterns...",
-              mkHelp helpTxt
+              mkHelpNoLine helpTxt
             ]
       )
   where
@@ -292,7 +305,7 @@ ignoreDirIntrinsicSizeParser =
   OA.switch $
     mconcat
       [ OA.long "ignore-dir-size",
-        mkHelp helpTxt
+        mkHelpNoLine helpTxt
       ]
   where
     helpTxt =
@@ -398,7 +411,7 @@ stableSortParser =
   OA.switch $
     mconcat
       [ OA.long "stable",
-        mkHelp helpTxt
+        mkHelpNoLine helpTxt
       ]
   where
     helpTxt =
@@ -447,6 +460,12 @@ mkHelp :: String -> Mod f a
 mkHelp =
   OA.helpDoc
     . fmap (<> Pretty.hardline)
+    . Chunk.unChunk
+    . Chunk.paragraph
+
+mkHelpNoLine :: String -> OA.Mod f a
+mkHelpNoLine =
+  OA.helpDoc
     . Chunk.unChunk
     . Chunk.paragraph
 

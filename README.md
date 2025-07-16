@@ -14,17 +14,21 @@
 
 - [Introduction](#introduction)
 - [Options](#options)
-  - [All](#all)
-  - [Depth](#depth)
-  - [Exclude](#exclude)
-  - [Files only](#files-only)
-  - [Format](#format)
-  - [Ignore dir size](#ignore-dir-size)
-  - [No color](#no-color)
-  - [Number of paths](#number-of-paths)
-  - [Reverse](#reverse)
-  - [Stable](#stable)
-  - [Strategy](#strategy)
+  - [Directory options](#directory-options)
+    - [Files only](#files-only)
+    - [Ignore dir size](#ignore-dir-size)
+  - [Formatting options](#formatting-options)
+    - [Format](#format)
+    - [No color](#no-color)
+    - [Number of paths](#number-of-paths)
+    - [Reverse](#reverse)
+    - [Stable](#stable)
+  - [Miscellaneous options](#miscellaneous-options)
+    - [Strategy](#strategy)
+  - [Search options](#search-options)
+    - [All](#all)
+    - [Depth](#depth)
+    - [Exclude](#exclude)
 - [Building](#building)
   - [Cabal](#cabal)
   - [Nix](#nix)
@@ -51,43 +55,9 @@ Path                                        |   Size | Dirs | Files
 
 # Options
 
-## All
+## Directory options
 
-**Arg:** `-a, --all`
-
-**Description:** Searches hidden files/directories. We only consider hidden files per the unix dot convention (e.g. `.hidden_path`). All files are considered unhidden on windows.
-
-**Examples:**
-
-```
-$ path-size -a ./
-```
-
-## Depth
-
-**Arg:** `-d,--depth NAT`
-
-**Description:** The depth limit of our search. Note that we still need to fully traverse the file system to get accurate data; this argument merely affects what is reported i.e. any depths > d are implicitly included in parent directories, but not directly.
-
-**Examples:**
-
-```
-$ path-size -d 1 ./
-```
-
-## Exclude
-
-**Arg:** `-e,--exclude Patterns...`
-
-**Description:** Glob patterns to skip
-
-**Examples:**
-
-```
-$ path-size -e bar -e foo ./
-```
-
-## Files only
+### Files only
 
 **Arg:** `-f,--files-only`
 
@@ -99,7 +69,21 @@ $ path-size -e bar -e foo ./
 $ path-size -f ./
 ```
 
-## Format
+### Ignore dir size
+
+**Arg:** `--ignore-dir-size`
+
+**Description:** Ignores the size of the directories themselves i.e. a directory's size is determined by the sum of all of its subfiles, only. The size of the directory itself (e.g. 4096 bytes on a typical ext4 filesystem) is ignored.
+
+**Examples:**
+
+```
+$ path-size --ignore-dir-size ./
+```
+
+## Formatting options
+
+### Format
 
 **Arg:** `--format`
 
@@ -124,25 +108,13 @@ test/functional/data/success/d2: 16.40K, Directories: 4, Files: 2
 test/functional/data/success/d2/d2: 8.21K, Directories: 2, Files: 1
 ```
 
-## Ignore dir size
-
-**Arg:** `--ignore-dir-size`
-
-**Description:** Ignores the size of the directories themselves i.e. a directory's size is determined by the sum of all of its subfiles, only. The size of the directory itself (e.g. 4096 bytes on a typical ext4 filesystem) is ignored.
-
-**Examples:**
-
-```
-$ path-size --ignore-dir-size ./
-```
-
-## No color
+### No color
 
 **Arg:** `--no-color`
 
 **Description:** Disables output colors.
 
-## Number of paths
+### Number of paths
 
 **Arg:** `-n,--num-paths (NAT | all)`
 
@@ -158,7 +130,7 @@ $ path-size -n all ./
 ...
 ```
 
-## Reverse
+### Reverse
 
 **Arg:** `-r,--reverse`
 
@@ -170,7 +142,7 @@ $ path-size -n all ./
 $ path-size -r ./
 ```
 
-## Stable
+### Stable
 
 **Arg:** `--stable`
 
@@ -182,7 +154,9 @@ $ path-size -r ./
 $ path-size --stable ./
 ```
 
-## Strategy
+## Miscellaneous options
+
+### Strategy
 
 **Arg:** `-s,--strategy (async | sync | pool)`
 
@@ -192,6 +166,44 @@ $ path-size --stable ./
 
 ```
 $ path-size -s pool ./
+```
+
+## Search options
+
+### All
+
+**Arg:** `-a, --all`
+
+**Description:** Searches hidden files/directories. We only consider hidden files per the unix dot convention (e.g. `.hidden_path`). All files are considered unhidden on windows.
+
+**Examples:**
+
+```
+$ path-size -a ./
+```
+
+### Depth
+
+**Arg:** `-d,--depth NAT`
+
+**Description:** The depth limit of our search. Note that we still need to fully traverse the file system to get accurate data; this argument merely affects what is reported i.e. any depths > d are implicitly included in parent directories, but not directly.
+
+**Examples:**
+
+```
+$ path-size -d 1 ./
+```
+
+### Exclude
+
+**Arg:** `-e,--exclude Patterns...`
+
+**Description:** Glob patterns to skip
+
+**Examples:**
+
+```
+$ path-size -e bar -e foo ./
 ```
 
 # Building

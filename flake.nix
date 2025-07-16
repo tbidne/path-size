@@ -82,11 +82,32 @@
               {
                 path = hlib.dontCheck prev.path_0_9_6;
 
+                # optparse jailbreaks
+                cabal-add = hlib.doJailbreak prev.cabal-add;
+                extensions = hlib.doJailbreak prev.extensions;
+                fourmolu = hlib.doJailbreak prev.fourmolu;
+                hie-bios = hlib.doJailbreak prev.hie-bios;
+                hspec-golden = hlib.doJailbreak prev.hspec-golden;
+                ormolu = hlib.doJailbreak prev.ormolu;
+                stan = hlib.doJailbreak prev.stan;
+                tasty = hlib.doJailbreak prev.tasty;
+                tasty-quickcheck = hlib.doJailbreak prev.tasty-quickcheck;
+                tasty-rerun = hlib.doJailbreak prev.tasty-rerun;
+                trial-optparse-applicative = hlib.doJailbreak prev.trial-optparse-applicative;
+
                 gitrev-typed = (
                   final.callHackageDirect {
                     pkg = "gitrev-typed";
                     ver = "0.1";
                     sha256 = "sha256-s7LEekR7NLe3CNhD/8uChnh50eGfaArrrtc5hoCtJ1A=";
+                  } { }
+                );
+
+                optparse-applicative = (
+                  final.callHackageDirect {
+                    pkg = "optparse-applicative";
+                    ver = "0.19.0.0";
+                    sha256 = "sha256-dhqvRILfdbpYPMxC+WpAyO0KUfq2nLopGk1NdSN2SDM=";
                   } { }
                 );
               }

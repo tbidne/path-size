@@ -115,7 +115,7 @@ executable path-size
     , fs-utils              ^>=0.1
     , gitrev-typed          ^>=0.1
     , Glob
-    , optparse-applicative  >=0.16.1.0 && <0.19
+    , optparse-applicative  ^>=0.19
     , os-string
     , path-size
     , smart-math
