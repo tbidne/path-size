@@ -175,6 +175,7 @@ test-suite functional
     , base
     , effects-async
     , effects-fs
+    , env-guard            ^>=0.2
     , exception-utils
     , exceptions
     , Glob
@@ -202,7 +203,7 @@ library bench-common
     , base
     , deepseq
     , effects-fs
-    , env-guard            ^>=0.2
+    , env-guard
     , exceptions
     , nonempty-containers
     , path-size

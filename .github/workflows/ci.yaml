@@ -46,7 +46,8 @@ jobs:
 
       - name: Functional Tests
         id: functional
-        run: cabal test functional --test-options '--size-cutoff 100000'
+        shell: bash
+        run: RUN_FUNC=1 cabal test functional --test-options '--size-cutoff 100000'
 
       - uses: actions/upload-artifact@v4
         name: CLI Tests Upload

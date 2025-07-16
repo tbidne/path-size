@@ -4,6 +4,7 @@
 module Main (main) where
 
 import Functional.PathSize qualified as PathSize
+import System.Environment.Guard (ExpectEnv (ExpectEnvSet), guardOrElse')
 import Test.Tasty qualified as Tasty
 import Test.Tasty.Golden (DeleteOutputFile (OnPass))
 
@@ -11,10 +12,15 @@ import Test.Tasty.Golden (DeleteOutputFile (OnPass))
 --
 -- @since 0.1
 main :: IO ()
-main =
-  Tasty.defaultMain $
-    Tasty.localOption OnPass $
-      Tasty.testGroup
-        "Functional Tests"
-        [ PathSize.tests
-        ]
+main = guardOrElse' "RUN_FUNC" ExpectEnvSet runTests doNothing
+  where
+    runTests = do
+      Tasty.defaultMain $
+        Tasty.localOption OnPass $
+          Tasty.testGroup
+            "Functional Tests"
+            [ PathSize.tests
+            ]
+
+    doNothing =
+      putStrLn "*** Functional tests disabled. Enabled with RUN_FUNC=1 ***"
