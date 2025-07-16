@@ -45,9 +45,9 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Text.Builder.Linear (Builder)
 import Data.Text.Builder.Linear qualified as TBLinear
-import Data.Text.Normalize (NormalizationMode (NFC))
-import Data.Text.Normalize qualified as TNormalize
-import FileSystem.OsPath (OsPath, decodeLenient)
+import FileSystem.OsPath (OsPath)
+import FileSystem.OsPath qualified as OsP
+import FileSystem.UTF8 qualified as UTF8
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
@@ -483,11 +483,7 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
 -- os-string version. Simpler still (and probably decent) would be to just
 -- count text length.
 pathLength :: OsPath -> Int
-pathLength =
-  T.length
-    . TNormalize.normalize NFC
-    . T.pack
-    . decodeLenient
+pathLength = OsP.glyphLength
 
 formatInt :: Integer -> Text
 formatInt =
@@ -502,9 +498,10 @@ pathToText :: OsPath -> Text
 
 #if POSIX
 pathToText =
-    FS.UTF8.decodeUtf8Lenient
+  UTF8.normalizeC
+    . FS.UTF8.decodeUtf8Lenient
     . BS.Short.fromShort
     . (\p -> p.getOsString.getPosixString)
 #else
-pathToText = T.pack . FS.OsPath.decodeLenient
+pathToText = UTF8.normalizeC . T.pack . FS.OsPath.decodeLenient
 #endif

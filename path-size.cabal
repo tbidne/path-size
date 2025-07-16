@@ -86,7 +86,6 @@ library
     , smart-math           ^>=0.1
     , text                 >=1.2.3.2  && <2.2
     , text-builder-linear  ^>=0.1
-    , unicode-transforms   ^>=0.4.0
     , unix-compat          >=0.6      && <0.8
 
   if !os(windows)
