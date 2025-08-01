@@ -1,3 +1,5 @@
-test/functional/data/success: 24.61K, Directories: 6, Files: 5
+test/functional/data/success: 24.62K, Directories: 6, Files: 7
 test/functional/data/success/d2: 16.40K, Directories: 4, Files: 2
 test/functional/data/success/d1: 4.11K, Directories: 1, Files: 3
+test/functional/data/success/🧑‍🌾: 6.00B, Directories: 0, Files: 1
+test/functional/data/success/🇺🇸🇳🇿: 6.00B, Directories: 0, Files: 1

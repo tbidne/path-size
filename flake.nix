@@ -62,6 +62,12 @@
       inputs.algebra-simple.follows = "algebra-simple";
       inputs.bounds.follows = "bounds";
     };
+    unicode-grapheme = {
+      url = "github:tbidne/unicode-grapheme";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nix-hs-utils.follows = "nix-hs-utils";
+    };
   };
   outputs =
     inputs@{
@@ -118,7 +124,6 @@
                 "fs-utils"
                 "si-bytes"
                 "smart-math"
-                "time-conv"
               ]
               // nix-hs-utils.mkRelLibs "${inputs.monad-effects}/lib" final [
                 "effects-async"
@@ -129,6 +134,10 @@
                 "effects-thread"
                 "effects-unix"
                 "effects-unix-compat"
+              ]
+              // nix-hs-utils.mkRelLibs "${inputs.unicode-grapheme}/lib" final [
+                "unicode-grapheme"
+                "unicode-grapheme-common"
               ];
           };
           hlib = pkgs.haskell.lib;

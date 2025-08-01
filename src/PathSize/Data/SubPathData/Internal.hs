@@ -47,7 +47,6 @@ import Data.Text.Builder.Linear (Builder)
 import Data.Text.Builder.Linear qualified as TBLinear
 import FileSystem.OsPath (OsPath)
 import FileSystem.OsPath qualified as OsP
-import FileSystem.UTF8 qualified as UTF8
 import GHC.Generics (Generic)
 import GHC.Records (HasField (getField))
 import GHC.Stack (HasCallStack)
@@ -81,6 +80,7 @@ import FileSystem.UTF8 qualified as FS.UTF8
 #else
 import FileSystem.OsPath qualified as FS.OsPath
 #endif
+import Unicode.Grapheme qualified as Grapheme
 
 -- | A flattened and sorted representation of 'PathTree'. Contains at least
 -- one element.
@@ -441,7 +441,7 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
       | d < 0 = s
       | otherwise = ws `padFn` s
       where
-        d = n - T.length s
+        d = n - graphemeLength s
         ws = T.replicate d " "
 
     formatSize :: Integer -> Text
@@ -483,7 +483,13 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
 -- os-string version. Simpler still (and probably decent) would be to just
 -- count text length.
 pathLength :: OsPath -> Int
-pathLength = OsP.glyphLength
+pathLength =
+  graphemeLength
+    . T.pack
+    . OsP.decodeLenient
+
+graphemeLength :: Text -> Int
+graphemeLength = Grapheme.runUnicodeFunction Grapheme.textWidth
 
 formatInt :: Integer -> Text
 formatInt =
@@ -498,10 +504,9 @@ pathToText :: OsPath -> Text
 
 #if POSIX
 pathToText =
-  UTF8.normalizeC
-    . FS.UTF8.decodeUtf8Lenient
+  FS.UTF8.decodeUtf8Lenient
     . BS.Short.fromShort
     . (\p -> p.getOsString.getPosixString)
 #else
-pathToText = UTF8.normalizeC . T.pack . FS.OsPath.decodeLenient
+pathToText = T.pack . FS.OsPath.decodeLenient
 #endif
