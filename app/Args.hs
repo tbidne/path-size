@@ -430,7 +430,7 @@ strategyParser =
         OA.long "strategy",
         OA.short 's',
         OA.metavar "(async | sync | pool)",
-        mkHelp helpTxt
+        mkHelpNoLine helpTxt
       ]
   where
     readStrategy =
