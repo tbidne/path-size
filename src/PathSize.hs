@@ -80,7 +80,7 @@ import PathSize.Data.SubPathData.Internal
     SubPathData (UnsafeSubPathData),
   )
 import PathSize.Exception (PathE (MkPathE))
-import PathSize.Utils (MonadPosixC)
+import PathSize.Utils (MonadPosixFilesC)
 import PathSize.Utils qualified as Utils
 import System.FilePath.Glob qualified as Glob
 import System.OsPath qualified as FP
@@ -96,7 +96,7 @@ findLargestPaths ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   -- | Configuration.
   Config ->
@@ -139,7 +139,7 @@ pathSizeRecursive ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   OsPath ->
   m (PathSizeResult Integer)
@@ -166,7 +166,7 @@ pathSizeRecursiveConfig ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   Config ->
   OsPath ->
@@ -184,7 +184,7 @@ pathDataRecursiveSync ::
   ( HasCallStack,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   Config ->
   OsPath ->
@@ -201,7 +201,7 @@ pathDataRecursiveAsync ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   Config ->
   OsPath ->
@@ -217,7 +217,7 @@ pathDataRecursiveAsyncPool ::
     MonadAsync m,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   Config ->
   OsPath ->
@@ -235,7 +235,7 @@ pathDataRecursive ::
   ( HasCallStack,
     MonadCatch m,
     MonadPathReader m,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   -- | Traversal function.
   (forall a b t. (HasCallStack, Traversable t) => (a -> m b) -> t a -> m (t b)) ->

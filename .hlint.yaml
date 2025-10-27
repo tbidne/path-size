@@ -1,1 +1,11 @@
 - arguments: [-XUnboxedTuples]
+
+- ignore:
+    name: Use <$>
+    within:
+      - "Args.TH"
+
+- ignore:
+    name: Avoid lambda
+    within:
+      - "PathSize.Data.SubPathData.Internal"

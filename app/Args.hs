@@ -149,7 +149,7 @@ argsParser = p <**> version <**> OA.helper
     p = do
       ~(filesOnly, ignoreDirIntrinsicSize) <- parseDirGroup
       ~(format, noColor, numPaths, reverseSort, stableSort) <- parseFormattingGroup
-      ~strategy <- parseMiscGroup
+      strategy <- parseMiscGroup
       ~(searchAll, maxDepth, exclude) <- parseSearchGroup
       path <- pathParser
       pure $
@@ -244,9 +244,9 @@ numPathsParser =
     readNat =
       OA.str >>= \case
         "all" -> pure Nothing
-        s -> case (TR.readMaybe >=> mkPositive) s of
-          Just n -> pure $ Just n
-          Nothing -> fail $ "Expected 'all' or a positive, received: " <> s
+        s -> case (TR.readEither >=> mkPositive) s of
+          Right n -> pure $ Just n
+          Left err -> fail $ "Expected 'all' or a positive, error: " <> err
     helpTxt =
       mconcat
         [ "The number of paths to display. If unspecified, defaults to 10. ",

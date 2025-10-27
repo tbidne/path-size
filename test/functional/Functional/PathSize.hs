@@ -22,10 +22,10 @@ import Effects.Concurrent.Async (MonadAsync)
 import Effects.FileSystem.PathReader (MonadPathReader)
 import Effects.FileSystem.PathReader qualified as RDir
 #if POSIX
-import Effects.System.Posix (MonadPosix (getSymbolicLinkStatus))
+import Effects.System.Posix.Files (MonadPosixFiles (getSymbolicLinkStatus))
 import System.OsString.Internal.Types (OsString (OsString))
 #else
-import Effects.System.PosixCompat (MonadPosixCompat (getSymbolicLinkStatus))
+import Effects.System.PosixCompat.Files (MonadPosixCompatFiles (getSymbolicLinkStatus))
 #endif
 import Data.Functor ((<&>))
 import Data.Maybe (fromMaybe)
@@ -261,14 +261,14 @@ newtype FuncIO a = MkFuncIO (IO a)
 
 #if POSIX
 
-instance MonadPosix FuncIO where
+instance MonadPosixFiles FuncIO where
   getSymbolicLinkStatus path = case pathToErr (OsString path) of
     Just err -> throwM err
     Nothing -> liftIO $ getSymbolicLinkStatus path
 
 #else
 
-instance MonadPosixCompat FuncIO where
+instance MonadPosixCompatFiles FuncIO where
   getSymbolicLinkStatus path = case pathToErr (FS.OsPath.unsafeEncode path) of
     Just err -> throwM err
     Nothing -> liftIO $ getSymbolicLinkStatus path

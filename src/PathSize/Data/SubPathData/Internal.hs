@@ -308,7 +308,7 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
           foldSeq goColor ""
             . Seq.zip colorSeq
             $ xs
-        else foldSeq go "" $ xs
+        else foldSeq go "" xs
     DisplayFormatTabular ->
       if color
         then
@@ -318,7 +318,7 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
             $ xs
         else (tableHeader <>) . foldSeq goTable "" $ xs
   where
-    xs = subPathDataToSeq $ spd
+    xs = subPathDataToSeq spd
 
     go :: PathData -> Builder -> Builder
     go (MkPathData {path, size, numFiles, numDirectories}) acc =
@@ -360,7 +360,7 @@ display (MkDisplayConfig {color, format, reverseSort}) spd =
           sep,
           TBLinear.fromText $ rpadN maxFileLen "Files",
           "\n",
-          TBLinear.fromText $ hyphens,
+          TBLinear.fromText hyphens,
           "\n"
         ]
 
@@ -489,7 +489,7 @@ pathLength =
     . OsP.decodeLenient
 
 graphemeLength :: Text -> Int
-graphemeLength = Grapheme.runUnicodeFunction Grapheme.textWidth
+graphemeLength = Grapheme.textWidth
 
 formatInt :: Integer -> Text
 formatInt =

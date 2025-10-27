@@ -5,7 +5,7 @@
 -- @since 0.1
 module PathSize.Utils
   ( -- * Windows / Unix compat
-    MonadPosixC,
+    MonadPosixFilesC,
     hidden,
     getFileStatus,
 
@@ -33,8 +33,8 @@ import PathSize.Exception (PathE)
 import System.PosixCompat.Files (FileStatus)
 
 #if POSIX
-import Effects.System.Posix (MonadPosix)
-import Effects.System.Posix qualified as Posix
+import Effects.System.Posix.Files (MonadPosixFiles)
+import Effects.System.Posix.Files qualified as Posix
 import System.OsString.Internal.Types
   ( OsString (getOsString),
     PosixString(getPosixString),
@@ -42,8 +42,8 @@ import System.OsString.Internal.Types
 import System.OsString.Data.ByteString.Short qualified as Short
 #else
 import Control.Monad.Catch (MonadThrow)
-import Effects.System.PosixCompat (MonadPosixCompat)
-import Effects.System.PosixCompat qualified as PosixCompat
+import Effects.System.PosixCompat.Files (MonadPosixCompatFiles)
+import Effects.System.PosixCompat.Files qualified as PosixCompat
 import FileSystem.OsPath qualified as FS.OsPath
 #endif
 
@@ -77,14 +77,14 @@ hidden = const False
 
 {- ORMOLU_DISABLE -}
 
--- | Alias for MonadPosix* constraints. On Posix, this is MonadPosix (unix),
+-- | Alias for MonadPosixFiles* constraints. On Posix, this is MonadPosixFiles (unix),
 -- which allows for greater efficiency. On Windows, this is just
--- MonadPosixCompat (unix-compat).
-type MonadPosixC m =
+-- MonadPosixFilesCompat (unix-compat).
+type MonadPosixFilesC m =
 #if POSIX
-  MonadPosix m
+  MonadPosixFiles m
 #else
-  MonadPosixCompat m
+  MonadPosixCompatFiles m
 #endif
 
 {- ORMOLU_ENABLE -}
@@ -96,7 +96,7 @@ type MonadPosixC m =
 getFileStatus ::
   forall m.
   ( HasCallStack,
-    MonadPosixC m
+    MonadPosixFilesC m
   ) =>
   OsPath ->
   m FileStatus
@@ -119,7 +119,7 @@ getFileStatus path =
 getFileStatus ::
   forall m.
   ( HasCallStack,
-    MonadPosixC m,
+    MonadPosixFilesC m,
     MonadThrow m
   ) =>
   OsPath ->

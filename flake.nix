@@ -81,41 +81,21 @@
       perSystem =
         { pkgs, ... }:
         let
-          ghc-version = "ghc9101";
+          ghc-version = "ghc9122";
           compiler = pkgs.haskell.packages."${ghc-version}".override {
             overrides =
               final: prev:
               {
-                path = hlib.dontCheck prev.path_0_9_6;
+                Cabal-syntax_3_10_3_0 = hlib.doJailbreak prev.Cabal-syntax_3_10_3_0;
 
-                # optparse jailbreaks
-                cabal-add = hlib.doJailbreak prev.cabal-add;
-                extensions = hlib.doJailbreak prev.extensions;
+                # TODO: Remove optparse override and jailbreaks once former
+                # is the default.
                 fourmolu = hlib.doJailbreak prev.fourmolu;
-                hie-bios = hlib.doJailbreak prev.hie-bios;
                 hspec-golden = hlib.doJailbreak prev.hspec-golden;
                 ormolu = hlib.doJailbreak prev.ormolu;
-                stan = hlib.doJailbreak prev.stan;
-                tasty = hlib.doJailbreak prev.tasty;
-                tasty-quickcheck = hlib.doJailbreak prev.tasty-quickcheck;
-                tasty-rerun = hlib.doJailbreak prev.tasty-rerun;
-                trial-optparse-applicative = hlib.doJailbreak prev.trial-optparse-applicative;
-
-                gitrev-typed = (
-                  final.callHackageDirect {
-                    pkg = "gitrev-typed";
-                    ver = "0.1";
-                    sha256 = "sha256-s7LEekR7NLe3CNhD/8uChnh50eGfaArrrtc5hoCtJ1A=";
-                  } { }
-                );
-
-                optparse-applicative = (
-                  final.callHackageDirect {
-                    pkg = "optparse-applicative";
-                    ver = "0.19.0.0";
-                    sha256 = "sha256-dhqvRILfdbpYPMxC+WpAyO0KUfq2nLopGk1NdSN2SDM=";
-                  } { }
-                );
+                optparse-applicative = prev.optparse-applicative_0_19_0_0;
+                stylish-haskell = hlib.doJailbreak prev.stylish-haskell;
+                 
               }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"
@@ -137,7 +117,6 @@
               ]
               // nix-hs-utils.mkRelLibs "${inputs.unicode-grapheme}/lib" final [
                 "unicode-grapheme"
-                "unicode-grapheme-common"
               ];
           };
           hlib = pkgs.haskell.lib;
@@ -160,14 +139,6 @@
                     pkgs.git
                   ];
                 });
-
-              # TODO: Once hlint is back to working with our GHC we can
-              # use nix-hs-utils.mkDevTools ++ otherDeps.
-              devTools = [
-                (hlib.dontCheck compiler.cabal-fmt)
-                (hlib.dontCheck compiler.haskell-language-server)
-                pkgs.nixfmt-rfc-style
-              ];
             };
           compilerPkgs = {
             inherit compiler pkgs;
@@ -179,8 +150,8 @@
 
           apps = {
             format = nix-hs-utils.format compilerPkgs;
-            #lint = nix-hs-utils.lint compilerPkgs;
-            #lintRefactor = nix-hs-utils.lintRefactor compilerPkgs;
+            lint = nix-hs-utils.lint compilerPkgs;
+            lint-refactor = nix-hs-utils.lint-refactor compilerPkgs;
           };
         };
       systems = [

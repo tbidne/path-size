@@ -35,7 +35,7 @@ import Effects.FileSystem.PathWriter
 import FileSystem.OsPath (OsPath, osp, (</>))
 import FileSystem.OsPath qualified as FS.OsPath
 import GHC.Stack (HasCallStack)
-import Numeric.Data.Positive (mkPositive)
+import Numeric.Data.Positive (unsafePositive)
 import PathSize
   ( Config
       ( MkConfig,
@@ -134,7 +134,7 @@ benchLargest10 MkBenchmarkSuite {..} strategies testDir =
     "takeLargest10"
     [ runLargestN
         s
-        (mkPositive 10)
+        (Just $ unsafePositive 10)
         (testDir </> [osp|dense-11|])
     | s <- NE.toList strategies
     ]
