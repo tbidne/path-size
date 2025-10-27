@@ -132,7 +132,7 @@ executable profile-utils
   build-depends:
     , base
     , bench-common
-    , fs-utils
+    , fs-utils      ^>=0.1
 
   hs-source-dirs: profiling/utils
 
@@ -142,7 +142,7 @@ executable profile
   build-depends:
     , base
     , deepseq
-    , fs-utils
+    , fs-utils             ^>=0.1
     , nonempty-containers
     , path-size
 
@@ -204,7 +204,7 @@ library bench-common
     , base
     , deepseq
     , effects-fs
-    , env-guard
+    , env-guard            ^>=0.2
     , exceptions
     , nonempty-containers
     , path-size
