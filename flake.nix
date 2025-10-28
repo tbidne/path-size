@@ -95,7 +95,7 @@
                 ormolu = hlib.doJailbreak prev.ormolu;
                 optparse-applicative = prev.optparse-applicative_0_19_0_0;
                 stylish-haskell = hlib.doJailbreak prev.stylish-haskell;
-                 
+
               }
               // nix-hs-utils.mkLibs inputs final [
                 "algebra-simple"

@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 -- | Provides CLI args functionality.
@@ -14,16 +15,19 @@ where
 import Args.TH qualified as TH
 import Control.Monad ((>=>))
 import Data.List qualified as L
+import Data.List.NonEmpty (NonEmpty ((:|)))
 import Data.String (IsString (fromString))
 import Data.Version (showVersion)
 import Data.Word (Word16)
 import Effects.Optparse (osPath)
+import Effects.Optparse.Completer qualified as EOC
 import FileSystem.OsPath (OsPath)
 import FileSystem.OsString (OsString)
 import FileSystem.OsString qualified as OsString
 import Numeric.Data.Positive (Positive, mkPositive)
 import Options.Applicative
   ( Mod,
+    OptionFields,
     Parser,
     ParserInfo
       ( ParserInfo,
@@ -197,7 +201,7 @@ versShort =
     [ "Version: ",
       showVersion Paths.version,
       " (",
-      OsString.decodeLenient $ versionInfo.gitShortHash,
+      OsString.decodeLenient versionInfo.gitShortHash,
       ")"
     ]
 
@@ -206,8 +210,8 @@ versLong =
   L.intercalate
     "\n"
     [ "Path-size: " <> showVersion Paths.version,
-      " - Git revision: " <> OsString.decodeLenient (versionInfo.gitHash),
-      " - Commit date:  " <> OsString.decodeLenient (versionInfo.gitCommitDate),
+      " - Git revision: " <> OsString.decodeLenient versionInfo.gitHash,
+      " - Commit date:  " <> OsString.decodeLenient versionInfo.gitCommitDate,
       " - GHC version:  " <> versionInfo.ghc
     ]
 
@@ -237,6 +241,7 @@ numPathsParser =
       [ OA.value (Just defaultNumPaths),
         OA.long "num-paths",
         OA.short 'n',
+        OA.completeWith ["all"],
         OA.metavar "(NAT | all)",
         mkHelp helpTxt
       ]
@@ -356,44 +361,27 @@ formatParser =
     $ mconcat
       [ OA.value DisplayFormatTabular,
         OA.long "format",
+        OA.completeWith ["single", "tabular"],
         OA.metavar "FMT",
-        OA.helpDoc helpTxt
+        helpTxt
       ]
   where
     readFormat =
       OA.str >>= \case
-        "s" -> pure DisplayFormatSingle
         "single" -> pure DisplayFormatSingle
-        "t" -> pure DisplayFormatTabular
         "tabular" -> pure DisplayFormatTabular
         other -> fail $ "Unrecognized format: " ++ other
 
     helpTxt =
-      mconcat
+      itemize
         [ intro,
-          Just Pretty.hardline,
           single,
-          tabular,
-          Just Pretty.hardline
+          tabular
         ]
 
-    intro = toMDoc "Formatting options."
-    single =
-      mconcat
-        [ Just Pretty.hardline,
-          toMDoc $
-            mconcat
-              [ "- (s|single): Simply, single-line format."
-              ]
-        ]
-    tabular =
-      mconcat
-        [ Just Pretty.hardline,
-          toMDoc $
-            mconcat
-              [ "- (t|tabular): The default. Prints a table."
-              ]
-        ]
+    intro = "Formatting options."
+    single = "single: Simple, single-line format."
+    tabular = "tabular: The default. Prints a table."
 
 reverseSortParser :: Parser Bool
 reverseSortParser =
@@ -429,8 +417,9 @@ strategyParser =
       [ OA.value Async,
         OA.long "strategy",
         OA.short 's',
+        OA.completeWith ["async", "sync", "pool"],
         OA.metavar "(async | sync | pool)",
-        mkHelpNoLine helpTxt
+        helpTxt
       ]
   where
     readStrategy =
@@ -441,20 +430,28 @@ strategyParser =
         other ->
           fail $
             mconcat
-              [ "Could not read strategy. Wanted one of (sync | async | pool), found: ",
+              [ "Could not read strategy. Wanted one of (async | pool | sync), found: ",
                 other
               ]
+
     helpTxt =
-      mconcat
-        [ "The search strategy is intended to improve performance. The ",
-          "default is 'async', which uses lightweight threads. The 'sync' ",
-          "option is a sequential search and likely the slowest. Finally, ",
-          "'pool' uses an explicit thread pool for concurrency. This is ",
-          "potentially the fastest, though experimentation is recommended."
+      itemizeNoLine
+        [ intro,
+          async,
+          pool,
+          sync
         ]
 
+    intro = "Search strategy options, for improved performance."
+    async = "async: The default, uses lightweight threads."
+    pool = "pool: Uses an explicit thread pool. Potentially the fastest."
+    sync = "sync: Sequential search, likely the slowest."
+
 pathParser :: Parser OsPath
-pathParser = OA.argument osPath (OA.metavar "PATH")
+pathParser =
+  OA.argument osPath $
+    OA.metavar "PATH"
+      <> OA.completer EOC.compgenCwdPathsCompleter
 
 mkHelp :: String -> Mod f a
 mkHelp =
@@ -471,3 +468,34 @@ mkHelpNoLine =
 
 toMDoc :: String -> Maybe Doc
 toMDoc = Chunk.unChunk . Chunk.paragraph
+
+itemize :: NonEmpty String -> Mod OptionFields a
+itemize =
+  OA.helpDoc
+    . Chunk.unChunk
+    . fmap (<> Pretty.line)
+    . itemizeHelper
+
+-- | 'itemize' that does not append a trailing newline. Useful for the last
+-- option in a group, as groups already start a newline.
+itemizeNoLine :: NonEmpty String -> Mod OptionFields a
+itemizeNoLine =
+  OA.helpDoc
+    . Chunk.unChunk
+    . itemizeHelper
+
+itemizeHelper :: NonEmpty String -> Chunk Doc
+itemizeHelper (intro :| ds) =
+  Chunk.vcatChunks $
+    ( Chunk.paragraph intro
+        : toChunk Pretty.softline
+        : (toItem <$> ds)
+    )
+  where
+    toItem d =
+      fmap (Pretty.nest 2)
+        . Chunk.paragraph
+        $ ("- " <> d)
+
+toChunk :: a -> Chunk a
+toChunk = Chunk . Just
