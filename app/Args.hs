@@ -486,7 +486,7 @@ itemizeNoLine =
 
 itemizeHelper :: NonEmpty String -> Chunk Doc
 itemizeHelper (intro :| ds) =
-  Chunk.vcatChunks $
+  Chunk.vcatChunks
     ( Chunk.paragraph intro
         : toChunk Pretty.softline
         : (toItem <$> ds)
