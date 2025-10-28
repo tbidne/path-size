@@ -18,6 +18,7 @@ import Data.String (IsString (fromString))
 import Data.Version (showVersion)
 import Data.Word (Word16)
 import Effects.Optparse (osPath)
+import Effects.Optparse.Completer qualified as EOC
 import FileSystem.OsPath (OsPath)
 import FileSystem.OsString (OsString)
 import FileSystem.OsString qualified as OsString
@@ -197,7 +198,7 @@ versShort =
     [ "Version: ",
       showVersion Paths.version,
       " (",
-      OsString.decodeLenient $ versionInfo.gitShortHash,
+      OsString.decodeLenient versionInfo.gitShortHash,
       ")"
     ]
 
@@ -206,8 +207,8 @@ versLong =
   L.intercalate
     "\n"
     [ "Path-size: " <> showVersion Paths.version,
-      " - Git revision: " <> OsString.decodeLenient (versionInfo.gitHash),
-      " - Commit date:  " <> OsString.decodeLenient (versionInfo.gitCommitDate),
+      " - Git revision: " <> OsString.decodeLenient versionInfo.gitHash,
+      " - Commit date:  " <> OsString.decodeLenient versionInfo.gitCommitDate,
       " - GHC version:  " <> versionInfo.ghc
     ]
 
@@ -237,6 +238,7 @@ numPathsParser =
       [ OA.value (Just defaultNumPaths),
         OA.long "num-paths",
         OA.short 'n',
+        OA.completeWith ["all"],
         OA.metavar "(NAT | all)",
         mkHelp helpTxt
       ]
@@ -356,15 +358,14 @@ formatParser =
     $ mconcat
       [ OA.value DisplayFormatTabular,
         OA.long "format",
+        OA.completeWith ["single", "tabular"],
         OA.metavar "FMT",
         OA.helpDoc helpTxt
       ]
   where
     readFormat =
       OA.str >>= \case
-        "s" -> pure DisplayFormatSingle
         "single" -> pure DisplayFormatSingle
-        "t" -> pure DisplayFormatTabular
         "tabular" -> pure DisplayFormatTabular
         other -> fail $ "Unrecognized format: " ++ other
 
@@ -381,18 +382,12 @@ formatParser =
     single =
       mconcat
         [ Just Pretty.hardline,
-          toMDoc $
-            mconcat
-              [ "- (s|single): Simply, single-line format."
-              ]
+          Pretty.nest 2 <$> toMDoc "- single: Simply, single-line format."
         ]
     tabular =
       mconcat
         [ Just Pretty.hardline,
-          toMDoc $
-            mconcat
-              [ "- (t|tabular): The default. Prints a table."
-              ]
+          Pretty.nest 2 <$> toMDoc "- tabular: The default. Prints a table."
         ]
 
 reverseSortParser :: Parser Bool
@@ -429,6 +424,7 @@ strategyParser =
       [ OA.value Async,
         OA.long "strategy",
         OA.short 's',
+        OA.completeWith ["async", "sync", "pool"],
         OA.metavar "(async | sync | pool)",
         mkHelpNoLine helpTxt
       ]
@@ -454,7 +450,10 @@ strategyParser =
         ]
 
 pathParser :: Parser OsPath
-pathParser = OA.argument osPath (OA.metavar "PATH")
+pathParser =
+  OA.argument osPath $
+    OA.metavar "PATH"
+      <> OA.completer EOC.compgenCwdPathsCompleter
 
 mkHelp :: String -> Mod f a
 mkHelp =
